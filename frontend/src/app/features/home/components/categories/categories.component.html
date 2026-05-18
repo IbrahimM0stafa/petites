@@ -1,0 +1,12 @@
+<section class="categories-panel" aria-label="Shop categories">
+  <div class="categories">
+    <article class="category" *ngFor="let category of categories">
+      <div class="category-icon" [ngClass]="category.art" aria-hidden="true">
+        <span class="category-icon-inner"></span>
+      </div>
+      <h3>{{ category.label }}</h3>
+    </article>
+  </div>
+
+  <div class="panel-heart" aria-hidden="true">♥</div>
+</section>

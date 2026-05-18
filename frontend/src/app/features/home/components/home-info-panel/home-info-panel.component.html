@@ -1,0 +1,40 @@
+<section class="home-info-panel" aria-label="About and newsletter">
+  <div class="panel-left">
+    <div class="panel-text">
+      <h3>Made with love <span class="panel-heart">♥</span></h3>
+      <p>At Petites, we believe the best things come in small packages. Each treat is crafted with care, using quality ingredients, for your sweetest moments.</p>
+      <a class="panel-cta" routerLink="/about">Our Story <span class="cta-heart">♥</span></a>
+    </div>
+
+    <div class="panel-art bowl" aria-hidden="true">
+      <!-- decorative bowl SVG -->
+      <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" width="200" height="120" role="img" aria-hidden="true">
+        <ellipse cx="100" cy="95" rx="60" ry="12" fill="#c78657" opacity="0.18"/>
+        <path d="M40 60c0-18 28-28 60-28s60 10 60 28v6H40z" fill="#f6e1c7"/>
+        <path d="M48 58c8-14 20-20 52-20s44 6 52 20" fill="#b0663f" opacity="0.15"/>
+        <rect x="30" y="70" width="30" height="12" rx="3" fill="#b36a4b"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="panel-right">
+    <div class="panel-text">
+      <h3>Stay Sweet <span class="panel-heart">♥</span></h3>
+      <p>Be the first to know about new treats, special offers, and sweet surprises!</p>
+      <form class="newsletter" (submit)="$event.preventDefault()">
+        <label class="visually-hidden" for="email">Email address</label>
+        <input id="email" type="email" placeholder="Your email address" />
+        <button class="email-btn" aria-label="Subscribe"><span class="btn-heart">♥</span></button>
+      </form>
+    </div>
+
+    <div class="panel-art envelope" aria-hidden="true">
+      <!-- simple envelope SVG -->
+      <svg viewBox="0 0 200 120" xmlns="http://www.w3.org/2000/svg" width="200" height="120" role="img" aria-hidden="true">
+        <rect x="20" y="30" width="160" height="80" rx="8" fill="#fff1ea" stroke="#e1bdb1"/>
+        <path d="M20 30l80 48 80-48" fill="none" stroke="#e1bdb1" stroke-width="3"/>
+        <path d="M60 58l40 24 40-24" fill="#f6c3c1" opacity="0.95"/>
+      </svg>
+    </div>
+  </div>
+</section>
