@@ -1,0 +1,26 @@
+<section class="featured-treats" aria-labelledby="featured-treats-title">
+  <h2 id="featured-treats-title" class="section-title">
+    <span class="title-heart" aria-hidden="true">♥</span>
+    Featured Treats
+    <span class="title-heart" aria-hidden="true">♥</span>
+  </h2>
+
+  <div class="treat-grid">
+    <ng-container *ngFor="let treat of treats">
+      <app-product-card
+        [name]="treat.name"
+        [price]="treat.price"
+        [artClass]="treat.artClass"
+        ctaText="Add to Cart"
+        ctaLink="/cart">
+      </app-product-card>
+    </ng-container>
+  </div>
+
+  <div class="section-footer">
+    <a class="view-all" routerLink="/shop">
+      View All Treats
+      <span class="button-heart" aria-hidden="true">♥</span>
+    </a>
+  </div>
+</section>
