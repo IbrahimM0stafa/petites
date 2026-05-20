@@ -1,0 +1,66 @@
+.back-link {
+	display: inline-block;
+	margin-bottom: 0.5rem;
+	color: var(--admin-muted);
+	text-decoration: none;
+	font-size: 0.875rem;
+}
+
+.back-link:hover {
+	color: var(--admin-accent);
+}
+
+.detail-actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.detail-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+	gap: 1.25rem;
+	margin: 1.5rem 0 0;
+}
+
+.detail-grid dt {
+	margin: 0 0 0.25rem;
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--admin-muted);
+}
+
+.detail-grid dd {
+	margin: 0;
+	font-weight: 500;
+}
+
+.mono {
+	font-family: ui-monospace, monospace;
+	font-size: 0.8125rem;
+	word-break: break-all;
+}
+
+.admin-btn-danger {
+	background: #dc2626;
+}
+
+.admin-btn-danger:hover:not(:disabled) {
+	background: #b91c1c;
+}
+
+.status-badge {
+	display: inline-block;
+	padding: 0.125rem 0.5rem;
+	border-radius: 999px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	background: #dcfce7;
+	color: #166534;
+}
+
+.status-badge--inactive {
+	background: #f3f4f6;
+	color: #6b7280;
+}

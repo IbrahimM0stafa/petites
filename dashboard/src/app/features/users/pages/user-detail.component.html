@@ -1,0 +1,78 @@
+<section class="page-card" *ngIf="loading">
+	<p class="page-status">Loading user…</p>
+</section>
+
+<section class="page-card" *ngIf="!loading && error && !user">
+	<p class="page-error" role="alert">{{ error }}</p>
+	<a routerLink="/users" class="admin-btn admin-btn-ghost">Back to users</a>
+</section>
+
+<section class="page-card" *ngIf="!loading && user as u">
+	<div class="page-header">
+		<div>
+			<a routerLink="/users" class="back-link">← Users</a>
+			<h2>{{ u.name }}</h2>
+		</div>
+		<div class="detail-actions">
+			<button
+				type="button"
+				class="admin-btn admin-btn-danger"
+				*ngIf="u.active"
+				(click)="deactivate()"
+				[disabled]="actionLoading"
+			>
+				{{ actionLoading ? 'Working…' : 'Deactivate' }}
+			</button>
+			<button
+				type="button"
+				class="admin-btn"
+				*ngIf="!u.active"
+				(click)="reactivate()"
+				[disabled]="actionLoading"
+			>
+				{{ actionLoading ? 'Working…' : 'Reactivate' }}
+			</button>
+		</div>
+	</div>
+
+	<p *ngIf="error" class="page-error" role="alert">{{ error }}</p>
+
+	<dl class="detail-grid">
+		<div>
+			<dt>Email</dt>
+			<dd>{{ u.email }}</dd>
+		</div>
+		<div>
+			<dt>Phone</dt>
+			<dd>{{ u.phone || '—' }}</dd>
+		</div>
+		<div>
+			<dt>Roles</dt>
+			<dd>{{ u.roles.join(', ') || '—' }}</dd>
+		</div>
+		<div>
+			<dt>Status</dt>
+			<dd>
+				<span class="status-badge" [class.status-badge--inactive]="!u.active">
+					{{ u.active ? 'Active' : 'Inactive' }}
+				</span>
+			</dd>
+		</div>
+		<div>
+			<dt>Completed orders</dt>
+			<dd>{{ u.completedOrdersCount }}</dd>
+		</div>
+		<div>
+			<dt>Created</dt>
+			<dd>{{ u.createdAt | date: 'medium' }}</dd>
+		</div>
+		<div>
+			<dt>Updated</dt>
+			<dd>{{ u.updatedAt | date: 'medium' }}</dd>
+		</div>
+		<div>
+			<dt>User ID</dt>
+			<dd class="mono">{{ u.id }}</dd>
+		</div>
+	</dl>
+</section>

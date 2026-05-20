@@ -1,0 +1,25 @@
+<div class="admin-layout">
+	<aside class="admin-sidebar" aria-label="Admin navigation">
+		<div class="admin-brand">
+			<span class="admin-brand-mark">P</span>
+			<span class="admin-brand-text">Petites Admin</span>
+		</div>
+		<nav class="admin-nav">
+			<a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Dashboard</a>
+			<a routerLink="/users" routerLinkActive="active">Users</a>
+		</nav>
+	</aside>
+
+	<div class="admin-main">
+		<header class="admin-topbar">
+			<h1 class="admin-topbar-title">Petites Admin</h1>
+			<div class="admin-topbar-actions">
+				<span class="admin-user-email" *ngIf="authState.email() as email">{{ email }}</span>
+				<button type="button" class="admin-btn admin-btn-ghost" (click)="logout()">Log out</button>
+			</div>
+		</header>
+		<main class="admin-content">
+			<router-outlet />
+		</main>
+	</div>
+</div>

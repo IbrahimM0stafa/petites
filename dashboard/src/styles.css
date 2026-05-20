@@ -1,7 +1,12 @@
-html,
-body {
-	margin: 0;
-	min-height: 100%;
+:root {
+	--admin-bg: #f8fafc;
+	--admin-surface: #ffffff;
+	--admin-sidebar-bg: #ffffff;
+	--admin-border: #e2e8f0;
+	--admin-text: #0f172a;
+	--admin-muted: #64748b;
+	--admin-accent: #7c3aed;
+	--admin-accent-soft: #ede9fe;
 }
 
 *,
@@ -10,25 +15,79 @@ body {
 	box-sizing: border-box;
 }
 
-:root {
-	--petites-header-offset: 10.25rem;
-	--petites-header-offset-mobile: 7.25rem;
-}
-
+html,
 body {
-	background: #fcf4eb;
-	overflow-x: hidden;
+	margin: 0;
+	min-height: 100%;
+	font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+	color: var(--admin-text);
+	background: var(--admin-bg);
 }
 
-img,
-svg {
-	max-width: 100%;
-	height: auto;
+a {
+	color: inherit;
 }
 
-app-root {
-	display: block;
-	min-height: 100vh;
+.page-card {
+	background: var(--admin-surface);
+	border: 1px solid var(--admin-border);
+	border-radius: 0.75rem;
+	padding: 1.5rem;
 }
 
-/* You can add global styles to this file, and also import other style files */
+.admin-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0.5rem 1rem;
+	border: none;
+	border-radius: 0.5rem;
+	background: var(--admin-accent);
+	color: #fff;
+	font: inherit;
+	font-weight: 600;
+	text-decoration: none;
+	cursor: pointer;
+}
+
+.admin-btn:hover:not(:disabled) {
+	filter: brightness(1.05);
+}
+
+.admin-btn:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+}
+
+.admin-btn-ghost {
+	background: transparent;
+	color: var(--admin-text);
+	border: 1px solid var(--admin-border);
+}
+
+.admin-btn-ghost:hover:not(:disabled) {
+	background: var(--admin-bg);
+}
+
+.admin-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+}
+
+.admin-table th,
+.admin-table td {
+	padding: 0.75rem 1rem;
+	text-align: left;
+	border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table th {
+	font-weight: 600;
+	color: var(--admin-muted);
+	background: var(--admin-bg);
+}
+
+.admin-table tbody tr:hover {
+	background: #fafafa;
+}

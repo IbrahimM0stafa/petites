@@ -1,0 +1,93 @@
+.admin-layout {
+	display: grid;
+	grid-template-columns: 240px 1fr;
+	min-height: 100vh;
+	background: var(--admin-bg);
+}
+
+.admin-sidebar {
+	background: var(--admin-sidebar-bg);
+	border-right: 1px solid var(--admin-border);
+	padding: 1.5rem 1rem;
+}
+
+.admin-brand {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	margin-bottom: 2rem;
+}
+
+.admin-brand-mark {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 2rem;
+	height: 2rem;
+	border-radius: 0.5rem;
+	background: var(--admin-accent);
+	color: #fff;
+	font-weight: 700;
+}
+
+.admin-brand-text {
+	font-weight: 600;
+	color: var(--admin-text);
+}
+
+.admin-nav {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.admin-nav a {
+	padding: 0.625rem 0.75rem;
+	border-radius: 0.5rem;
+	color: var(--admin-muted);
+	text-decoration: none;
+	font-weight: 500;
+}
+
+.admin-nav a:hover,
+.admin-nav a.active {
+	background: var(--admin-accent-soft);
+	color: var(--admin-accent);
+}
+
+.admin-main {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.admin-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 1rem 1.5rem;
+	border-bottom: 1px solid var(--admin-border);
+	background: var(--admin-surface);
+}
+
+.admin-topbar-title {
+	margin: 0;
+	font-size: 1.125rem;
+	font-weight: 600;
+}
+
+.admin-topbar-actions {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+}
+
+.admin-user-email {
+	color: var(--admin-muted);
+	font-size: 0.875rem;
+}
+
+.admin-content {
+	padding: 1.5rem;
+	flex: 1;
+}

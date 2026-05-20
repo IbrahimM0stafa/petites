@@ -1,0 +1,41 @@
+<section class="page-card">
+	<div class="page-header">
+		<h2>Users</h2>
+		<button type="button" class="admin-btn admin-btn-ghost" (click)="loadUsers()" [disabled]="loading">Refresh</button>
+	</div>
+
+	<p *ngIf="loading" class="page-status">Loading users…</p>
+	<p *ngIf="error" class="page-error" role="alert">{{ error }}</p>
+
+	<div class="table-wrap" *ngIf="!loading && !error">
+		<table class="admin-table">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Email</th>
+					<th>Roles</th>
+					<th>Status</th>
+					<th>Orders</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr *ngFor="let user of users">
+					<td>
+						<a [routerLink]="['/users', user.id]" class="table-link">{{ user.name }}</a>
+					</td>
+					<td>{{ user.email }}</td>
+					<td>{{ user.roles.join(', ') || '—' }}</td>
+					<td>
+						<span class="status-badge" [class.status-badge--inactive]="!user.active">
+							{{ user.active ? 'Active' : 'Inactive' }}
+						</span>
+					</td>
+					<td>{{ user.completedOrdersCount }}</td>
+				</tr>
+				<tr *ngIf="users.length === 0">
+					<td colspan="5" class="table-empty">No users found.</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+</section>

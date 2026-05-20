@@ -3,6 +3,7 @@ package com.petites.backend.users.seed;
 import java.util.List;
 
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -10,6 +11,7 @@ import com.petites.backend.users.entity.Role;
 import com.petites.backend.users.repository.RoleRepository;
 
 @Component
+@Order(1)
 public class RoleSeeder implements CommandLineRunner {
 
     private static final List<String> DEFAULT_ROLES = List.of("SUPER_ADMIN", "STAFF", "USER");

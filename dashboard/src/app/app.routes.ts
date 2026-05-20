@@ -1,6 +1,34 @@
 import { Routes } from '@angular/router';
 
+import { adminRoleGuard } from './core/guards/admin-role.guard';
+import { authGuard } from './core/guards/auth.guard';
+
 export const routes: Routes = [
-	{ path: '', loadComponent: () => import('./features/home/pages/home.component').then(m => m.HomeComponent) },
-	// add other routes as needed (shop route removed until component exists)
+	{
+		path: 'login',
+		loadComponent: () => import('./features/auth/pages/login-page.component').then((m) => m.LoginPageComponent)
+	},
+	{
+		path: '',
+		canActivate: [authGuard, adminRoleGuard],
+		loadComponent: () => import('./layout/admin-shell/admin-shell.component').then((m) => m.AdminShellComponent),
+		children: [
+			{
+				path: '',
+				loadComponent: () =>
+					import('./features/dashboard/pages/overview.component').then((m) => m.OverviewComponent)
+			},
+			{
+				path: 'users',
+				loadComponent: () =>
+					import('./features/users/pages/users-list.component').then((m) => m.UsersListComponent)
+			},
+			{
+				path: 'users/:id',
+				loadComponent: () =>
+					import('./features/users/pages/user-detail.component').then((m) => m.UserDetailComponent)
+			}
+		]
+	},
+	{ path: '**', redirectTo: '' }
 ];

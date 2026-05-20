@@ -30,7 +30,8 @@ public class AuthService {
     }
 
     public AuthResponse login(AuthRequest request) {
-        User user = userService.findByEmail(request.email())
+        String email = request.email() == null ? null : request.email().trim().toLowerCase();
+        User user = userService.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
 
         if (!user.isActive()) {

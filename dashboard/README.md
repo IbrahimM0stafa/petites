@@ -1,59 +1,57 @@
-# Frontend
+# Petites Admin Dashboard
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.19.
+Angular admin application for Petites staff (`SUPER_ADMIN` and `STAFF` roles). Runs separately from the customer storefront in `../frontend`.
 
 ## Development server
 
-To start a local development server, run:
-
 ```bash
+npm install
 ng serve
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Open `http://localhost:4300/`. The dev server uses port **4300** so backend CORS (`http://localhost:4300`) applies without extra configuration.
 
-## Code scaffolding
+## Backend configuration
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+API origin is set in `src/environments/`:
 
-```bash
-ng generate component component-name
-```
+- `environment.ts` / `environment.development.ts` → `http://localhost:8080`
+- `environment.staging.ts` and `environment.production.ts` for deployed APIs
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Build configurations:
 
-```bash
-ng generate --help
-```
+- `ng build --configuration development`
+- `ng build --configuration staging`
+- `ng build --configuration production`
+
+## Routes
+
+| Path | Description |
+|------|-------------|
+| `/login` | Staff sign in (no public signup) |
+| `/` | Dashboard overview (requires auth + admin role) |
+| `/users` | User list |
+| `/users/:id` | User detail, deactivate / reactivate |
+
+Sessions are stored under `petites.admin.auth.session` so they do not conflict with the customer app on port 4200.
+
+## Admin access
+
+Sign in with a backend user that has `STAFF` or `SUPER_ADMIN` role. Accounts with only `USER` are rejected after login.
+
+With the backend running on the `dev` profile, these accounts are seeded automatically:
+
+| Role | Email | Password |
+|------|-------|----------|
+| `SUPER_ADMIN` | `superadmin@petites.com` | `abcABC12$$` |
+| `STAFF` | `staff@petites.com` | `abcABC12$$` |
+
+Emails are stored lowercase. Disable seeding with `app.seed.admin-users.enabled=false` in `application-dev.properties`.
 
 ## Building
-
-To build the project run:
 
 ```bash
 ng build
 ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Output: `dist/dashboard`.
