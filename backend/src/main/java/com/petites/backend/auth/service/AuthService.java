@@ -4,6 +4,7 @@ import java.util.Set;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.petites.backend.auth.dto.AuthRequest;
 import com.petites.backend.auth.dto.AuthResponse;
@@ -41,19 +42,24 @@ public class AuthService {
         }
 
         JwtService.JwtToken token = jwtService.issueToken(user);
+        refreshTokenService.revokeAllActiveForUser(user);
         RefreshTokenService.RefreshTokenResult refresh = refreshTokenService.issue(user);
         Set<String> roles = user.getRoles().stream().map(role -> role.getName()).collect(java.util.stream.Collectors.toSet());
 
         return new AuthResponse(token.token(), token.expiresAt(), refresh.token(), refresh.expiresAt(), user.getId(), roles);
     }
 
+    @Transactional
     public AuthResponse refresh(String refreshToken) {
         RefreshTokenService.RefreshTokenResult refresh = refreshTokenService.rotate(refreshToken);
-        JwtService.JwtToken token = jwtService.issueToken(refresh.user());
-        Set<String> roles = refresh.user().getRoles().stream()
+        User user = userService.findById(refresh.userId())
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        JwtService.JwtToken token = jwtService.issueToken(user);
+        Set<String> roles = user.getRoles().stream()
                 .map(role -> role.getName())
                 .collect(java.util.stream.Collectors.toSet());
 
-        return new AuthResponse(token.token(), token.expiresAt(), refresh.token(), refresh.expiresAt(), refresh.user().getId(), roles);
+        return new AuthResponse(token.token(), token.expiresAt(), refresh.token(), refresh.expiresAt(), user.getId(), roles);
     }
 }

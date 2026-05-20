@@ -29,6 +29,11 @@ public class RefreshTokenService {
     }
 
     @Transactional
+    public void revokeAllActiveForUser(User user) {
+        refreshTokenRepository.revokeAllActiveForUser(user, Instant.now());
+    }
+
+    @Transactional
     public RefreshTokenResult issue(User user) {
         RefreshToken token = new RefreshToken();
         token.setUser(user);
@@ -38,7 +43,7 @@ public class RefreshTokenService {
         token.setTokenHash(hash(rawToken));
 
         RefreshToken saved = refreshTokenRepository.save(token);
-        return new RefreshTokenResult(rawToken, saved.getExpiresAt(), user);
+        return new RefreshTokenResult(rawToken, saved.getExpiresAt(), user.getId());
     }
 
     @Transactional
@@ -71,6 +76,6 @@ public class RefreshTokenService {
         }
     }
 
-    public record RefreshTokenResult(String token, Instant expiresAt, User user) {
+    public record RefreshTokenResult(String token, Instant expiresAt, String userId) {
     }
 }

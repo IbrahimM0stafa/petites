@@ -1,0 +1,77 @@
+<section class="auth-page auth-page--account">
+  <div class="account-shell">
+    <header class="account-hero">
+      <div class="account-avatar" aria-hidden="true">{{ userInitials }}</div>
+      <div class="account-hero-copy">
+        <p class="auth-eyebrow">My account</p>
+        <h1>{{ user ? 'Hello, ' + user.name.split(' ')[0] : 'Your account' }}</h1>
+        <p class="auth-lead" *ngIf="user">Manage your profile and keep track of your Petites pre-orders.</p>
+      </div>
+    </header>
+
+    <div class="account-loading" *ngIf="loading">
+      <span class="account-spinner" aria-hidden="true"></span>
+      <p>Loading your profile…</p>
+    </div>
+
+    <div class="auth-alert" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
+    <div class="auth-alert auth-alert--success" *ngIf="message" role="status">{{ message }}</div>
+
+    <div class="account-stats" *ngIf="!loading && user">
+      <article class="stat-card">
+        <span class="stat-label">Completed orders</span>
+        <strong class="stat-value">{{ user.completedOrdersCount }}</strong>
+      </article>
+      <article class="stat-card stat-card--accent">
+        <span class="stat-label">Member status</span>
+        <strong class="stat-value">{{ user.active ? 'Active' : 'Inactive' }}</strong>
+      </article>
+    </div>
+
+    <section class="account-card" *ngIf="!loading && user" aria-labelledby="profile-heading">
+      <h2 id="profile-heading">Profile details</h2>
+      <dl class="profile-grid">
+        <div class="profile-item">
+          <dt>Full name</dt>
+          <dd>{{ user.name }}</dd>
+        </div>
+        <div class="profile-item">
+          <dt>Email</dt>
+          <dd>{{ user.email }}</dd>
+        </div>
+        <div class="profile-item">
+          <dt>Phone</dt>
+          <dd>{{ user.phone }}</dd>
+        </div>
+        <div class="profile-item">
+          <dt>Account ID</dt>
+          <dd class="mono">{{ user.id }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <details class="account-dev" *ngIf="isDev && authState.isAuthenticated()">
+      <summary>Developer tools</summary>
+      <div class="account-dev-body">
+        <p class="account-dev-note">Session expiry (local)</p>
+        <ul class="account-dev-meta">
+          <li><span>Access token</span><code>{{ authState.accessTokenExpiresAt() ?? '—' }}</code></li>
+          <li><span>Refresh token</span><code>{{ authState.refreshTokenExpiresAt() ?? '—' }}</code></li>
+        </ul>
+        <div class="account-actions account-actions--dev">
+          <button type="button" class="auth-btn auth-btn--secondary" [disabled]="refreshTesting" (click)="refreshNow()">
+            {{ refreshTesting ? 'Testing…' : 'Refresh now' }}
+          </button>
+          <button type="button" class="auth-btn auth-btn--secondary" [disabled]="refreshTesting" (click)="simulateExpiredAccessToken()">
+            Simulate expired token
+          </button>
+        </div>
+      </div>
+    </details>
+
+    <footer class="account-actions">
+      <a class="auth-btn" routerLink="/">Continue shopping</a>
+      <button type="button" class="auth-btn auth-btn--secondary" (click)="logout()">Sign out</button>
+    </footer>
+  </div>
+</section>

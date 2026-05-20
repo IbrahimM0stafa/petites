@@ -1,0 +1,31 @@
+<form class="auth-card auth-form" [formGroup]="loginForm" (ngSubmit)="submit()" novalidate>
+  <div class="auth-card-header">
+    <p class="auth-eyebrow">Sign in</p>
+    <h2>Good to see you again</h2>
+    <p class="auth-subtitle">Enter the email and password you used when you joined Petites.</p>
+  </div>
+
+  <div class="auth-alert" *ngIf="serverError" role="alert">{{ serverError }}</div>
+
+  <label class="auth-field">
+    <span>Email</span>
+    <input type="email" formControlName="email" autocomplete="email" placeholder="you@example.com" />
+    <small *ngIf="loginForm.controls.email.touched && loginForm.controls.email.invalid">Enter a valid email address.</small>
+    <small *ngFor="let message of serverFieldErrors['email']">{{ message }}</small>
+  </label>
+
+  <label class="auth-field">
+    <span>Password</span>
+    <input type="password" formControlName="password" autocomplete="current-password" placeholder="At least 8 characters" />
+    <small *ngIf="loginForm.controls.password.touched && loginForm.controls.password.invalid">Password must be at least 8 characters.</small>
+    <small *ngFor="let message of serverFieldErrors['password']">{{ message }}</small>
+  </label>
+
+  <button class="auth-btn" type="submit" [disabled]="loading">
+    {{ loading ? 'Signing in…' : 'Sign in' }}
+  </button>
+
+  <p class="auth-footer">
+    New to Petites? <a routerLink="/signup">Create an account</a>
+  </p>
+</form>

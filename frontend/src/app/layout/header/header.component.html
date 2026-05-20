@@ -39,8 +39,10 @@
     <div class="nav-group nav-right">
       <a routerLink="/faq" routerLinkActive="active">FAQ</a>
       <a routerLink="/contact" routerLinkActive="active">Contact</a>
+      <a routerLink="/login" routerLinkActive="active" *ngIf="!authState.isAuthenticated()">Login</a>
+      <a routerLink="/signup" routerLinkActive="active" *ngIf="!authState.isAuthenticated()">Signup</a>
 
-      <a class="icon-button" routerLink="/account" aria-label="Account">
+      <a class="icon-button" routerLink="/account" aria-label="Account" *ngIf="authState.isAuthenticated()">
         <svg viewBox="0 0 24 24" aria-hidden="true" class="icon">
           <circle cx="12" cy="8" r="3.5"></circle>
           <path d="M5.5 19c1.2-3.3 3.6-5 6.5-5s5.3 1.7 6.5 5"></path>
@@ -96,6 +98,8 @@
     <a routerLink="/about" routerLinkActive="active" (click)="closeMenu()">About</a>
     <a routerLink="/faq" routerLinkActive="active" (click)="closeMenu()">FAQ</a>
     <a routerLink="/contact" routerLinkActive="active" (click)="closeMenu()">Contact</a>
-    <a routerLink="/account" routerLinkActive="active" (click)="closeMenu()">Account</a>
+    <a routerLink="/login" routerLinkActive="active" (click)="closeMenu()" *ngIf="!authState.isAuthenticated()">Login</a>
+    <a routerLink="/signup" routerLinkActive="active" (click)="closeMenu()" *ngIf="!authState.isAuthenticated()">Signup</a>
+    <a routerLink="/account" routerLinkActive="active" (click)="closeMenu()" *ngIf="authState.isAuthenticated()">Account</a>
   </div>
 </header>

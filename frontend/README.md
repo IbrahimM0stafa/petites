@@ -12,6 +12,25 @@ ng serve
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+## Backend configuration
+
+The frontend reads its API origin from Angular environment files:
+
+- `src/environments/environment.ts` and `src/environments/environment.development.ts` point to `http://localhost:8080`
+- `src/environments/environment.staging.ts` and `src/environments/environment.production.ts` can be updated for non-local deployments
+
+Available build configurations:
+
+- `ng build --configuration development`
+- `ng build --configuration staging`
+- `ng build --configuration production`
+
+Authentication routes:
+
+- `/login` for bearer-token sign in
+- `/signup` for public customer signup
+- `/account` for session, refresh, and guest-session management
+
 ## Code scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
