@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
 import { AuthService } from '../../core/services/auth.service';
@@ -16,6 +16,15 @@ export class AdminShellComponent {
 	private readonly authService = inject(AuthService);
 	private readonly router = inject(Router);
 	readonly authState = inject(AuthStateService);
+	readonly sidebarOpen = signal(false);
+
+	toggleSidebar(): void {
+		this.sidebarOpen.update((open) => !open);
+	}
+
+	closeSidebar(): void {
+		this.sidebarOpen.set(false);
+	}
 
 	logout(): void {
 		this.authService.logout();
