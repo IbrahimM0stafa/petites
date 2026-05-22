@@ -35,7 +35,7 @@ public class SecurityConfig {
                           @Value("${app.cors.allowed-headers:*}") List<String> allowedHeaders,
                           @Value("${app.cors.allow-credentials:true}") boolean allowCredentials,
                           @Value("${app.security.permit-post:/api/auth/login,/api/auth/refresh,/api/users,/api/guest-sessions}") List<String> permitPostPaths,
-                          @Value("${app.security.permit-get:/api/guest-sessions/current}") List<String> permitGetPaths) {
+                          @Value("${app.security.permit-get:/api/guest-sessions/current,/api/categories,/api/categories/**,/api/products,/api/products/**}") List<String> permitGetPaths) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.allowedOrigins = allowedOrigins;
         this.allowedMethods = allowedMethods;

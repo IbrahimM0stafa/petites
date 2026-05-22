@@ -1,13 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, ViewChild, ElementRef } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
-
-type FeaturedTreat = {
-  name: string;
-  price: string;
-  artClass: string;
-};
+import { ShopService } from '../../../../core/services/shop.service';
+import { Product } from '../../../../core/models/shop.models';
 
 @Component({
   selector: 'app-featured-treats',
@@ -28,11 +24,7 @@ type FeaturedTreat = {
         (touchend)="onTouchEnd($event)">
         <ng-container *ngFor="let treat of treats">
           <app-product-card
-            [name]="treat.name"
-            [price]="treat.price"
-            [artClass]="treat.artClass"
-            ctaText="Add to Cart"
-            ctaLink="/cart">
+            [product]="treat">
           </app-product-card>
         </ng-container>
       </div>
@@ -47,17 +39,25 @@ type FeaturedTreat = {
   `,
   styleUrls: ['./featured-treats.component.css']
 })
-export class FeaturedTreatsComponent {
+export class FeaturedTreatsComponent implements OnInit {
   @ViewChild('treatCarousel') carousel!: ElementRef<HTMLDivElement>;
   private touchStartX: number = 0;
   private touchEndX: number = 0;
 
-  readonly treats: FeaturedTreat[] = [
-    { name: 'Mini Choco Caramel Cake', price: '$6.50', artClass: 'cake' },
-    { name: 'Blueberry Crumble Muffin', price: '$3.25', artClass: 'muffin' },
-    { name: 'Mini Tiramisu Cup', price: '$5.25', artClass: 'tiramisu' },
-    { name: 'Fudgy Brownie Bites (2pcs)', price: '$3.75', artClass: 'brownie' },
-  ];
+  treats: Product[] = [];
+
+  constructor(private readonly shopService: ShopService) {}
+
+  ngOnInit(): void {
+    this.shopService.getFeaturedProducts().subscribe({
+      next: (response) => {
+        this.treats = response.content;
+      },
+      error: (err) => {
+        console.error('Error fetching featured treats', err);
+      }
+    });
+  }
 
   onTouchStart(event: TouchEvent): void {
     this.touchStartX = event.touches[0].clientX;

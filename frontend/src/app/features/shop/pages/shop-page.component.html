@@ -1,0 +1,63 @@
+<main class="shop-page">
+  <header class="shop-header">
+    <h1>Shop ♥</h1>
+    <p class="subtitle">Handmade sweet treats, made with love.</p>
+  </header>
+
+  <!-- Premium Mobile Filter Toggle Bar -->
+  <div class="mobile-filter-bar">
+    <button class="mobile-filter-toggle" (click)="toggleFilters()" aria-label="Open filters">
+      <svg class="filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M4 6h16M4 12h12M4 18h8" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span>Filters & Refine</span>
+    </button>
+    <span class="results-count">{{ filteredProducts.length }} {{ filteredProducts.length === 1 ? 'treat' : 'treats' }} available</span>
+  </div>
+
+  <!-- Glassmorphic Backdrop overlay -->
+  <div class="filters-backdrop" [class.show]="isFilterOpen" (click)="toggleFilters()"></div>
+
+  <div class="shop-layout">
+    <aside class="shop-filters" [class.open]="isFilterOpen" aria-label="Shop filters">
+      <!-- Drawer Header visible only on mobile -->
+      <div class="drawer-header">
+        <h3>Filters</h3>
+        <button class="close-drawer-btn" (click)="toggleFilters()" aria-label="Close filters">
+          <svg class="close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <section class="categories card-section">
+        <h4>CATEGORIES</h4>
+        <ul>
+          <li *ngFor="let c of categories">
+            <button class="cat-btn" [class.active]="(tempCategory === null && c.id === null) || (tempCategory?.id === c.id)" (click)="selectCategoryDraft(c)">
+              <span class="radio" aria-hidden="true"><span class="dot"></span></span>
+              <span class="cat-label">{{ c.name }}</span>
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <section class="price card-section">
+        <h4>PRICE</h4>
+        <div class="price-range">
+          <input type="range" min="0" max="50" step="1" [value]="tempPrice" (input)="onPriceChange($event)" />
+          <div class="price-labels"><span>$0</span><span>Up to ${{ tempPrice.toFixed(2) }}</span></div>
+        </div>
+        <button class="apply-btn" (click)="applyFilters()">APPLY <span class="button-heart">♥</span></button>
+      </section>
+    </aside>
+
+    <section class="shop-grid">
+      <div class="grid">
+        <app-product-card *ngFor="let p of filteredProducts"
+          [product]="p">
+        </app-product-card>
+      </div>
+    </section>
+  </div>
+</main>

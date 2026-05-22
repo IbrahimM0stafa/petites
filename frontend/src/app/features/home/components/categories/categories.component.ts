@@ -1,5 +1,8 @@
-import { AfterViewInit, Component, ElementRef, HostListener, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { ShopService } from '../../../../core/services/shop.service';
+import { Category } from '../../../../core/models/shop.models';
 
 @Component({
   selector: 'app-categories',
@@ -8,15 +11,8 @@ import { CommonModule } from '@angular/common';
   templateUrl: './categories.component.html',
   styleUrls: ['./categories.component.css']
 })
-export class CategoriesComponent implements AfterViewInit {
-  readonly categories = [
-    { label: 'Mini Cakes', art: 'mini-cakes' },
-    { label: 'Muffins', art: 'muffins' },
-    { label: 'Brownies', art: 'brownies' },
-    { label: 'Dessert Cups', art: 'dessert-cups' },
-    { label: 'Pastries', art: 'pastries' },
-    { label: 'Gift Boxes', art: 'gift-boxes' },
-  ];
+export class CategoriesComponent implements OnInit, AfterViewInit {
+  categories: Category[] = [];
   @ViewChild('categoriesContainer', { static: false }) categoriesContainer?: ElementRef<HTMLDivElement>;
 
   pages: number[] = [];
@@ -27,9 +23,40 @@ export class CategoriesComponent implements AfterViewInit {
   private readonly mobileBreakpoint = 560;
   private readonly visibleCardsMobile = 3;
 
+  constructor(
+    private readonly shopService: ShopService,
+    private readonly router: Router
+  ) {}
+
+  ngOnInit(): void {
+    this.shopService.getCategories().subscribe({
+      next: (response) => {
+        this.categories = response.content;
+        // Compute pagination and scroll state after dynamic data is loaded
+        setTimeout(() => {
+          this.computePagination();
+          this.onCategoriesScroll();
+        }, 0);
+      },
+      error: (err) => {
+        console.error('Error fetching categories in component', err);
+      }
+    });
+  }
+
   ngAfterViewInit(): void {
-    this.computePagination();
-    this.onCategoriesScroll();
+    if (this.categories.length > 0) {
+      this.computePagination();
+      this.onCategoriesScroll();
+    }
+  }
+
+  onCategoryClick(categoryId: string): void {
+    this.router.navigate(['/shop'], { queryParams: { category: categoryId } });
+  }
+
+  getCategoryClass(name: string): string {
+    return name.toLowerCase().replace(/\s+/g, '-');
   }
 
   private getCardStep(): number {

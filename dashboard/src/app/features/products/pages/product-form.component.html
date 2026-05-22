@@ -1,0 +1,180 @@
+<section class="page-card">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>{{ isEditMode ? 'Edit Product' : 'Add Product' }}</h2>
+      <p class="subtitle">{{ isEditMode ? 'Modify existing store product details, pricing and media' : 'Create a new catalog product with images' }}</p>
+    </div>
+    <a routerLink="/products" class="admin-btn admin-btn-ghost">Back to list</a>
+  </div>
+
+  <div *ngIf="loading && isEditMode" class="page-status">
+    <div class="spinner"></div>
+    <p>Loading product details...</p>
+  </div>
+
+  <div class="form-container" *ngIf="!loading || !isEditMode">
+    <p *ngIf="errorMessage" class="page-error" role="alert">{{ errorMessage }}</p>
+
+    <form [formGroup]="productForm" (ngSubmit)="onSubmit()" class="admin-form">
+      <div class="form-grid">
+        <!-- Main Form Fields -->
+        <div class="form-col col-main">
+          <div class="form-group">
+            <label for="name">Product Name <span class="required">*</span></label>
+            <input type="text" id="name" formControlName="name" class="form-control" placeholder="e.g. Silk Wrap Dress"
+                   [class.is-invalid]="productForm.get('name')?.touched && productForm.get('name')?.invalid" />
+            <div class="error-feedback" *ngIf="productForm.get('name')?.touched && productForm.get('name')?.invalid">
+              <span *ngIf="productForm.get('name')?.errors?.['required']">Product name is required.</span>
+              <span *ngIf="productForm.get('name')?.errors?.['minlength']">Name must be at least 2 characters.</span>
+            </div>
+            <div class="error-feedback" *ngIf="fieldErrors['name']">
+              <span *ngFor="let err of fieldErrors['name']">{{ err }}</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea id="description" formControlName="description" rows="5" class="form-control form-textarea" 
+                      placeholder="Describe the product details, size guidelines, material specifications..."></textarea>
+            <div class="error-feedback" *ngIf="fieldErrors['description']">
+              <span *ngFor="let err of fieldErrors['description']">{{ err }}</span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group col-half">
+              <label for="price">Price (USD) <span class="required">*</span></label>
+              <input type="number" id="price" formControlName="price" step="0.01" class="form-control" placeholder="0.00"
+                     [class.is-invalid]="productForm.get('price')?.touched && productForm.get('price')?.invalid" />
+              <div class="error-feedback" *ngIf="productForm.get('price')?.touched && productForm.get('price')?.invalid">
+                <span *ngIf="productForm.get('price')?.errors?.['required']">Price is required.</span>
+                <span *ngIf="productForm.get('price')?.errors?.['min']">Price must be greater than 0.00.</span>
+              </div>
+              <div class="error-feedback" *ngIf="fieldErrors['price']">
+                <span *ngFor="let err of fieldErrors['price']">{{ err }}</span>
+              </div>
+            </div>
+
+            <div class="form-group col-half">
+              <label for="categoryId">Category</label>
+              <select id="categoryId" formControlName="categoryId" class="form-control"
+                      [class.is-invalid]="productForm.get('categoryId')?.touched && productForm.get('categoryId')?.invalid">
+                <option value="">Uncategorized / No Category</option>
+                <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+              </select>
+              <div class="error-feedback" *ngIf="fieldErrors['categoryId']">
+                <span *ngFor="let err of fieldErrors['categoryId']">{{ err }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group toggle-group">
+            <label class="checkbox-container">
+              <input type="checkbox" formControlName="isAvailable" />
+              <span class="checkmark"></span>
+              <span class="toggle-label">Product is available for purchase</span>
+            </label>
+            <small class="helper-text">Unavailable products are hidden from the store catalog but kept in database.</small>
+          </div>
+
+          <div class="form-group toggle-group">
+            <label class="checkbox-container">
+              <input type="checkbox" formControlName="isFeatured" />
+              <span class="checkmark"></span>
+              <span class="toggle-label">Mark product as featured</span>
+            </label>
+            <small class="helper-text">Featured products can be highlighted on storefront sections.</small>
+            <div class="error-feedback" *ngIf="fieldErrors['isFeatured']">
+              <span *ngFor="let err of fieldErrors['isFeatured']">{{ err }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Media Upload Sidebar (Main image + Gallery) -->
+        <div class="form-col col-sidebar">
+          <!-- Main Product Image -->
+          <div class="form-group">
+            <label>Cover Image (Main)</label>
+            
+            <div class="upload-zone" [class.has-image]="productForm.get('mainImage')?.value">
+              <div *ngIf="uploadingMain" class="uploading-state">
+                <div class="spinner spinner-small"></div>
+                <p>Uploading cover...</p>
+              </div>
+
+              <div *ngIf="productForm.get('mainImage')?.value && !uploadingMain" class="preview-state">
+                <img [src]="productForm.get('mainImage')?.value" alt="Main cover" class="preview-img" />
+                <button type="button" class="remove-img-btn" (click)="removeMainImage()" title="Remove Cover">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div *ngIf="!productForm.get('mainImage')?.value && !uploadingMain" class="prompt-state">
+                <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
+                </svg>
+                <span class="upload-title">Upload cover image</span>
+                <span class="upload-desc">JPG, PNG, WEBP</span>
+                <input type="file" (change)="onMainImageSelected($event)" accept="image/*" class="file-input" />
+              </div>
+            </div>
+            <input type="hidden" formControlName="mainImage" />
+            <div class="error-feedback" *ngIf="fieldErrors['mainImage']">
+              <span *ngFor="let err of fieldErrors['mainImage']">{{ err }}</span>
+            </div>
+          </div>
+
+          <!-- Secondary Gallery Images -->
+          <div class="form-group gallery-section">
+            <label>Product Gallery (Secondary Images)</label>
+            
+            <div formArrayName="imageUrls" class="gallery-list">
+              <div *ngFor="let ctrl of imageUrls.controls; let i = index" class="gallery-item-card">
+                <div class="gallery-item-index">{{ i + 1 }}</div>
+                
+                <div class="gallery-upload-box" [class.has-image]="ctrl.value">
+                  <div *ngIf="uploadingSecondary[i]" class="uploading-state">
+                    <div class="spinner spinner-small"></div>
+                  </div>
+
+                  <div *ngIf="ctrl.value && !uploadingSecondary[i]" class="preview-state">
+                    <img [src]="ctrl.value" alt="Gallery preview" class="gallery-preview-img" />
+                  </div>
+
+                  <div *ngIf="!ctrl.value && !uploadingSecondary[i]" class="prompt-state small-prompt">
+                    <span class="upload-text">Upload File</span>
+                    <input type="file" (change)="onSecondaryImageSelected($event, i)" accept="image/*" class="file-input" />
+                  </div>
+                </div>
+
+                <div class="gallery-item-actions">
+                  <button type="button" class="gallery-btn delete-gallery-btn" (click)="removeSecondaryImageControl(i)" title="Remove this spot">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button type="button" class="admin-btn admin-btn-ghost add-gallery-btn" (click)="addSecondaryImageControl()">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="margin-right: 0.25rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Gallery Image
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="/products" class="admin-btn admin-btn-ghost">Cancel</a>
+        <button type="submit" class="admin-btn" [disabled]="loading || uploadingMain || uploadingSecondary.includes(true)">
+          {{ isEditMode ? 'Update Product' : 'Create Product' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

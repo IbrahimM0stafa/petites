@@ -1,0 +1,89 @@
+<main class="product-detail-page">
+  <div class="back-nav">
+    <a routerLink="/shop" class="back-link">
+      <svg class="back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Back to shop
+    </a>
+  </div>
+
+  <div *ngIf="isLoading" class="loading-state">
+    <div class="spinner"></div>
+    <p>Baking your treat details...</p>
+  </div>
+
+  <div *ngIf="errorMessage" class="error-state">
+    <p class="error-msg">{{ errorMessage }}</p>
+    <button class="retry-btn" (click)="ngOnInit()">Retry</button>
+  </div>
+
+  <article *ngIf="!isLoading && !errorMessage && product" class="detail-container">
+    <!-- Left Column: Gallery -->
+    <section class="gallery-column">
+      <div 
+        class="main-image-viewport" 
+        [ngClass]="getArtClass()"
+        [style.backgroundImage]="activeImage ? 'url(' + activeImage + ')' : null">
+      </div>
+      
+      <!-- Thumbnail Carousel -->
+      <div class="thumbnails-container" *ngIf="product.images && product.images.length > 0">
+          <button 
+            *ngIf="product.mainImage"
+            type="button"
+            class="thumbnail-btn main-image-btn"
+            [class.active]="isMainImageActive()"
+            (click)="resetActiveImage()"
+            [style.backgroundImage]="'url(' + product.mainImage + ')'"
+            aria-label="View main image">
+          </button>
+        <button 
+          *ngFor="let img of product.images" 
+          type="button"
+          class="thumbnail-btn" 
+          [class.active]="activeImage === img.imageUrl"
+          (click)="setActiveImage(img.imageUrl)"
+          [style.backgroundImage]="'url(' + img.imageUrl + ')'"
+          [attr.aria-label]="'View image ' + img.id">
+        </button>
+      </div>
+    </section>
+
+    <!-- Right Column: Specs & Checkout -->
+    <section class="details-column">
+      <header class="product-header">
+        <span class="category-tag">{{ product.categoryName || 'Treat' }}</span>
+        <h1>{{ product.name }}</h1>
+        <p class="price-tag">${{ product.price.toFixed(2) }}</p>
+      </header>
+
+      <div class="product-info-block">
+        <div class="info-row">
+          <span class="info-label">Availability</span>
+          <span class="status-badge" [class.available]="product.isAvailable" [class.out-of-stock]="!product.isAvailable">
+            {{ product.isAvailable ? 'In Stock & Fresh' : 'Out of Stock' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="description-section">
+        <h3>Description</h3>
+        <p>{{ product.description }}</p>
+      </div>
+
+      <div class="purchase-controls" *ngIf="product.isAvailable">
+        <div class="quantity-selector">
+          <button type="button" class="qty-btn minus" (click)="decrementQuantity()" aria-label="Decrease quantity">−</button>
+          <span class="qty-number">{{ quantity }}</span>
+          <button type="button" class="qty-btn plus" (click)="incrementQuantity()" aria-label="Increase quantity">+</button>
+        </div>
+
+        <button type="button" class="add-to-cart-btn" (click)="addToCart()">
+          ADD TO CART 
+          <span class="button-heart">♥</span>
+        </button>
+      </div>
+    </section>
+  </article>
+</main>

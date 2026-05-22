@@ -1,0 +1,98 @@
+<section class="page-card">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>{{ isEditMode ? 'Edit Category' : 'Add Category' }}</h2>
+      <p class="subtitle">{{ isEditMode ? 'Modify existing store category information' : 'Create a new category category' }}</p>
+    </div>
+    <a routerLink="/categories" class="admin-btn admin-btn-ghost">Back to list</a>
+  </div>
+
+  <div *ngIf="loading && isEditMode" class="page-status">
+    <div class="spinner"></div>
+    <p>Loading category data...</p>
+  </div>
+
+  <div class="form-container" *ngIf="!loading || !isEditMode">
+    <p *ngIf="errorMessage" class="page-error" role="alert">{{ errorMessage }}</p>
+
+    <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()" class="admin-form">
+      <div class="form-grid">
+        <!-- Main Info -->
+        <div class="form-col col-main">
+          <div class="form-group">
+            <label for="name">Category Name <span class="required">*</span></label>
+            <input type="text" id="name" formControlName="name" class="form-control" placeholder="e.g. Dresses, Tops" 
+                   [class.is-invalid]="categoryForm.get('name')?.touched && categoryForm.get('name')?.invalid" />
+            <div class="error-feedback" *ngIf="categoryForm.get('name')?.touched && categoryForm.get('name')?.invalid">
+              <span *ngIf="categoryForm.get('name')?.errors?.['required']">Category name is required.</span>
+              <span *ngIf="categoryForm.get('name')?.errors?.['minlength']">Name must be at least 2 characters.</span>
+            </div>
+            <div class="error-feedback" *ngIf="fieldErrors['name']">
+              <span *ngFor="let err of fieldErrors['name']">{{ err }}</span>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="sortOrder">Sort Order</label>
+            <input type="number" id="sortOrder" formControlName="sortOrder" class="form-control" placeholder="0"
+                   [class.is-invalid]="categoryForm.get('sortOrder')?.touched && categoryForm.get('sortOrder')?.invalid" />
+            <small class="helper-text">Controls the visual order in the store catalog (lower numbers first).</small>
+            <div class="error-feedback" *ngIf="categoryForm.get('sortOrder')?.touched && categoryForm.get('sortOrder')?.invalid">
+              <span *ngIf="categoryForm.get('sortOrder')?.errors?.['min']">Sort order cannot be negative.</span>
+            </div>
+            <div class="error-feedback" *ngIf="fieldErrors['sortOrder']">
+              <span *ngFor="let err of fieldErrors['sortOrder']">{{ err }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Upload Section -->
+        <div class="form-col col-sidebar">
+          <div class="form-group">
+            <label>Category Image</label>
+            
+            <div class="upload-zone" [class.has-image]="categoryForm.get('imageUrl')?.value">
+              <!-- Uploading state -->
+              <div *ngIf="uploading" class="uploading-state">
+                <div class="spinner spinner-small"></div>
+                <p>Uploading to Cloudinary...</p>
+              </div>
+
+              <!-- Preview State -->
+              <div *ngIf="categoryForm.get('imageUrl')?.value && !uploading" class="preview-state">
+                <img [src]="categoryForm.get('imageUrl')?.value" alt="Preview" class="preview-img" />
+                <button type="button" class="remove-img-btn" (click)="removeImage()" title="Remove Image">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Upload Prompt State -->
+              <div *ngIf="!categoryForm.get('imageUrl')?.value && !uploading" class="prompt-state">
+                <svg class="upload-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
+                </svg>
+                <span class="upload-title">Choose image file</span>
+                <span class="upload-desc">JPG, PNG, GIF up to 5MB</span>
+                <input type="file" (change)="onImageSelected($event)" accept="image/*" class="file-input" />
+              </div>
+            </div>
+            
+            <input type="hidden" formControlName="imageUrl" />
+            <div class="error-feedback" *ngIf="fieldErrors['imageUrl']">
+              <span *ngFor="let err of fieldErrors['imageUrl']">{{ err }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="/categories" class="admin-btn admin-btn-ghost">Cancel</a>
+        <button type="submit" class="admin-btn" [disabled]="loading || uploading">
+          {{ isEditMode ? 'Update Category' : 'Create Category' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

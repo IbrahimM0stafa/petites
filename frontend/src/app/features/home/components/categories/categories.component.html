@@ -1,10 +1,17 @@
 <section class="categories-panel" aria-label="Shop categories">
   <div class="categories" #categoriesContainer (scroll)="onCategoriesScroll()">
-    <article class="category" *ngFor="let category of categories">
-      <div class="category-icon" [ngClass]="category.art" aria-hidden="true">
-        <span class="category-icon-inner"></span>
+    <article class="category" *ngFor="let category of categories" (click)="onCategoryClick(category.id)" style="cursor: pointer;">
+      <div class="category-icon" [ngClass]="getCategoryClass(category.name)" aria-hidden="true">
+        <span 
+          class="category-icon-inner" 
+          [style.backgroundImage]="category.imageUrl ? 'url(' + category.imageUrl + ')' : null"
+          [style.width]="category.imageUrl ? '5.2rem' : '3.8rem'"
+          [style.height]="category.imageUrl ? '5.2rem' : '3.8rem'"
+          [style.borderRadius]="category.imageUrl ? '50%' : null"
+          [style.backgroundSize]="category.imageUrl ? 'cover' : 'contain'">
+        </span>
       </div>
-      <h3>{{ category.label }}</h3>
+      <h3>{{ category.name }}</h3>
     </article>
   </div>
 

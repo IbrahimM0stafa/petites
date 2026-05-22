@@ -1,0 +1,86 @@
+<section class="page-card">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>Categories</h2>
+      <p class="subtitle">Manage store categories, hierarchy and sorting order</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="admin-btn admin-btn-ghost" (click)="loadCategories()" [disabled]="loading">Refresh</button>
+      <a routerLink="new" class="admin-btn">Add Category</a>
+    </div>
+  </div>
+
+  <div *ngIf="loading && categories.length === 0" class="page-status">
+    <div class="spinner"></div>
+    <p>Loading categories...</p>
+  </div>
+
+  <p *ngIf="error" class="page-error" role="alert">{{ error }}</p>
+
+  <div class="table-wrap" *ngIf="!error && categories.length > 0">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th style="width: 80px;">Image</th>
+          <th>Name</th>
+          <th>Sort Order</th>
+          <th style="width: 150px; text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let category of categories" class="category-row">
+          <td>
+            <div class="thumb-container">
+              <img *ngIf="category.imageUrl" [src]="category.imageUrl" alt="{{ category.name }}" class="category-thumb" />
+              <div *ngIf="!category.imageUrl" class="no-image">No Image</div>
+            </div>
+          </td>
+          <td>
+            <span class="category-name">{{ category.name }}</span>
+          </td>
+          <td>
+            <span class="badge badge-sort">{{ category.sortOrder ?? '—' }}</span>
+          </td>
+          <td style="text-align: right;">
+            <div class="action-buttons">
+              <a [routerLink]="[category.id, 'edit']" class="action-btn edit-btn" title="Edit">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </a>
+              <button (click)="onDelete(category.id)" class="action-btn delete-btn" title="Delete">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="!loading && categories.length === 0 && !error" class="empty-state">
+    <div class="empty-icon">📂</div>
+    <h3>No categories found</h3>
+    <p>Get started by creating a new category for your store.</p>
+    <a routerLink="new" class="admin-btn">Add Category</a>
+  </div>
+
+  <!-- Pagination -->
+  <div class="pagination-container" *ngIf="totalPages > 1 && !loading">
+    <div class="pagination-info">
+      Showing {{ page * size + 1 }} - {{ mathMin((page + 1) * size, totalElements) }} of {{ totalElements }} categories
+    </div>
+    <div class="pagination-controls">
+      <button [disabled]="page === 0" (click)="setPage(page - 1)" class="page-btn">Previous</button>
+      <button *ngFor="let p of [].constructor(totalPages); let i = index" 
+              [class.active]="i === page" 
+              (click)="setPage(i)" 
+              class="page-btn num-btn">
+        {{ i + 1 }}
+      </button>
+      <button [disabled]="page === totalPages - 1" (click)="setPage(page + 1)" class="page-btn">Next</button>
+    </div>
+  </div>
+</section>

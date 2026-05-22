@@ -1,9 +1,17 @@
 <article class="treat-card">
-  <div class="treat-art" [ngClass]="artClass" aria-hidden="true"></div>
+  <div 
+    class="treat-art" 
+    [routerLink]="product ? '/products/' + product.id : ctaLink"
+    style="cursor: pointer;"
+    [ngClass]="getArtClass()" 
+    [style.backgroundImage]="imageUrl ? 'url(' + imageUrl + ')' : null"
+    [style.backgroundSize]="imageUrl ? 'cover' : 'contain'"
+    aria-hidden="true">
+  </div>
 
   <div class="treat-content">
-    <h3>{{ name }}</h3>
-    <p class="price">{{ price }}</p>
+    <h3 [routerLink]="product ? '/products/' + product.id : ctaLink" style="cursor: pointer;">{{ name }}</h3>
+    <p class="price">{{ formattedPrice }}</p>
     <a class="add-button" [routerLink]="ctaLink">
       {{ ctaText }}
       <span class="button-heart" aria-hidden="true">♥</span>
