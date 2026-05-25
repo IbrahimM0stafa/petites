@@ -2,6 +2,7 @@ package com.petites.backend.products.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 public record ProductResponse(
@@ -16,6 +17,11 @@ public record ProductResponse(
         boolean isFeatured,
         List<ProductImageResponse> images,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        boolean scheduledEligible,
+        LocalDate earliestScheduledDate,
+        boolean instantAvailableToday,
+        Integer instantQuantityToday,
+        Instant instantAvailableUntil
 ) {
 }

@@ -1,0 +1,90 @@
+<section class="page-card">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>Global Settings</h2>
+      <p class="subtitle">Configure cutoff times, delivery fees and other business policies</p>
+    </div>
+  </div>
+
+  <p *ngIf="errorMessage" class="page-error" role="alert">{{ errorMessage }}</p>
+  <p *ngIf="successMessage" class="page-success" role="alert">{{ successMessage }}</p>
+
+  <div *ngIf="loading" class="page-status">
+    <div class="spinner"></div>
+    <p>Loading settings...</p>
+  </div>
+
+  <form *ngIf="!loading" [formGroup]="settingsForm" (ngSubmit)="onSubmit()" class="settings-form">
+    <div class="form-grid">
+      <!-- Cutoff Time Card -->
+      <div class="settings-card">
+        <div class="card-icon">🕒</div>
+        <h3>Preorder Cutoff Time</h3>
+        <p class="card-desc">Orders placed after this time will be scheduled for subsequent delivery cycles.</p>
+        <div class="form-group">
+          <label for="delivery_cutoff_time">Cutoff Time (24h format)</label>
+          <input 
+            type="text" 
+            id="delivery_cutoff_time" 
+            formControlName="delivery_cutoff_time" 
+            class="form-control" 
+            placeholder="e.g. 19:00" />
+          <div *ngIf="settingsForm.get('delivery_cutoff_time')?.touched && settingsForm.get('delivery_cutoff_time')?.invalid" class="field-error">
+            Please enter a valid 24h format time (HH:MM).
+          </div>
+        </div>
+      </div>
+
+      <!-- Delivery Fee Card -->
+      <div class="settings-card">
+        <div class="card-icon">💸</div>
+        <h3>Flat Delivery Fee</h3>
+        <p class="card-desc">The standard base delivery fee applied during checkout to customer orders.</p>
+        <div class="form-group">
+          <label for="delivery_fee">Delivery Fee (EGP)</label>
+          <input 
+            type="number" 
+            id="delivery_fee" 
+            formControlName="delivery_fee" 
+            class="form-control" 
+            placeholder="50" />
+          <div *ngIf="settingsForm.get('delivery_fee')?.touched && settingsForm.get('delivery_fee')?.invalid" class="field-error">
+            Delivery fee must be 0 or higher.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active rules status list -->
+    <div class="raw-settings-section">
+      <h3>Active Settings Payload</h3>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Setting Key</th>
+              <th>Value</th>
+              <th>Last Updated</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let setting of settings">
+              <td><code>{{ setting.key }}</code></td>
+              <td><strong>{{ setting.value }}</strong></td>
+              <td><small>{{ setting.updatedAt | date:'medium' }}</small></td>
+            </tr>
+            <tr *ngIf="settings.length === 0">
+              <td colspan="3" style="text-align: center; color: var(--admin-muted);">No settings loaded from backend yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="admin-btn" [disabled]="saving || settingsForm.invalid">
+        {{ saving ? 'Saving Changes...' : 'Save Settings' }}
+      </button>
+    </div>
+  </form>
+</section>

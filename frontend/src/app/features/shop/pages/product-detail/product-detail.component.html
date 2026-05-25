@@ -18,6 +18,11 @@
     <button class="retry-btn" (click)="ngOnInit()">Retry</button>
   </div>
 
+  <div *ngIf="successMessage" class="success-state">
+    <p class="success-msg">{{ successMessage }}</p>
+    <a routerLink="/cart" class="retry-btn">Go to cart</a>
+  </div>
+
   <article *ngIf="!isLoading && !errorMessage && product" class="detail-container">
     <!-- Left Column: Gallery -->
     <section class="gallery-column">
@@ -79,8 +84,16 @@
           <button type="button" class="qty-btn plus" (click)="incrementQuantity()" aria-label="Increase quantity">+</button>
         </div>
 
-        <button type="button" class="add-to-cart-btn" (click)="addToCart()">
-          ADD TO CART 
+        <label class="delivery-selector" *ngIf="product.scheduledEligible">
+          <span>Delivery mode</span>
+          <select name="deliveryMode" [(ngModel)]="deliveryMode">
+            <option value="INSTANT" [disabled]="!product.instantAvailableToday">Instant</option>
+            <option value="SCHEDULED">Scheduled</option>
+          </select>
+        </label>
+
+        <button type="button" class="add-to-cart-btn" [disabled]="addingToCart" (click)="addToCart()">
+          {{ addingToCart ? 'ADDING…' : 'ADD TO CART' }}
           <span class="button-heart">♥</span>
         </button>
       </div>

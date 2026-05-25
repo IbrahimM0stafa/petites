@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.petites.backend.users.dto.RoleResponse;
 import com.petites.backend.users.dto.UserResponse;
@@ -32,11 +33,13 @@ public class RoleController {
     }
 
     @PostMapping("/users/{userId}/roles/{roleName}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF')")
     public UserResponse assignRole(@PathVariable String userId, @PathVariable String roleName) {
         return userService.assignRole(userId, roleName);
     }
 
     @DeleteMapping("/users/{userId}/roles/{roleName}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF')")
     public UserResponse removeRole(@PathVariable String userId, @PathVariable String roleName) {
         return userService.removeRole(userId, roleName);
     }

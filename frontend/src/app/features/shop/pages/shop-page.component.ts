@@ -23,6 +23,8 @@ export class ShopPageComponent implements OnInit {
   tempCategory: Category | null = null;
   tempPrice = 50;
 
+  currentFulfillmentMode: 'scheduled' | 'instant' = 'scheduled';
+
   products: Product[] = [];
   categories: Category[] = [];
 
@@ -60,7 +62,7 @@ export class ShopPageComponent implements OnInit {
 
   loadProducts(): void {
     const catId = this.selectedCategory && this.selectedCategory.id !== null ? this.selectedCategory.id : undefined;
-    this.shopService.getProducts(catId).subscribe({
+    this.shopService.getProducts(catId, this.currentFulfillmentMode).subscribe({
       next: (prodResponse) => {
         this.products = prodResponse.content;
       },
@@ -68,6 +70,13 @@ export class ShopPageComponent implements OnInit {
         console.error('Error loading products', err);
       }
     });
+  }
+
+  changeFulfillmentMode(mode: 'scheduled' | 'instant'): void {
+    if (this.currentFulfillmentMode !== mode) {
+      this.currentFulfillmentMode = mode;
+      this.loadProducts();
+    }
   }
 
   get filteredProducts(): Product[] {

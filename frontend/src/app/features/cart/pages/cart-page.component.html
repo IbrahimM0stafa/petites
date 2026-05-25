@@ -1,0 +1,76 @@
+<section class="purchase-page">
+  <header class="purchase-hero">
+    <p class="purchase-eyebrow">Cart</p>
+    <h1>Your baked-to-order basket</h1>
+    <p>Adjust quantities, switch delivery mode per item, and head to checkout when you’re ready.</p>
+  </header>
+
+  <div class="purchase-banner purchase-banner--error" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
+  <div class="purchase-banner purchase-banner--success" *ngIf="statusMessage" role="status">{{ statusMessage }}</div>
+
+  <div class="purchase-loading" *ngIf="loading">
+    <span class="purchase-spinner" aria-hidden="true"></span>
+    <p>Loading cart…</p>
+  </div>
+
+  <ng-container *ngIf="!loading">
+    <div class="purchase-empty" *ngIf="!cart?.items?.length">
+      <h2>Your cart is empty</h2>
+      <p>Browse the shop and add treats to start your order.</p>
+      <a routerLink="/shop" class="purchase-btn">Continue shopping</a>
+    </div>
+
+    <div class="cart-layout" *ngIf="cart?.items?.length">
+      <div class="cart-list">
+        <article class="cart-item" *ngFor="let item of cart?.items">
+          <img class="cart-item-image" [src]="item.productImage || '/assets/images/logo.png'" [alt]="item.productName" />
+          <div class="cart-item-copy">
+            <p class="cart-item-name">{{ item.productName }}</p>
+            <p class="cart-item-meta">Item total: {{ item.lineTotal | currency }}</p>
+            <p class="cart-item-meta">Unit price: {{ item.unitPrice | currency }}</p>
+
+            <div class="cart-item-controls">
+              <div class="qty-control">
+                <button type="button" class="qty-btn" [disabled]="updatingItemId === item.itemId" (click)="changeQuantity(item, -1)">−</button>
+                <span>{{ item.quantity }}</span>
+                <button type="button" class="qty-btn" [disabled]="updatingItemId === item.itemId" (click)="changeQuantity(item, 1)">+</button>
+              </div>
+
+              <label class="delivery-select">
+                <span>Delivery mode</span>
+                <select [disabled]="updatingItemId === item.itemId" [value]="item.deliveryMode" (change)="changeDeliveryMode(item, $any($event.target).value)">
+                  <option value="INSTANT">Instant</option>
+                  <option value="SCHEDULED">Scheduled</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div class="cart-item-actions">
+            <strong>{{ item.lineTotal | currency }}</strong>
+            <button type="button" class="text-button" [disabled]="updatingItemId === item.itemId" (click)="removeItem(item)">Remove</button>
+          </div>
+        </article>
+      </div>
+
+      <aside class="cart-summary">
+        <h2>Order summary</h2>
+        <dl>
+          <div>
+            <dt>Items</dt>
+            <dd>{{ cart?.items?.length }}</dd>
+          </div>
+          <div>
+            <dt>Subtotal</dt>
+            <dd>{{ cart?.subtotal | currency }}</dd>
+          </div>
+        </dl>
+
+        <div class="summary-actions">
+          <button type="button" class="purchase-btn purchase-btn--secondary" [disabled]="updatingItemId === 'clear'" (click)="clearCart()">Clear cart</button>
+          <a routerLink="/checkout" class="purchase-btn">Checkout</a>
+        </div>
+      </aside>
+    </div>
+  </ng-container>
+</section>

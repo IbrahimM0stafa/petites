@@ -1,0 +1,110 @@
+<section class="page-card">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>Fulfillment Manager</h2>
+      <p class="subtitle" *ngIf="product">Manage production limits and active same-day stock for <strong>{{ product.name }}</strong></p>
+    </div>
+    <div class="header-actions">
+      <a routerLink="/products" class="admin-btn admin-btn-ghost">Back to List</a>
+    </div>
+  </div>
+
+  <p *ngIf="errorMessage" class="page-error" role="alert">{{ errorMessage }}</p>
+  <p *ngIf="successMessage" class="page-success" role="alert">{{ successMessage }}</p>
+
+  <div *ngIf="loading" class="page-status">
+    <div class="spinner"></div>
+    <p>Loading fulfillment status...</p>
+  </div>
+
+  <div *ngIf="!loading && product && status" class="fulfillment-layout">
+    <!-- Summary Section -->
+    <div class="summary-section">
+      <div class="summary-card">
+        <div class="summary-title">Daily Preorder Limit</div>
+        <div class="summary-value">{{ status.dailyCapacity }} units/day</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-title">Tomorrow's Preorders</div>
+        <div class="summary-value warning-color" [class.danger-color]="status.reservedQuantityTomorrow >= status.dailyCapacity">
+          {{ status.reservedQuantityTomorrow }} reserved
+        </div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-title">Active Same-Day Stock</div>
+        <div class="summary-value success-color" [class.inactive-color]="!status.instantActive">
+          {{ status.instantActive ? status.instantQuantity + ' units' : 'Disabled' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="controls-grid">
+      <!-- Section 1: Preorder Capacity -->
+      <div class="control-box">
+        <h3>📅 Scheduled Preorder Capacity</h3>
+        <p class="box-desc">Define the daily maximum production limit for this item. Orders will stop for the day once capacity is reached.</p>
+        
+        <form [formGroup]="capacityForm" (ngSubmit)="onUpdateCapacity()">
+          <div class="form-group">
+            <label for="dailyCapacity">Daily Capacity Limit</label>
+            <input 
+              type="number" 
+              id="dailyCapacity" 
+              formControlName="dailyCapacity" 
+              class="form-control" />
+            <div *ngIf="capacityForm.get('dailyCapacity')?.touched && capacityForm.get('dailyCapacity')?.invalid" class="field-error">
+              Capacity must be 0 or higher.
+            </div>
+          </div>
+          <button type="submit" class="admin-btn btn-update" [disabled]="savingCapacity || capacityForm.invalid">
+            {{ savingCapacity ? 'Saving Capacity...' : 'Update Preorder Capacity' }}
+          </button>
+        </form>
+      </div>
+
+      <!-- Section 2: Same-day Instant Inventory Overlay -->
+      <div class="control-box">
+        <h3>⚡ Same-Day Instant Delivery Stock</h3>
+        <p class="box-desc">Configure same-day physical inventory ready on-shelf. This enables the lightning-fast checkout option for this product until the window expires.</p>
+        
+        <form [formGroup]="instantForm" (ngSubmit)="onUpdateInstant()">
+          <div class="form-group">
+            <label for="availableQuantity">Same-day Stock Quantity</label>
+            <input 
+              type="number" 
+              id="availableQuantity" 
+              formControlName="availableQuantity" 
+              class="form-control" />
+            <div *ngIf="instantForm.get('availableQuantity')?.touched && instantForm.get('availableQuantity')?.invalid" class="field-error">
+              Quantity must be 0 or higher.
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="availableUntil">Available Until (Expiration Window)</label>
+            <input 
+              type="datetime-local" 
+              id="availableUntil" 
+              formControlName="availableUntil" 
+              class="form-control" />
+            <div *ngIf="instantForm.get('availableUntil')?.touched && instantForm.get('availableUntil')?.invalid" class="field-error">
+              Please specify an expiration time.
+            </div>
+          </div>
+
+          <div class="checkbox-group">
+            <input 
+              type="checkbox" 
+              id="active" 
+              formControlName="active" />
+            <label for="active">Enable Same-Day Delivery active status overlay</label>
+          </div>
+
+          <button type="submit" class="admin-btn btn-update" [disabled]="savingInstant || instantForm.invalid">
+            {{ savingInstant ? 'Saving Stock...' : 'Save Instant Stock Configuration' }}
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</section>

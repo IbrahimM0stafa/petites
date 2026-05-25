@@ -1,8 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
-import { AuthService } from '../../core/services/auth.service';
-import { AuthStateService } from '../../core/services/auth-state.service';
+import { CartService } from '../../core/services/cart.service';
 import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
 
@@ -14,12 +13,9 @@ import { HeaderComponent } from '../header/header.component';
   styleUrl: './shell.component.css'
 })
 export class ShellComponent implements OnInit {
-	private readonly authService = inject(AuthService);
-	private readonly authState = inject(AuthStateService);
+	private readonly cartService = inject(CartService);
 
 	ngOnInit(): void {
-		if (!this.authState.isAuthenticated()) {
-			this.authService.ensureGuestSession().subscribe({ error: () => undefined });
-		}
+		this.cartService.loadCart().subscribe({ error: () => undefined });
 	}
 }

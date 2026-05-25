@@ -4,6 +4,24 @@
     <p class="subtitle">Handmade sweet treats, made with love.</p>
   </header>
 
+  <!-- Beautiful Premium Tab Toggler -->
+  <div class="fulfillment-tabs">
+    <button 
+      class="tab-btn" 
+      [class.active]="currentFulfillmentMode === 'scheduled'" 
+      (click)="changeFulfillmentMode('scheduled')">
+      <span class="tab-icon">📅</span>
+      <span class="tab-label">Scheduled Preorder</span>
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="currentFulfillmentMode === 'instant'" 
+      (click)="changeFulfillmentMode('instant')">
+      <span class="tab-icon">⚡</span>
+      <span class="tab-label">Same-day Instant</span>
+    </button>
+  </div>
+
   <!-- Premium Mobile Filter Toggle Bar -->
   <div class="mobile-filter-bar">
     <button class="mobile-filter-toggle" (click)="toggleFilters()" aria-label="Open filters">
@@ -55,7 +73,8 @@
     <section class="shop-grid">
       <div class="grid">
         <app-product-card *ngFor="let p of filteredProducts"
-          [product]="p">
+          [product]="p"
+          [fulfillmentMode]="currentFulfillmentMode">
         </app-product-card>
       </div>
     </section>

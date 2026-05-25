@@ -1,28 +1,50 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
+import { AddressResponse, AddressUpdateRequest } from '../../../core/models/address.models';
 import { isRefreshTokenRejected, readApiErrorMessage } from '../../../core/models/api-error.model';
+import { LoyaltyResponse } from '../../../core/models/loyalty.models';
 import { UserResponse } from '../../../core/models/user.models';
+import { AddressService } from '../../../core/services/address.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthStateService } from '../../../core/services/auth-state.service';
+import { CartService } from '../../../core/services/cart.service';
+import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { environment } from '../../../../environments/environment';
 
 @Component({
 	selector: 'app-account-page',
 	standalone: true,
-	imports: [CommonModule, RouterLink],
+	imports: [CommonModule, ReactiveFormsModule, RouterLink],
 	templateUrl: './account-page.component.html',
 	styleUrl: './account-page.component.css'
 })
 export class AccountPageComponent implements OnInit {
+	private readonly formBuilder = inject(FormBuilder);
+
 	readonly isDev = !environment.production;
+	readonly addressForm = this.formBuilder.group({
+		city: ['', [Validators.required, Validators.minLength(2)]],
+		area: ['', [Validators.required, Validators.minLength(2)]],
+		street: ['', [Validators.required, Validators.minLength(2)]],
+		building: [''],
+		notes: ['']
+	});
 
 	user: UserResponse | null = null;
+	addresses: AddressResponse[] = [];
+	loyalty: LoyaltyResponse | null = null;
 	loading = true;
+	addressesLoading = false;
+	addressSaving = false;
 	refreshTesting = false;
 	errorMessage = '';
 	message = '';
+	addressMessage = '';
+	addressError = '';
+	editingAddressId: string | null = null;
 
 	get userInitials(): string {
 		const name = this.user?.name?.trim();
@@ -41,11 +63,16 @@ export class AccountPageComponent implements OnInit {
 	constructor(
 		readonly authState: AuthStateService,
 		private readonly authService: AuthService,
+		private readonly addressService: AddressService,
+		private readonly cartService: CartService,
+		private readonly loyaltyService: LoyaltyService,
 		private readonly router: Router
 	) {}
 
 	ngOnInit(): void {
 		this.loadProfile();
+		this.loadAddresses();
+		this.loadLoyalty();
 	}
 
 	refreshNow(): void {
@@ -90,6 +117,105 @@ export class AccountPageComponent implements OnInit {
 		});
 	}
 
+	startAddressEdit(address: AddressResponse): void {
+		this.editingAddressId = address.id;
+		this.addressError = '';
+		this.addressMessage = '';
+		this.addressForm.reset({
+			city: address.city,
+			area: address.area,
+			street: address.street,
+			building: address.building ?? '',
+			notes: address.notes ?? ''
+		});
+	}
+
+	clearAddressForm(): void {
+		this.editingAddressId = null;
+		this.addressForm.reset({ city: '', area: '', street: '', building: '', notes: '' });
+	}
+
+	saveAddress(): void {
+		if (this.addressForm.invalid) {
+			this.addressForm.markAllAsTouched();
+			return;
+		}
+
+		const rawValue = this.addressForm.getRawValue();
+		const payload: AddressUpdateRequest = {
+			city: rawValue.city ?? undefined,
+			area: rawValue.area ?? undefined,
+			street: rawValue.street ?? undefined,
+			building: rawValue.building?.trim() || undefined,
+			notes: rawValue.notes?.trim() || undefined
+		};
+
+		this.addressSaving = true;
+		this.addressError = '';
+		this.addressMessage = '';
+
+		const request$ = this.editingAddressId
+			? this.addressService.updateAddress(this.editingAddressId, payload)
+			: this.addressService.createAddress({
+				city: payload.city ?? '',
+				area: payload.area ?? '',
+				street: payload.street ?? '',
+				building: payload.building,
+				notes: payload.notes
+			});
+
+		request$.subscribe({
+			next: () => {
+				this.addressSaving = false;
+				this.addressMessage = this.editingAddressId ? 'Address updated.' : 'Address saved.';
+				this.clearAddressForm();
+				this.loadAddresses();
+			},
+			error: (error) => {
+				this.addressSaving = false;
+				this.addressError = readApiErrorMessage(error, 'Unable to save address.');
+			}
+		});
+	}
+
+	removeAddress(addressId: string): void {
+		if (!window.confirm('Delete this address?')) {
+			return;
+		}
+
+		this.addressSaving = true;
+		this.addressError = '';
+		this.addressService.deleteAddress(addressId).subscribe({
+			next: () => {
+				this.addressSaving = false;
+				this.addressMessage = 'Address deleted.';
+				this.loadAddresses();
+			},
+			error: (error) => {
+				this.addressSaving = false;
+				this.addressError = readApiErrorMessage(error, 'Unable to delete address.');
+			}
+		});
+	}
+
+	logout(): void {
+		this.authService.clearAuthSession();
+		this.authService.ensureGuestSession().subscribe({
+			next: () => {
+				this.cartService.loadCart().subscribe({ error: () => undefined });
+				this.loadAddresses();
+				this.loadLoyalty();
+				void this.router.navigateByUrl('/');
+			},
+			error: () => {
+				this.cartService.loadCart().subscribe({ error: () => undefined });
+				this.loadAddresses();
+				this.loadLoyalty();
+				void this.router.navigateByUrl('/');
+			}
+		});
+	}
+
 	private refreshErrorMessage(error: unknown, fallback = 'Refresh token request failed.'): string {
 		if (isRefreshTokenRejected(error)) {
 			return 'This refresh token was already used. Sign in again to get a new session.';
@@ -120,14 +246,38 @@ export class AccountPageComponent implements OnInit {
 		});
 	}
 
-	logout(): void {
-		this.authService.clearAuthSession();
-		this.authService.ensureGuestSession().subscribe({
-			next: async () => {
-				await this.router.navigateByUrl('/');
+	private loadAddresses(): void {
+		if (!this.authState.isAuthenticated()) {
+			this.addresses = [];
+			return;
+		}
+
+		this.addressesLoading = true;
+		this.addressError = '';
+		this.addressService.listAddresses().subscribe({
+			next: (addresses) => {
+				this.addresses = addresses;
+				this.addressesLoading = false;
 			},
-			error: async () => {
-				await this.router.navigateByUrl('/');
+			error: (error) => {
+				this.addressError = readApiErrorMessage(error, 'Unable to load saved addresses.');
+				this.addressesLoading = false;
+			}
+		});
+	}
+
+	private loadLoyalty(): void {
+		if (!this.authState.isAuthenticated()) {
+			this.loyalty = null;
+			return;
+		}
+
+		this.loyaltyService.getMyLoyalty().subscribe({
+			next: (loyalty) => {
+				this.loyalty = loyalty;
+			},
+			error: () => {
+				this.loyalty = null;
 			}
 		});
 	}

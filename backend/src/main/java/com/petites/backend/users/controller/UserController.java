@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -38,26 +39,31 @@ public class UserController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF')")
     public List<UserResponse> list() {
         return userService.list();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF') or #id == principal")
     public UserResponse get(@PathVariable String id) {
         return userService.get(id);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF') or #id == principal")
     public UserResponse update(@PathVariable String id, @Valid @RequestBody UserUpdateRequest request) {
         return userService.update(id, request);
     }
 
     @PatchMapping("/{id}/deactivate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF') or #id == principal")
     public UserResponse deactivate(@PathVariable String id) {
         return userService.setActive(id, false);
     }
 
     @PatchMapping("/{id}/reactivate")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF') or #id == principal")
     public UserResponse reactivate(@PathVariable String id) {
         return userService.setActive(id, true);
     }

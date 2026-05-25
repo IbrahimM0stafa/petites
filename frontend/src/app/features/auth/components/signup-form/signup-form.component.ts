@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import { switchMap } from 'rxjs';
 
 import { readApiErrorMessage, readApiFieldErrors } from '../../../../core/models/api-error.model';
+import { CartService } from '../../../../core/services/cart.service';
 import { AuthService } from '../../../../core/services/auth.service';
 
 @Component({
@@ -30,6 +31,7 @@ export class SignupFormComponent {
 
 	constructor(
 		private readonly authService: AuthService,
+		private readonly cartService: CartService,
 		private readonly router: Router
 	) {}
 
@@ -52,6 +54,7 @@ export class SignupFormComponent {
 			.subscribe({
 				next: async () => {
 					this.loading = false;
+					this.cartService.loadCart().subscribe({ error: () => undefined });
 					await this.router.navigateByUrl('/');
 				},
 				error: (error) => {

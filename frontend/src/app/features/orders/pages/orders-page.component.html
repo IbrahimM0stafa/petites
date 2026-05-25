@@ -1,0 +1,104 @@
+<section class="orders-page">
+  <header class="orders-hero">
+    <p class="orders-eyebrow">Orders</p>
+    <h1>Your recent orders</h1>
+    <p>New orders appear first. Guests see their guest-session order history, and signed-in users see their account orders.</p>
+  </header>
+
+  <div class="orders-banner" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
+
+  <div class="orders-loading" *ngIf="loading || detailLoading">
+    <span class="orders-spinner" aria-hidden="true"></span>
+    <p>{{ detailLoading ? 'Loading order…' : 'Loading orders…' }}</p>
+  </div>
+
+  <div class="orders-layout" *ngIf="!loading">
+    <div class="orders-list">
+      <article class="order-card" *ngFor="let order of orders">
+        <div class="order-card-head">
+          <div>
+            <p class="order-number">{{ order.orderNumber }}</p>
+            <p>{{ order.createdAt | date:'medium' }}</p>
+          </div>
+          <span class="order-status" [class]="statusClass(order.status)">{{ order.status }}</span>
+        </div>
+
+        <dl class="order-meta">
+          <div>
+            <dt>Total</dt>
+            <dd>{{ order.totalAmount | currency }}</dd>
+          </div>
+          <div>
+            <dt>Type</dt>
+            <dd>{{ order.orderType }}</dd>
+          </div>
+          <div>
+            <dt>Items</dt>
+            <dd>{{ order.items.length }}</dd>
+          </div>
+        </dl>
+
+        <a class="purchase-link" [routerLink]="['/orders', order.orderId]">View details</a>
+      </article>
+
+      <div class="purchase-empty" *ngIf="!orders.length">
+        <h2>No orders yet</h2>
+        <p>Your completed checkouts will appear here.</p>
+        <a routerLink="/shop" class="purchase-link">Shop now</a>
+      </div>
+    </div>
+
+    <aside class="order-detail" *ngIf="selectedOrder; else ordersHint">
+      <header class="order-detail-head">
+        <div>
+          <p class="order-number">{{ selectedOrder.orderNumber }}</p>
+          <h2>{{ selectedOrder.status }}</h2>
+        </div>
+        <span class="order-status" [class]="statusClass(selectedOrder.status)">{{ selectedOrder.status }}</span>
+      </header>
+
+      <dl class="order-detail-grid">
+        <div>
+          <dt>Subtotal</dt>
+          <dd>{{ selectedOrder.subtotal | currency }}</dd>
+        </div>
+        <div>
+          <dt>Delivery fee</dt>
+          <dd>{{ selectedOrder.deliveryFee | currency }}</dd>
+        </div>
+        <div>
+          <dt>Discount</dt>
+          <dd>-{{ selectedOrder.discountAmount | currency }}</dd>
+        </div>
+        <div>
+          <dt>Total</dt>
+          <dd>{{ selectedOrder.totalAmount | currency }}</dd>
+        </div>
+        <div>
+          <dt>Customer</dt>
+          <dd>{{ selectedOrder.customerName }}</dd>
+        </div>
+        <div>
+          <dt>Phone</dt>
+          <dd>{{ selectedOrder.customerPhone }}</dd>
+        </div>
+      </dl>
+
+      <div class="order-items">
+        <article *ngFor="let item of selectedOrder.items">
+          <strong>{{ item.productName || item.productId }}</strong>
+          <p>{{ item.quantity }} x {{ item.unitPrice | currency }} · {{ item.lineTotal | currency }}</p>
+        </article>
+      </div>
+
+      <a class="purchase-link purchase-link--muted" [routerLink]="['/orders']">Back to orders</a>
+    </aside>
+
+    <ng-template #ordersHint>
+      <aside class="order-detail order-detail--empty">
+        <h2>Order details</h2>
+        <p>Select an order to inspect the full receipt.</p>
+      </aside>
+    </ng-template>
+  </div>
+</section>

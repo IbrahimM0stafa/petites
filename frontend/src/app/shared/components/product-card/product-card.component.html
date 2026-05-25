@@ -2,11 +2,17 @@
   <div 
     class="treat-art" 
     [routerLink]="product ? '/products/' + product.id : ctaLink"
-    style="cursor: pointer;"
+    style="cursor: pointer; position: relative;"
     [ngClass]="getArtClass()" 
     [style.backgroundImage]="imageUrl ? 'url(' + imageUrl + ')' : null"
     [style.backgroundSize]="imageUrl ? 'cover' : 'contain'"
     aria-hidden="true">
+    <div *ngIf="product && fulfillmentMode === 'scheduled' && product.scheduledEligible" class="fulfillment-badge scheduled-badge">
+      Earliest Delivery: {{ product.earliestScheduledDate | date:'mediumDate' }}
+    </div>
+    <div *ngIf="product && fulfillmentMode === 'instant' && product.instantAvailableToday" class="fulfillment-badge instant-badge">
+      ⚡ Same-Day Delivery available until {{ product.instantAvailableUntil | date:'shortTime' }} ({{ product.instantQuantityToday }} left)
+    </div>
   </div>
 
   <div class="treat-content">

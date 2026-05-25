@@ -1,0 +1,124 @@
+<section class="purchase-page">
+  <header class="purchase-hero">
+    <p class="purchase-eyebrow">Checkout</p>
+    <h1>Review and place your order</h1>
+    <p *ngIf="isAuthenticated">Use a saved address, validate a coupon, and finish with COD.</p>
+    <p *ngIf="!isAuthenticated">Guest checkout uses pickup only. Name and phone are required.</p>
+  </header>
+
+  <div class="purchase-banner purchase-banner--error" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
+  <div class="purchase-banner purchase-banner--success" *ngIf="statusMessage" role="status">{{ statusMessage }}</div>
+
+  <div class="purchase-loading" *ngIf="loading">
+    <span class="purchase-spinner" aria-hidden="true"></span>
+    <p>Loading checkout…</p>
+  </div>
+
+  <ng-container *ngIf="!loading && cart?.items?.length">
+    <div class="checkout-layout">
+      <form class="checkout-form" [formGroup]="checkoutForm" (ngSubmit)="submitCheckout()" novalidate>
+        <section class="checkout-card">
+          <h2>Customer details</h2>
+
+          <div class="checkout-grid" *ngIf="!isAuthenticated">
+            <label>
+              <span>Customer name</span>
+              <input type="text" formControlName="customerName" placeholder="Jane Doe" />
+            </label>
+            <label>
+              <span>Customer phone</span>
+              <input type="tel" formControlName="customerPhone" placeholder="01xxxxxxxxx" />
+            </label>
+          </div>
+
+          <div class="checkout-grid">
+            <label>
+              <span>Order type</span>
+              <select formControlName="orderType">
+                <option value="PICKUP">Pickup</option>
+                <option value="DELIVERY" [disabled]="!isAuthenticated">Delivery</option>
+              </select>
+            </label>
+            <label *ngIf="isAuthenticated && orderType === 'DELIVERY'">
+              <span>Delivery address</span>
+              <select formControlName="addressId">
+                <option value="">Select an address</option>
+                <option *ngFor="let address of addresses" [value]="address.id">{{ address.city }}, {{ address.area }} - {{ address.street }}</option>
+              </select>
+            </label>
+          </div>
+
+          <label>
+            <span>Notes</span>
+            <textarea formControlName="notes" rows="4" placeholder="Any delivery or pickup notes"></textarea>
+          </label>
+
+          <label *ngIf="hasScheduledItems">
+            <span>Scheduled date</span>
+            <input type="date" formControlName="scheduledDate" />
+          </label>
+        </section>
+
+        <section class="checkout-card">
+          <h2>Coupon</h2>
+          <div class="coupon-row">
+            <input type="text" formControlName="couponCode" placeholder="Enter coupon code" />
+            <button type="button" class="purchase-btn purchase-btn--secondary" [disabled]="validatingCoupon" (click)="validateCoupon()">{{ validatingCoupon ? 'Validating…' : 'Validate' }}</button>
+          </div>
+          <p class="coupon-preview" *ngIf="couponPreview">
+            {{ couponPreview.message }}<br />
+            Discount: {{ couponPreview.discountAmount | currency }} · Final: {{ couponPreview.finalAmount | currency }}
+          </p>
+        </section>
+
+        <button type="submit" class="purchase-btn" [disabled]="placingOrder">{{ placingOrder ? 'Placing order…' : 'Place order' }}</button>
+      </form>
+
+      <aside class="checkout-card checkout-summary">
+        <h2>Cart summary</h2>
+        <dl>
+          <div>
+            <dt>Subtotal</dt>
+            <dd>{{ subtotal | currency }}</dd>
+          </div>
+          <div *ngIf="couponPreview">
+            <dt>Discount</dt>
+            <dd>-{{ couponPreview.discountAmount | currency }}</dd>
+          </div>
+          <div class="summary-total">
+            <dt>Total</dt>
+            <dd>{{ finalAmount | currency }}</dd>
+          </div>
+        </dl>
+
+        <div class="checkout-items">
+          <article *ngFor="let item of cart?.items">
+            <strong>{{ item.productName }}</strong>
+            <p>{{ item.quantity }} x {{ item.unitPrice | currency }} · {{ item.deliveryMode }}</p>
+          </article>
+        </div>
+
+        <div class="checkout-actions">
+          <a routerLink="/cart" class="purchase-btn purchase-btn--secondary">Back to cart</a>
+        </div>
+      </aside>
+    </div>
+
+    <section class="purchase-card" *ngIf="orders.length">
+      <h2>Created orders</h2>
+      <article class="order-result" *ngFor="let order of orders">
+        <div>
+          <p class="order-number">{{ order.orderNumber }}</p>
+          <p>{{ order.status }} · {{ order.orderType }} · {{ order.totalAmount | currency }}</p>
+        </div>
+        <a class="purchase-btn purchase-btn--secondary" [routerLink]="['/orders', order.orderId]">Open order</a>
+      </article>
+    </section>
+  </ng-container>
+
+  <div class="purchase-empty" *ngIf="!loading && !cart?.items?.length">
+    <h2>Your cart is empty</h2>
+    <p>Add items before checking out.</p>
+    <a routerLink="/shop" class="purchase-btn">Continue shopping</a>
+  </div>
+</section>

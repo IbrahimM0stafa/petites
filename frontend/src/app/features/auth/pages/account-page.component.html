@@ -5,7 +5,7 @@
       <div class="account-hero-copy">
         <p class="auth-eyebrow">My account</p>
         <h1>{{ user ? 'Hello, ' + user.name.split(' ')[0] : 'Your account' }}</h1>
-        <p class="auth-lead" *ngIf="user">Manage your profile and keep track of your Petites pre-orders.</p>
+        <p class="auth-lead" *ngIf="user">Manage your profile, saved addresses, and loyalty progress.</p>
       </div>
     </header>
 
@@ -25,6 +25,10 @@
       <article class="stat-card stat-card--accent">
         <span class="stat-label">Member status</span>
         <strong class="stat-value">{{ user.active ? 'Active' : 'Inactive' }}</strong>
+      </article>
+      <article class="stat-card" *ngIf="loyalty">
+        <span class="stat-label">Until reward</span>
+        <strong class="stat-value">{{ loyalty.ordersUntilNextReward }}</strong>
       </article>
     </div>
 
@@ -50,6 +54,97 @@
       </dl>
     </section>
 
+    <section class="account-card" *ngIf="!loading && authState.isAuthenticated()" aria-labelledby="loyalty-heading">
+      <h2 id="loyalty-heading">Loyalty</h2>
+      <dl class="profile-grid" *ngIf="loyalty; else loyaltyEmpty">
+        <div class="profile-item">
+          <dt>Completed orders</dt>
+          <dd>{{ loyalty.completedOrdersCount }}</dd>
+        </div>
+        <div class="profile-item">
+          <dt>Reward target</dt>
+          <dd>{{ loyalty.rewardOrderTarget }}</dd>
+        </div>
+        <div class="profile-item">
+          <dt>Until next reward</dt>
+          <dd>{{ loyalty.ordersUntilNextReward }}</dd>
+        </div>
+        <div class="profile-item">
+          <dt>Reward available</dt>
+          <dd>{{ loyalty.rewardAvailable ? 'Yes' : 'No' }}</dd>
+        </div>
+      </dl>
+      <ng-template #loyaltyEmpty>
+        <p class="account-muted">Loyalty details are not available yet.</p>
+      </ng-template>
+    </section>
+
+    <section class="account-card" *ngIf="!loading && authState.isAuthenticated()" aria-labelledby="addresses-heading">
+      <div class="account-card-header">
+        <h2 id="addresses-heading">Saved addresses</h2>
+        <button type="button" class="auth-btn auth-btn--secondary auth-btn--compact" (click)="clearAddressForm()">New address</button>
+      </div>
+
+      <div class="auth-alert auth-alert--success" *ngIf="addressMessage" role="status">{{ addressMessage }}</div>
+      <div class="auth-alert" *ngIf="addressError" role="alert">{{ addressError }}</div>
+
+      <div class="account-loading" *ngIf="addressesLoading">
+        <span class="account-spinner" aria-hidden="true"></span>
+        <p>Loading addresses…</p>
+      </div>
+
+      <div class="address-list" *ngIf="!addressesLoading && addresses.length">
+        <article class="address-card" *ngFor="let address of addresses">
+          <div>
+            <strong>{{ address.city }}, {{ address.area }}</strong>
+            <p>{{ address.street }}</p>
+            <p *ngIf="address.building">Building: {{ address.building }}</p>
+            <p *ngIf="address.notes">Notes: {{ address.notes }}</p>
+          </div>
+          <div class="address-actions">
+            <button type="button" class="auth-btn auth-btn--secondary auth-btn--compact" (click)="startAddressEdit(address)">Edit</button>
+            <button type="button" class="auth-btn auth-btn--secondary auth-btn--compact" [disabled]="addressSaving" (click)="removeAddress(address.id)">Delete</button>
+          </div>
+        </article>
+      </div>
+
+      <p class="account-muted" *ngIf="!addressesLoading && !addresses.length">No saved addresses yet.</p>
+
+      <form class="address-form" [formGroup]="addressForm" (ngSubmit)="saveAddress()" novalidate>
+        <div class="profile-grid">
+          <label class="auth-field compact-field">
+            <span>City</span>
+            <input type="text" formControlName="city" placeholder="Cairo" />
+          </label>
+          <label class="auth-field compact-field">
+            <span>Area</span>
+            <input type="text" formControlName="area" placeholder="Maadi" />
+          </label>
+        </div>
+        <label class="auth-field compact-field">
+          <span>Street</span>
+          <input type="text" formControlName="street" placeholder="Street name" />
+        </label>
+        <div class="profile-grid">
+          <label class="auth-field compact-field">
+            <span>Building</span>
+            <input type="text" formControlName="building" placeholder="Building / apartment" />
+          </label>
+          <label class="auth-field compact-field">
+            <span>Notes</span>
+            <input type="text" formControlName="notes" placeholder="Delivery notes" />
+          </label>
+        </div>
+
+        <div class="account-actions account-actions--dev">
+          <button type="submit" class="auth-btn" [disabled]="addressSaving">
+            {{ addressSaving ? 'Saving…' : editingAddressId ? 'Update address' : 'Save address' }}
+          </button>
+          <button type="button" class="auth-btn auth-btn--secondary" [disabled]="addressSaving" (click)="clearAddressForm()">Clear</button>
+        </div>
+      </form>
+    </section>
+
     <details class="account-dev" *ngIf="isDev && authState.isAuthenticated()">
       <summary>Developer tools</summary>
       <div class="account-dev-body">
@@ -71,6 +166,7 @@
 
     <footer class="account-actions">
       <a class="auth-btn" routerLink="/">Continue shopping</a>
+      <a class="auth-btn auth-btn--secondary" routerLink="/orders">View orders</a>
       <button type="button" class="auth-btn auth-btn--secondary" (click)="logout()">Sign out</button>
     </footer>
   </div>

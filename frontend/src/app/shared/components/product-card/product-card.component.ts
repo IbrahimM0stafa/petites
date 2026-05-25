@@ -12,6 +12,7 @@ import { Product } from '../../../core/models/shop.models';
 })
 export class ProductCardComponent implements OnChanges {
   @Input() product?: Product;
+  @Input() fulfillmentMode: 'scheduled' | 'instant' = 'scheduled';
   @Input() name = '';
   @Input() price: string | number = '';
   @Input() artClass = '';
@@ -23,7 +24,7 @@ export class ProductCardComponent implements OnChanges {
     if (this.product) {
       this.name = this.product.name;
       this.price = this.product.price;
-      this.imageUrl = this.product.mainImage;
+      this.imageUrl = this.product.mainImage || undefined;
       this.ctaLink = '/cart';
       this.ctaText = 'Add to Cart';
     }

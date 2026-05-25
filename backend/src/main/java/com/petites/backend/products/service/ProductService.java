@@ -22,6 +22,10 @@ import com.petites.backend.products.dto.ProductUpdateRequest;
 import com.petites.backend.products.entity.Product;
 import com.petites.backend.products.entity.ProductImage;
 import com.petites.backend.products.repository.ProductRepository;
+import com.petites.backend.products.entity.InstantDeliveryInventory;
+import java.time.LocalDate;
+import java.time.Instant;
+import java.util.Optional;
 
 @Service
 public class ProductService {
@@ -30,11 +34,13 @@ public class ProductService {
     private final CategoryRepository categoryRepository;
     private static final Logger logger = LoggerFactory.getLogger(ProductService.class);
     private final ImageUploadService imageUploadService;
+    private final FulfillmentService fulfillmentService;
 
-    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository, ImageUploadService imageUploadService) {
+    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository, ImageUploadService imageUploadService, FulfillmentService fulfillmentService) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.imageUploadService = imageUploadService;
+        this.fulfillmentService = fulfillmentService;
     }
 
     @Transactional
@@ -51,20 +57,28 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> list(String categoryId, Boolean available, Pageable pageable) {
-        boolean hasCategory = categoryId != null && !categoryId.trim().isEmpty();
-        boolean hasAvailable = available != null;
+    public Page<ProductResponse> list(String categoryId, Boolean available, String fulfillmentMode, Pageable pageable) {
+        String catId = (categoryId != null && !categoryId.trim().isEmpty()) ? categoryId.trim() : null;
 
         Page<Product> productPage;
 
-        if (hasCategory && hasAvailable) {
-            productPage = productRepository.findByCategoryIdAndAvailable(categoryId.trim(), available, pageable);
-        } else if (hasCategory) {
-            productPage = productRepository.findByCategoryId(categoryId.trim(), pageable);
-        } else if (hasAvailable) {
-            productPage = productRepository.findByAvailable(available, pageable);
+        if ("instant".equalsIgnoreCase(fulfillmentMode)) {
+            productPage = productRepository.findInstantAvailable(catId, available, Instant.now(), pageable);
+        } else if ("scheduled".equalsIgnoreCase(fulfillmentMode)) {
+            productPage = productRepository.findScheduledEligible(catId, available, pageable);
         } else {
-            productPage = productRepository.findAll(pageable);
+            boolean hasCategory = catId != null;
+            boolean hasAvailable = available != null;
+
+            if (hasCategory && hasAvailable) {
+                productPage = productRepository.findByCategoryIdAndAvailable(catId, available, pageable);
+            } else if (hasCategory) {
+                productPage = productRepository.findByCategoryId(catId, pageable);
+            } else if (hasAvailable) {
+                productPage = productRepository.findByAvailable(available, pageable);
+            } else {
+                productPage = productRepository.findAll(pageable);
+            }
         }
 
         return productPage.map(this::toResponse);
@@ -193,6 +207,14 @@ public class ProductService {
                     .toList();
         }
 
+        LocalDate earliestDate = fulfillmentService.calculateEarliestScheduledDate();
+        boolean scheduledEligible = product.isAvailable();
+
+        Optional<InstantDeliveryInventory> activeInstant = fulfillmentService.getActiveInstantInventory(product.getId());
+        boolean instantAvailableToday = activeInstant.isPresent();
+        Integer instantQuantityToday = activeInstant.map(InstantDeliveryInventory::getAvailableQuantity).orElse(0);
+        Instant instantAvailableUntil = activeInstant.map(InstantDeliveryInventory::getAvailableUntil).orElse(null);
+
         return new ProductResponse(
                 product.getId(),
                 categoryId,
@@ -205,7 +227,12 @@ public class ProductService {
                 product.isFeatured(),
                 images,
                 product.getCreatedAt(),
-                product.getUpdatedAt()
+                product.getUpdatedAt(),
+                scheduledEligible,
+                earliestDate,
+                instantAvailableToday,
+                instantQuantityToday,
+                instantAvailableUntil
         );
     }
 }

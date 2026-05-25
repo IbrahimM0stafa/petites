@@ -40,8 +40,9 @@ public class ProductController {
     public Page<ProductResponse> list(
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) Boolean available,
+            @RequestParam(required = false) String fulfillmentMode,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return productService.list(categoryId, available, pageable);
+        return productService.list(categoryId, available, fulfillmentMode, pageable);
     }
 
     @GetMapping("/featured")

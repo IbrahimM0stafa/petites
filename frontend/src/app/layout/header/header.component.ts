@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, HostListener } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
+import { CartService } from '../../core/services/cart.service';
 import { AuthStateService } from '../../core/services/auth-state.service';
 
 @Component({
@@ -12,7 +13,10 @@ import { AuthStateService } from '../../core/services/auth-state.service';
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent {
-	constructor(readonly authState: AuthStateService) {}
+  constructor(
+    readonly authState: AuthStateService,
+    readonly cartService: CartService
+  ) {}
 
   menuOpen = false;
   isScrolled = false;

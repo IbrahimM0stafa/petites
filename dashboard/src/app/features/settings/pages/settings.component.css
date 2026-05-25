@@ -1,0 +1,124 @@
+.settings-form {
+  margin-top: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.settings-card {
+  background: #fff;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+}
+
+.card-icon {
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+}
+
+.settings-card h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.15rem;
+  color: var(--admin-text);
+}
+
+.card-desc {
+  font-size: 0.85rem;
+  color: var(--admin-muted);
+  margin: 0 0 1.25rem 0;
+  line-height: 1.4;
+  flex-grow: 1;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.form-group label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--admin-muted);
+}
+
+.form-control {
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--admin-border);
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-control:focus {
+  border-color: var(--admin-accent);
+  box-shadow: 0 0 0 3px var(--admin-accent-soft);
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-top: 0.25rem;
+}
+
+.page-success {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  background-color: #dcfce7;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+  margin-bottom: 1.5rem;
+  font-weight: 500;
+}
+
+.raw-settings-section {
+  background: var(--admin-bg);
+  border: 1px solid var(--admin-border);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.raw-settings-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: var(--admin-text);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.admin-table th, .admin-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.admin-table th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--admin-muted);
+  font-weight: 700;
+}
+
+.admin-table td {
+  font-size: 0.875rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}

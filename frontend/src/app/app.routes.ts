@@ -8,6 +8,10 @@ export const routes: Routes = [
 	{ path: 'signup', loadComponent: () => import('./features/auth/pages/signup-page.component').then((m) => m.SignupPageComponent) },
 	{ path: 'shop', loadComponent: () => import('./features/shop/pages/shop-page.component').then((m) => m.ShopPageComponent) },
 	{ path: 'products/:id', loadComponent: () => import('./features/shop/pages/product-detail/product-detail.component').then((m) => m.ProductDetailComponent) },
+	{ path: 'cart', loadComponent: () => import('./features/cart/pages/cart-page.component').then((m) => m.CartPageComponent) },
+	{ path: 'checkout', loadComponent: () => import('./features/checkout/pages/checkout-page.component').then((m) => m.CheckoutPageComponent) },
+	{ path: 'orders', loadComponent: () => import('./features/orders/pages/orders-page.component').then((m) => m.OrdersPageComponent) },
+	{ path: 'orders/:id', loadComponent: () => import('./features/orders/pages/orders-page.component').then((m) => m.OrdersPageComponent) },
 	{
 		path: 'account',
 		canActivate: [authGuard],

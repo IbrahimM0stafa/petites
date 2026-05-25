@@ -93,6 +93,13 @@ public class UserService {
     }
 
     @Transactional
+    public UserResponse incrementCompletedOrdersCount(String id) {
+        User user = getEntity(id);
+        user.setCompletedOrdersCount(user.getCompletedOrdersCount() + 1);
+        return toResponse(userRepository.save(user));
+    }
+
+    @Transactional
     public UserResponse assignRole(String userId, String roleName) {
         User user = getEntity(userId);
         Role role = roleRepository.findByName(roleName)

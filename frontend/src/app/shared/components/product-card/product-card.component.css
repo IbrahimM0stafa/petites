@@ -88,3 +88,38 @@
   .price { font-size: 1.45rem; }
   .add-button { padding: 0.9rem 1.25rem; font-size: 0.98rem; }
 }
+
+/* Glassmorphic Fulfillment Badges */
+.fulfillment-badge {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  right: 10px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-align: center;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 4px 12px rgba(83, 47, 32, 0.08);
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  z-index: 2;
+  text-transform: none;
+}
+
+.scheduled-badge {
+  background: rgba(255, 250, 246, 0.88);
+  border: 1px solid rgba(183, 149, 132, 0.35);
+  color: #6e3c32;
+}
+
+.instant-badge {
+  background: rgba(254, 243, 199, 0.88);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #92400e;
+}
+
+.treat-card:hover .fulfillment-badge {
+  transform: translateY(-2px);
+}

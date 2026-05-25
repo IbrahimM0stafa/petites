@@ -1,13 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ShopService } from '../../../../core/services/shop.service';
 import { Product } from '../../../../core/models/shop.models';
+import { DeliveryMode } from '../../../../core/models/cart.models';
+import { CartService } from '../../../../core/services/cart.service';
+import { readApiErrorMessage } from '../../../../core/models/api-error.model';
 
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './product-detail.component.html',
   styleUrls: ['./product-detail.component.css']
 })
@@ -15,12 +19,16 @@ export class ProductDetailComponent implements OnInit {
   product?: Product;
   activeImage = '';
   quantity = 1;
+  deliveryMode: DeliveryMode = 'INSTANT';
   isLoading = true;
   errorMessage = '';
+  successMessage = '';
+  addingToCart = false;
 
   constructor(
     private readonly route: ActivatedRoute,
-    private readonly shopService: ShopService
+    private readonly shopService: ShopService,
+    private readonly cartService: CartService
   ) {}
 
   ngOnInit(): void {
@@ -39,6 +47,7 @@ export class ProductDetailComponent implements OnInit {
       next: (product) => {
         this.product = product;
         this.activeImage = product.mainImage || '';
+        this.deliveryMode = product.scheduledEligible && !product.instantAvailableToday ? 'SCHEDULED' : 'INSTANT';
         this.isLoading = false;
       },
       error: (err) => {
@@ -83,6 +92,24 @@ export class ProductDetailComponent implements OnInit {
 
   addToCart(): void {
     if (!this.product) return;
-    alert(`Added ${this.quantity} x ${this.product.name} to cart! (Demo)`);
+
+    this.addingToCart = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.cartService.addItem({
+      productId: this.product.id,
+      quantity: this.quantity,
+      deliveryMode: this.deliveryMode
+    }).subscribe({
+      next: () => {
+        this.addingToCart = false;
+        this.successMessage = `${this.quantity} x ${this.product?.name} added to cart.`;
+      },
+      error: (error) => {
+        this.addingToCart = false;
+        this.errorMessage = readApiErrorMessage(error, 'Unable to add item to cart.');
+      }
+    });
   }
 }

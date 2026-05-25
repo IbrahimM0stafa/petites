@@ -81,7 +81,7 @@
 
 .account-stats {
 	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 1rem;
 }
 
@@ -120,6 +120,13 @@
 	border-radius: 1rem;
 	background: rgba(252, 244, 235, 0.55);
 	border: 1px solid rgba(90, 53, 41, 0.08);
+}
+
+.account-card-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
 }
 
 .account-card h2 {
@@ -164,6 +171,49 @@
 	font-size: 0.82rem;
 	font-weight: 500;
 	color: var(--petites-brown-soft);
+}
+
+.account-muted {
+	margin: 0;
+	color: var(--petites-brown-soft);
+}
+
+.address-list {
+	display: grid;
+	gap: 0.85rem;
+}
+
+.address-card {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 1rem;
+	border-radius: 0.95rem;
+	background: rgba(255, 255, 255, 0.65);
+	border: 1px solid rgba(90, 53, 41, 0.08);
+}
+
+.address-card strong,
+.address-card p {
+	margin: 0;
+}
+
+.address-card p + p {
+	margin-top: 0.25rem;
+}
+
+.address-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	justify-content: flex-end;
+}
+
+.address-form {
+	display: grid;
+	gap: 0.85rem;
+	padding-top: 0.35rem;
 }
 
 .account-dev {
@@ -238,6 +288,12 @@
 	min-width: 0;
 }
 
+.auth-btn--compact {
+	min-width: 0;
+	flex: 0 0 auto;
+	padding-inline: 1rem;
+}
+
 @media (max-width: 640px) {
 	.account-hero {
 		flex-direction: column;
@@ -248,6 +304,11 @@
 	.account-stats,
 	.profile-grid {
 		grid-template-columns: 1fr;
+	}
+
+	.account-card-header,
+	.address-card {
+		flex-direction: column;
 	}
 
 	.account-actions .auth-btn {

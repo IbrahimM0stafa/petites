@@ -15,10 +15,13 @@ export class ShopService {
     });
   }
 
-  getProducts(categoryId?: string, available = true, page = 0, size = 20, sort = 'createdAt,desc'): Observable<PagedResponse<Product>> {
-    const params: Record<string, string | number | boolean> = { available, page, size, sort };
+  getProducts(categoryId?: string, fulfillmentMode?: 'scheduled' | 'instant', page = 0, size = 20, sort = 'createdAt,desc'): Observable<PagedResponse<Product>> {
+    const params: Record<string, string | number | boolean> = { page, size, sort };
     if (categoryId !== undefined && categoryId !== null) {
       params['categoryId'] = categoryId;
+    }
+    if (fulfillmentMode) {
+      params['fulfillmentMode'] = fulfillmentMode;
     }
     return this.apiClient.get<PagedResponse<Product>>('/api/products', { params });
   }

@@ -10,20 +10,8 @@ export interface ProductImage {
   imageUrl: string;
 }
 
-export interface Product {
-  id: string;
-  categoryId: string;
-  categoryName?: string;
-  name: string;
-  description: string;
-  price: number;
-  mainImage?: string;
-  isAvailable: boolean;
-  isFeatured: boolean;
-  images: ProductImage[];
-  createdAt?: string;
-  updatedAt?: string;
-}
+import { Product } from './product.model';
+export type { Product };
 
 export interface PagedResponse<T> {
   content: T[];
