@@ -14,6 +14,7 @@ public record CouponCreateRequest(
         BigDecimal minimumOrderAmount,
         BigDecimal maxDiscountAmount,
         Integer usageLimit,
+        Integer perUserLimit,
         Instant startsAt,
         Instant expiresAt,
         Boolean active

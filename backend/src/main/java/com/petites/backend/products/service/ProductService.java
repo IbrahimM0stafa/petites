@@ -46,14 +46,9 @@ public class ProductService {
     @Transactional
     public void delete(String id) {
         Product product = getEntity(id);
-        deleteCloudinaryImage(product.getMainImage());
-        // Remove Cloudinary images first
-        if (product.getImages() != null) {
-            for (ProductImage img : new ArrayList<>(product.getImages())) {
-                deleteCloudinaryImage(img.getImageUrl());
-                }
-                }
-        productRepository.delete(product);
+        product.setAvailable(false);
+        product.setFeatured(false);
+        productRepository.save(product);
     }
 
     @Transactional(readOnly = true)

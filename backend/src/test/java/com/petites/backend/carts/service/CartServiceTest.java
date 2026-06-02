@@ -6,6 +6,7 @@ import com.petites.backend.carts.dto.CheckoutResponse;
 import com.petites.backend.carts.entity.Cart;
 import com.petites.backend.carts.entity.CartItem;
 import com.petites.backend.carts.enums.CartStatus;
+import com.petites.backend.addresses.dto.AddressResponse;
 import com.petites.backend.carts.repository.CartItemRepository;
 import com.petites.backend.carts.repository.CartRepository;
 import com.petites.backend.common.enums.DeliveryMode;
@@ -150,6 +151,7 @@ class CartServiceTest {
                 order.getUserId(),
                 order.getGuestSessionId(),
                 order.getAddressId(),
+                (AddressResponse) null,
                 order.getDeliveryMode(),
                 order.getOrderType(),
                 order.getStatus(),

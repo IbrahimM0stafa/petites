@@ -1,0 +1,107 @@
+<section class="page-card">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>{{ isEditMode ? 'Edit Coupon' : 'Add Coupon' }}</h2>
+      <p class="subtitle">Configure discount rules, limits, and validity windows</p>
+    </div>
+    <a routerLink="/coupons" class="admin-btn admin-btn-ghost">Back to list</a>
+  </div>
+
+  <div *ngIf="loading && isEditMode" class="page-status">
+    <div class="spinner"></div>
+    <p>Loading coupon...</p>
+  </div>
+
+  <div class="form-container" *ngIf="!loading || !isEditMode">
+    <p *ngIf="errorMessage" class="page-error" role="alert">{{ errorMessage }}</p>
+
+    <form [formGroup]="couponForm" (ngSubmit)="onSubmit()" class="admin-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="code">Coupon Code <span class="required">*</span></label>
+          <input id="code" type="text" formControlName="code" class="form-control" placeholder="WELCOME20" />
+          <div class="error-feedback" *ngIf="couponForm.get('code')?.touched && couponForm.get('code')?.invalid">
+            <span *ngIf="couponForm.get('code')?.errors?.['required']">Code is required.</span>
+            <span *ngIf="couponForm.get('code')?.errors?.['minlength']">Code must be at least 3 characters.</span>
+          </div>
+          <div class="error-feedback" *ngIf="fieldErrors['code']">
+            <span *ngFor="let err of fieldErrors['code']">{{ err }}</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="discountType">Discount Type</label>
+          <select id="discountType" formControlName="discountType" class="form-control">
+            <option *ngFor="let type of discountTypes" [value]="type">{{ type }}</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="discountValue">Discount Value <span class="required">*</span></label>
+          <input id="discountValue" type="number" formControlName="discountValue" class="form-control" />
+          <div class="error-feedback" *ngIf="couponForm.get('discountValue')?.touched && couponForm.get('discountValue')?.invalid">
+            <span *ngIf="couponForm.get('discountValue')?.errors?.['required']">Discount value is required.</span>
+            <span *ngIf="couponForm.get('discountValue')?.errors?.['min']">Discount must be 0 or higher.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="minimumOrderAmount">Minimum Order Amount</label>
+          <input id="minimumOrderAmount" type="number" formControlName="minimumOrderAmount" class="form-control" />
+        </div>
+
+        <div class="form-group" *ngIf="couponForm.get('discountType')?.value === 'PERCENTAGE'">
+          <label for="maxDiscountAmount">Max Discount Amount</label>
+          <input id="maxDiscountAmount" type="number" formControlName="maxDiscountAmount" class="form-control" />
+          <small class="hint">Applies only to percentage discounts; ignored for fixed discounts.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="usageLimit">Usage Limit</label>
+          <div class="input-with-action">
+            <input id="usageLimit" type="number" formControlName="usageLimit" class="form-control" placeholder="∞" />
+            <button type="button" class="btn-action" title="Set infinite" (click)="setNullControl('usageLimit')">∞</button>
+          </div>
+          <small class="hint">Leave empty or click ∞ for no global usage restriction (infinite).</small>
+        </div>
+
+        <div class="form-group">
+          <label for="perUserLimit">Per-user Limit</label>
+          <div class="input-with-action">
+            <input id="perUserLimit" type="number" formControlName="perUserLimit" class="form-control" placeholder="∞" />
+            <button type="button" class="btn-action" title="Set infinite" (click)="setNullControl('perUserLimit')">∞</button>
+          </div>
+          <small class="hint">Leave empty or click ∞ for no per-user restriction (infinite).</small>
+        </div>
+
+        <div class="form-group" *ngIf="isEditMode">
+          <label>Used Count</label>
+          <div class="form-control static-field">{{ couponUsedCount ?? 0 }}</div>
+          <small class="hint">Read-only. Updated automatically when orders complete.</small>
+        </div>
+
+        <div class="form-group">
+          <label for="startsAt">Starts At</label>
+          <input id="startsAt" type="datetime-local" formControlName="startsAt" class="form-control" />
+        </div>
+
+        <div class="form-group">
+          <label for="expiresAt">Expires At</label>
+          <input id="expiresAt" type="datetime-local" formControlName="expiresAt" class="form-control" />
+        </div>
+
+        <div class="form-group checkbox-group">
+          <input id="active" type="checkbox" formControlName="active" />
+          <label for="active">Active</label>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="/coupons" class="admin-btn admin-btn-ghost">Cancel</a>
+        <button type="submit" class="admin-btn" [disabled]="loading">
+          {{ isEditMode ? 'Update Coupon' : 'Create Coupon' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

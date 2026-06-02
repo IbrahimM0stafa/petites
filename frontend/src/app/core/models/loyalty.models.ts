@@ -4,4 +4,7 @@ export interface LoyaltyResponse {
 	rewardOrderTarget: number;
 	ordersUntilNextReward: number;
 	rewardAvailable: boolean;
+	rewardProductId?: string | null;
+	rewardProductName?: string | null;
+	rewardProductImage?: string | null;
 }

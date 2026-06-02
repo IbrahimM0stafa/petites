@@ -49,7 +49,7 @@ public class Order extends AuditedEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_method", nullable = false, length = 20)
-    private PaymentMethod paymentMethod = PaymentMethod.COD;
+    private PaymentMethod paymentMethod = PaymentMethod.INSTAPAY;
 
     @Column(name = "subtotal", precision = 10, scale = 2, nullable = false)
     private BigDecimal subtotal = BigDecimal.ZERO;
@@ -80,6 +80,9 @@ public class Order extends AuditedEntity {
 
     @Column(name = "reward_applied", nullable = false)
     private boolean rewardApplied = false;
+
+    @Column(name = "completion_recorded", columnDefinition = "boolean default false")
+    private boolean completionRecorded = false;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderItem> items = new ArrayList<>();
@@ -233,6 +236,14 @@ public class Order extends AuditedEntity {
 
     public void setRewardApplied(boolean rewardApplied) {
         this.rewardApplied = rewardApplied;
+    }
+
+    public boolean isCompletionRecorded() {
+        return completionRecorded;
+    }
+
+    public void setCompletionRecorded(boolean completionRecorded) {
+        this.completionRecorded = completionRecorded;
     }
 
     public List<OrderItem> getItems() {

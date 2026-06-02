@@ -27,6 +27,11 @@ export class ShopPageComponent implements OnInit {
 
   products: Product[] = [];
   categories: Category[] = [];
+  // Pagination state
+  page = 0;
+  size = 20;
+  totalPages = 0;
+  totalElements = 0;
 
   constructor(
     private readonly shopService: ShopService,
@@ -62,9 +67,26 @@ export class ShopPageComponent implements OnInit {
 
   loadProducts(): void {
     const catId = this.selectedCategory && this.selectedCategory.id !== null ? this.selectedCategory.id : undefined;
-    this.shopService.getProducts(catId, this.currentFulfillmentMode).subscribe({
+    this.shopService.getProducts(catId, this.currentFulfillmentMode, this.page, this.size).subscribe({
       next: (prodResponse) => {
         this.products = prodResponse.content;
+        // Normalize pagination information from backend. Some APIs return totals
+        // at the top-level (totalPages/totalElements) while others nest under
+        // a `page` object ({ number, size, totalElements, totalPages }).
+        const pageObj = (prodResponse as any).page ?? null;
+        // serverPageNumber: prefer server-provided page index if present
+        const serverPageNumber = pageObj?.number ?? (prodResponse as any).number ?? null;
+        const serverTotalPages = (prodResponse as any).totalPages ?? pageObj?.totalPages ?? 0;
+        const serverTotalElements = (prodResponse as any).totalElements ?? pageObj?.totalElements ?? 0;
+
+        this.totalPages = serverTotalPages;
+        this.totalElements = serverTotalElements;
+
+        if (serverPageNumber !== null && serverPageNumber !== undefined) {
+          this.page = serverPageNumber;
+        }
+
+        // Removed debug log for production UI.
       },
       error: (err) => {
         console.error('Error loading products', err);
@@ -81,8 +103,8 @@ export class ShopPageComponent implements OnInit {
 
   get filteredProducts(): Product[] {
     return this.products.filter((p) => {
-      // Client-side Price Filter
-      return p.price <= this.appliedPrice;
+      // Hide unavailable products and apply the client-side price filter.
+      return p.isAvailable !== false && p.price <= this.appliedPrice;
     });
   }
 
@@ -108,6 +130,28 @@ export class ShopPageComponent implements OnInit {
     this.selectedCategory = this.tempCategory;
     this.appliedPrice = this.tempPrice;
     this.isFilterOpen = false;
-    this.loadProducts(); // Load new products from the backend for the newly selected category
+    // Reset to first page when filters change
+    this.page = 0;
+    this.loadProducts();
+  }
+
+  goToPage(pageNum: number): void {
+    if (pageNum < 0 || (this.totalPages && pageNum >= this.totalPages)) return;
+    this.page = pageNum;
+    this.loadProducts();
+  }
+
+  nextPage(): void {
+    if (this.page + 1 < this.totalPages) {
+      this.page += 1;
+      this.loadProducts();
+    }
+  }
+
+  prevPage(): void {
+    if (this.page > 0) {
+      this.page -= 1;
+      this.loadProducts();
+    }
   }
 }

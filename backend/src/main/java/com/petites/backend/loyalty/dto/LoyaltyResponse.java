@@ -5,6 +5,9 @@ public record LoyaltyResponse(
         int completedOrdersCount,
         int rewardOrderTarget,
         int ordersUntilNextReward,
-        boolean rewardAvailable
+        boolean rewardAvailable,
+        String rewardProductId,
+        String rewardProductName,
+        String rewardProductImage
 ) {
 }

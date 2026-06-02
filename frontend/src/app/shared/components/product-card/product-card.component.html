@@ -1,7 +1,7 @@
 <article class="treat-card">
   <div 
     class="treat-art" 
-    [routerLink]="product ? '/products/' + product.id : ctaLink"
+    [routerLink]="productLink"
     style="cursor: pointer; position: relative;"
     [ngClass]="getArtClass()" 
     [style.backgroundImage]="imageUrl ? 'url(' + imageUrl + ')' : null"
@@ -16,11 +16,13 @@
   </div>
 
   <div class="treat-content">
-    <h3 [routerLink]="product ? '/products/' + product.id : ctaLink" style="cursor: pointer;">{{ name }}</h3>
+    <h3 [routerLink]="productLink" style="cursor: pointer;">{{ name }}</h3>
     <p class="price">{{ formattedPrice }}</p>
-    <a class="add-button" [routerLink]="ctaLink">
-      {{ ctaText }}
+    <p class="button-note" *ngIf="product && product.isAvailable === false">This item is no longer available.</p>
+    <button type="button" class="add-button" [disabled]="adding || !canAddToCart" (click)="addToCart($event)">
+      {{ adding ? 'Adding…' : (product && product.isAvailable === false ? 'Unavailable' : ctaText) }}
       <span class="button-heart" aria-hidden="true">♥</span>
-    </a>
+    </button>
+    <p class="button-note" *ngIf="statusMessage">{{ statusMessage }}</p>
   </div>
 </article>

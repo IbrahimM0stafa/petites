@@ -7,6 +7,10 @@ import com.petites.backend.coupons.dto.CouponValidationResponse;
 import com.petites.backend.coupons.entity.Coupon;
 import com.petites.backend.coupons.enums.DiscountType;
 import com.petites.backend.coupons.repository.CouponRepository;
+import com.petites.backend.coupons.repository.CouponUsageRepository;
+import com.petites.backend.coupons.entity.CouponUsage;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
@@ -18,9 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class CouponService {
 
     private final CouponRepository couponRepository;
+    private final CouponUsageRepository couponUsageRepository;
 
-    public CouponService(CouponRepository couponRepository) {
+    public CouponService(CouponRepository couponRepository, CouponUsageRepository couponUsageRepository) {
         this.couponRepository = couponRepository;
+        this.couponUsageRepository = couponUsageRepository;
     }
 
     @Transactional(readOnly = true)
@@ -36,7 +42,7 @@ public class CouponService {
     @Transactional
     public CouponResponse create(CouponCreateRequest request) {
         Coupon coupon = new Coupon();
-        apply(coupon, request.code(), request.discountType(), request.discountValue(), request.minimumOrderAmount(), request.maxDiscountAmount(), request.usageLimit(), request.startsAt(), request.expiresAt(), request.active());
+        apply(coupon, request.code(), request.discountType(), request.discountValue(), request.minimumOrderAmount(), request.maxDiscountAmount(), request.usageLimit(), request.perUserLimit(), request.startsAt(), request.expiresAt(), request.active());
         return toResponse(couponRepository.save(coupon));
     }
 
@@ -55,21 +61,14 @@ public class CouponService {
         if (request.minimumOrderAmount() != null) {
             coupon.setMinimumOrderAmount(request.minimumOrderAmount());
         }
-        if (request.maxDiscountAmount() != null) {
-            coupon.setMaxDiscountAmount(request.maxDiscountAmount());
-        }
-        if (request.usageLimit() != null) {
-            coupon.setUsageLimit(request.usageLimit());
-        }
+        coupon.setMaxDiscountAmount(request.maxDiscountAmount());
+        coupon.setUsageLimit(request.usageLimit());
+        coupon.setPerUserLimit(request.perUserLimit());
         if (request.usedCount() != null) {
             coupon.setUsedCount(request.usedCount());
         }
-        if (request.startsAt() != null) {
-            coupon.setStartsAt(request.startsAt());
-        }
-        if (request.expiresAt() != null) {
-            coupon.setExpiresAt(request.expiresAt());
-        }
+        coupon.setStartsAt(request.startsAt());
+        coupon.setExpiresAt(request.expiresAt());
         if (request.active() != null) {
             coupon.setActive(request.active());
         }
@@ -95,7 +94,8 @@ public class CouponService {
             return new CouponValidationResponse(false, null, code.trim(), BigDecimal.ZERO, subtotal, "Coupon not found");
         }
 
-        String validationMessage = validateCoupon(coupon, subtotal);
+        String userId = currentUserIdOrNull();
+        String validationMessage = validateCoupon(coupon, subtotal, userId);
         if (validationMessage != null) {
             return new CouponValidationResponse(false, coupon.getId(), coupon.getCode(), BigDecimal.ZERO, subtotal, validationMessage);
         }
@@ -109,7 +109,8 @@ public class CouponService {
     public Coupon resolveForCheckout(String couponId, String couponCode, BigDecimal subtotal) {
         if (couponId != null && !couponId.isBlank()) {
             Coupon coupon = getEntity(couponId.trim());
-            if (validateCoupon(coupon, subtotal) != null) {
+            String userId = currentUserIdOrNull();
+            if (validateCoupon(coupon, subtotal, userId) != null) {
                 throw new IllegalArgumentException("Coupon is not valid for this order");
             }
             return coupon;
@@ -118,7 +119,8 @@ public class CouponService {
         if (couponCode != null && !couponCode.isBlank()) {
             Coupon coupon = couponRepository.findByCodeIgnoreCase(couponCode.trim())
                     .orElseThrow(() -> new IllegalArgumentException("Coupon not found"));
-            if (validateCoupon(coupon, subtotal) != null) {
+            String userId = currentUserIdOrNull();
+            if (validateCoupon(coupon, subtotal, userId) != null) {
                 throw new IllegalArgumentException("Coupon is not valid for this order");
             }
             return coupon;
@@ -140,14 +142,14 @@ public class CouponService {
             discountAmount = coupon.getDiscountValue();
         }
 
-        if (coupon.getMaxDiscountAmount() != null) {
+        if (coupon.getDiscountType() == DiscountType.PERCENTAGE && coupon.getMaxDiscountAmount() != null) {
             discountAmount = discountAmount.min(coupon.getMaxDiscountAmount());
         }
 
         return discountAmount.min(subtotal).max(BigDecimal.ZERO);
     }
 
-    private String validateCoupon(Coupon coupon, BigDecimal subtotal) {
+    private String validateCoupon(Coupon coupon, BigDecimal subtotal, String userId) {
         if (!coupon.isActive()) {
             return "Coupon is inactive";
         }
@@ -161,10 +163,49 @@ public class CouponService {
         if (coupon.getUsageLimit() != null && coupon.getUsedCount() >= coupon.getUsageLimit()) {
             return "Coupon usage limit reached";
         }
+
+        // Per-user limit check
+        if (userId != null && coupon.getPerUserLimit() != null) {
+            CouponUsage usage = couponUsageRepository.findByCouponIdAndUserId(coupon.getId(), userId)
+                    .orElse(null);
+            int usedByUser = usage == null ? 0 : usage.getUsedCount();
+            if (usedByUser >= coupon.getPerUserLimit()) {
+                return "Coupon usage limit reached for this user";
+            }
+        }
         if (subtotal != null && coupon.getMinimumOrderAmount() != null && subtotal.compareTo(coupon.getMinimumOrderAmount()) < 0) {
             return "Order amount does not meet coupon minimum";
         }
         return null;
+    }
+
+    private String currentUserIdOrNull() {
+        try {
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (authentication == null || authentication.getPrincipal() == null) return null;
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof String userId && !userId.isBlank() && !"anonymousUser".equals(userId)) {
+                return userId;
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    @Transactional
+    public void recordUsage(String couponId, String userId) {
+        if (couponId == null) return;
+        Coupon coupon = getEntity(couponId);
+        // increment global used count for all coupons
+        coupon.setUsedCount(coupon.getUsedCount() + 1);
+        couponRepository.save(coupon);
+
+        if (userId == null) return;
+        CouponUsage usage = couponUsageRepository.findByCouponIdAndUserId(couponId, userId)
+                .orElseGet(() -> new CouponUsage(couponId, userId));
+        usage.setUsedCount(usage.getUsedCount() + 1);
+        usage.setLastUsedAt(Instant.now());
+        couponUsageRepository.save(usage);
     }
 
     private Coupon getEntity(String id) {
@@ -179,6 +220,7 @@ public class CouponService {
                        BigDecimal minimumOrderAmount,
                        BigDecimal maxDiscountAmount,
                        Integer usageLimit,
+                       Integer perUserLimit,
                        Instant startsAt,
                        Instant expiresAt,
                        Boolean active) {
@@ -188,6 +230,7 @@ public class CouponService {
         coupon.setMinimumOrderAmount(minimumOrderAmount == null ? BigDecimal.ZERO : minimumOrderAmount);
         coupon.setMaxDiscountAmount(maxDiscountAmount);
         coupon.setUsageLimit(usageLimit);
+        coupon.setPerUserLimit(perUserLimit);
         coupon.setStartsAt(startsAt);
         coupon.setExpiresAt(expiresAt);
         coupon.setActive(active == null || active);
@@ -202,6 +245,7 @@ public class CouponService {
                 coupon.getMinimumOrderAmount(),
                 coupon.getMaxDiscountAmount(),
                 coupon.getUsageLimit(),
+                coupon.getPerUserLimit(),
                 coupon.getUsedCount(),
                 coupon.getStartsAt(),
                 coupon.getExpiresAt(),

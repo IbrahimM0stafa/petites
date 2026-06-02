@@ -1,74 +1,164 @@
 <section class="purchase-page">
+  <div class="purchase-bg-glow"></div>
+  
   <header class="purchase-hero">
-    <p class="purchase-eyebrow">Cart</p>
+    <p class="purchase-eyebrow">Checkout Basket</p>
     <h1>Your baked-to-order basket</h1>
-    <p>Adjust quantities, switch delivery mode per item, and head to checkout when you’re ready.</p>
+    <p class="purchase-subtitle">Adjust quantities, switch delivery mode per item, and head to checkout when you’re ready.</p>
   </header>
 
-  <div class="purchase-banner purchase-banner--error" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
-  <div class="purchase-banner purchase-banner--success" *ngIf="statusMessage" role="status">{{ statusMessage }}</div>
+  <div
+    class="purchase-banner"
+    *ngIf="bannerMessage"
+    [class.purchase-banner--error]="bannerVariant === 'error'"
+    [class.purchase-banner--success]="bannerVariant === 'success'"
+    [attr.role]="bannerVariant === 'error' ? 'alert' : 'status'">
+    <svg class="banner-icon" viewBox="0 0 20 20" fill="currentColor">
+      <path *ngIf="bannerVariant === 'error'" fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+      <path *ngIf="bannerVariant === 'success'" fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+    </svg>
+    <span>{{ bannerMessage }}</span>
+  </div>
 
   <div class="purchase-loading" *ngIf="loading">
     <span class="purchase-spinner" aria-hidden="true"></span>
-    <p>Loading cart…</p>
+    <p>Loading your fresh basket…</p>
   </div>
 
   <ng-container *ngIf="!loading">
     <div class="purchase-empty" *ngIf="!cart?.items?.length">
-      <h2>Your cart is empty</h2>
-      <p>Browse the shop and add treats to start your order.</p>
-      <a routerLink="/shop" class="purchase-btn">Continue shopping</a>
+      <div class="empty-icon-wrap">
+        <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        </svg>
+      </div>
+      <h2>Your basket is empty</h2>
+      <p>Browse our selection of freshly baked treats to start your order.</p>
+      <a routerLink="/shop" class="purchase-btn purchase-btn--primary">
+        <span>Continue shopping</span>
+        <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+        </svg>
+      </a>
     </div>
 
     <div class="cart-layout" *ngIf="cart?.items?.length">
       <div class="cart-list">
+        <aside class="reward-card" *ngIf="showRewardTeaser">
+          <div class="reward-card-image-wrap">
+            <img class="reward-card-image" [src]="rewardProductImage || '/assets/images/logo.png'" [alt]="rewardProductName" *ngIf="rewardProductImage; else rewardFallbackImage" />
+            <ng-template #rewardFallbackImage>
+              <div class="reward-card-fallback" aria-hidden="true">Gift</div>
+            </ng-template>
+            <div class="reward-badge">
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V4a1 1 0 10-2 0v2h2zm3 0h2a1 1 0 100-2h-2v2z" clip-rule="evenodd" />
+                <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
+              </svg>
+            </div>
+          </div>
+          <div class="reward-card-copy">
+            <p class="reward-card-eyebrow">Free reward on this order</p>
+            <h2>{{ rewardProductName }}</h2>
+            <p>Will be added automatically at checkout as our sweet thank you.</p>
+          </div>
+        </aside>
+
         <article class="cart-item" *ngFor="let item of cart?.items">
-          <img class="cart-item-image" [src]="item.productImage || '/assets/images/logo.png'" [alt]="item.productName" />
+          <div class="cart-item-image-wrap">
+            <img class="cart-item-image" [src]="item.productImage || '/assets/images/logo.png'" [alt]="item.productName" />
+          </div>
+          
           <div class="cart-item-copy">
-            <p class="cart-item-name">{{ item.productName }}</p>
-            <p class="cart-item-meta">Item total: {{ item.lineTotal | currency }}</p>
-            <p class="cart-item-meta">Unit price: {{ item.unitPrice | currency }}</p>
+            <h3 class="cart-item-name">{{ item.productName }}</h3>
+            <p class="cart-item-unavailable" *ngIf="!isProductAvailable(item)">This product is no longer available and must be removed from your cart.</p>
+            
+            <div class="cart-item-pricing-grid">
+              <div class="pricing-detail">
+                <span class="pricing-label">Unit price</span>
+                <span class="pricing-value">{{ item.unitPrice | currency }}</span>
+              </div>
+              <div class="pricing-detail">
+                <span class="pricing-label">Subtotal</span>
+                <span class="pricing-value pricing-value--total">{{ item.lineTotal | currency }}</span>
+              </div>
+            </div>
 
             <div class="cart-item-controls">
               <div class="qty-control">
-                <button type="button" class="qty-btn" [disabled]="updatingItemId === item.itemId" (click)="changeQuantity(item, -1)">−</button>
-                <span>{{ item.quantity }}</span>
-                <button type="button" class="qty-btn" [disabled]="updatingItemId === item.itemId" (click)="changeQuantity(item, 1)">+</button>
+                <button type="button" class="qty-btn" [disabled]="updatingItemId === item.itemId || !isProductAvailable(item)" (click)="changeQuantity(item, -1)" aria-label="Decrease quantity">
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+                <span class="qty-number">{{ item.quantity }}</span>
+                <button type="button" class="qty-btn" [disabled]="updatingItemId === item.itemId || !isProductAvailable(item)" (click)="changeQuantity(item, 1)" aria-label="Increase quantity">
+                  <svg viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                  </svg>
+                </button>
               </div>
 
-              <label class="delivery-select">
-                <span>Delivery mode</span>
-                <select [disabled]="updatingItemId === item.itemId" [value]="item.deliveryMode" (change)="changeDeliveryMode(item, $any($event.target).value)">
-                  <option value="INSTANT">Instant</option>
-                  <option value="SCHEDULED">Scheduled</option>
-                </select>
-              </label>
+              <div class="delivery-select-wrapper">
+                <span class="delivery-label">Delivery</span>
+                <div class="select-styled-container">
+                <select
+                class="delivery-select-el"
+                [class.delivery-select-el--locked]="!isInstantAvailable(item)"
+                [attr.title]="isInstantAvailable(item) ? 'Choose delivery mode' : 'Instant delivery is unavailable for this item today.'"
+                [disabled]="updatingItemId === item.itemId || !isProductAvailable(item)"
+                [value]="item.deliveryMode"
+                (change)="changeDeliveryMode(item, $any($event.target).value)">
+                <option value="INSTANT" [disabled]="!isInstantAvailable(item)">Instant Delivery</option>
+                    <option value="SCHEDULED">Scheduled Pickup</option>
+                  </select>
+                  <svg class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
 
           <div class="cart-item-actions">
-            <strong>{{ item.lineTotal | currency }}</strong>
-            <button type="button" class="text-button" [disabled]="updatingItemId === item.itemId" (click)="removeItem(item)">Remove</button>
+            <span class="line-total-desktop">{{ item.lineTotal | currency }}</span>
+            <button type="button" class="remove-btn" [disabled]="updatingItemId === item.itemId" (click)="removeItem(item)" aria-label="Remove item">
+              <svg class="trash-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span class="remove-text">Remove</span>
+            </button>
           </div>
         </article>
       </div>
 
       <aside class="cart-summary">
-        <h2>Order summary</h2>
-        <dl>
-          <div>
-            <dt>Items</dt>
-            <dd>{{ cart?.items?.length }}</dd>
+        <h2>Order Summary</h2>
+        
+        <div class="summary-details">
+          <div class="summary-row">
+            <span class="summary-label">Selected Items</span>
+            <span class="summary-val">{{ cart?.items?.length }}</span>
           </div>
-          <div>
-            <dt>Subtotal</dt>
-            <dd>{{ cart?.subtotal | currency }}</dd>
+          <div class="summary-row summary-row--subtotal">
+            <span class="summary-label">Subtotal</span>
+            <span class="summary-val">{{ cart?.subtotal | currency }}</span>
           </div>
-        </dl>
+        </div>
 
         <div class="summary-actions">
-          <button type="button" class="purchase-btn purchase-btn--secondary" [disabled]="updatingItemId === 'clear'" (click)="clearCart()">Clear cart</button>
-          <a routerLink="/checkout" class="purchase-btn">Checkout</a>
+          <a routerLink="/checkout" class="purchase-btn purchase-btn--primary checkout-btn-pulse">
+            <span>Proceed to checkout</span>
+            <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+            </svg>
+          </a>
+          <button type="button" class="purchase-btn purchase-btn--secondary" [disabled]="updatingItemId === 'clear'" (click)="clearCart()">
+            <svg class="clear-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+            </svg>
+            <span>Clear entire cart</span>
+          </button>
         </div>
       </aside>
     </div>

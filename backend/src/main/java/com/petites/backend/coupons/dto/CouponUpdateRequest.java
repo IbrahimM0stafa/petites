@@ -11,6 +11,7 @@ public record CouponUpdateRequest(
         BigDecimal minimumOrderAmount,
         BigDecimal maxDiscountAmount,
         Integer usageLimit,
+        Integer perUserLimit,
         Integer usedCount,
         Instant startsAt,
         Instant expiresAt,

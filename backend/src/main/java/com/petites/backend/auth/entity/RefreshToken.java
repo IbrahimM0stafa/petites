@@ -8,15 +8,21 @@ import com.petites.backend.users.entity.User;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "refresh_tokens", uniqueConstraints = {
+@Table(name = "refresh_tokens",
+    indexes = {
+        @Index(name = "idx_refresh_tokens_user_id", columnList = "user_id"),
+        @Index(name = "idx_refresh_tokens_user_revoked", columnList = "user_id, revoked_at")
+    },
+    uniqueConstraints = {
         @UniqueConstraint(columnNames = "token_hash")
-})
+    })
 public class RefreshToken extends AuditedEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)

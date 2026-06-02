@@ -12,6 +12,7 @@ public record CouponResponse(
         BigDecimal minimumOrderAmount,
         BigDecimal maxDiscountAmount,
         Integer usageLimit,
+        Integer perUserLimit,
         int usedCount,
         Instant startsAt,
         Instant expiresAt,

@@ -79,8 +79,7 @@ export class ProductListComponent implements OnInit {
     this.productService.list(filters).subscribe({
       next: (res) => {
         this.products = res.content;
-        this.totalPages = res.totalPages;
-        this.totalElements = res.totalElements;
+        this.applyPaginationMeta(res);
         this.loading = false;
       },
       error: (err) => {
@@ -117,5 +116,58 @@ export class ProductListComponent implements OnInit {
 
   mathMin(a: number, b: number): number {
     return Math.min(a, b);
+  }
+
+  private applyPaginationMeta(meta: {
+    totalPages?: number;
+    totalElements?: number;
+    size?: number;
+    number?: number;
+    page?: {
+      totalPages?: number;
+      totalElements?: number;
+      size?: number;
+      number?: number;
+    };
+    meta?: {
+      totalPages?: number;
+      totalElements?: number;
+      size?: number;
+      number?: number;
+      total?: number;
+      totalCount?: number;
+      total_pages?: number;
+    };
+    total?: number;
+    totalCount?: number;
+    total_pages?: number;
+  }): void {
+    const pageMeta = meta.page ?? {};
+    const altMeta = meta.meta ?? {};
+    const totalElements =
+      meta.totalElements ??
+      meta.total ??
+      meta.totalCount ??
+      pageMeta.totalElements ??
+      altMeta.totalElements ??
+      altMeta.total ??
+      altMeta.totalCount ??
+      0;
+    const size = meta.size ?? pageMeta.size ?? altMeta.size ?? this.size;
+    const totalPages =
+      meta.totalPages ??
+      meta.total_pages ??
+      pageMeta.totalPages ??
+      altMeta.totalPages ??
+      altMeta.total_pages ??
+      (size ? Math.ceil(totalElements / size) : 0);
+    const pageNumber = meta.number ?? pageMeta.number ?? altMeta.number;
+
+    this.totalElements = totalElements;
+    this.totalPages = totalPages;
+    this.size = size;
+    if (pageNumber !== undefined) {
+      this.page = pageNumber;
+    }
   }
 }

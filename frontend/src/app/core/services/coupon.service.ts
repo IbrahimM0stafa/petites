@@ -1,8 +1,6 @@
-import { HttpContext } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { SKIP_AUTH_HEADER, SKIP_AUTH_REFRESH, SKIP_GUEST_HEADER } from '../http/http-context.tokens';
 import { CouponValidationResponse } from '../models/coupon.models';
 import { ApiClientService } from './api-client.service';
 
@@ -14,12 +12,7 @@ export class CouponService {
 
 	validateCoupon(code: string, subtotal: number): Observable<CouponValidationResponse> {
 		return this.apiClient.get<CouponValidationResponse>('/api/coupons/validate', {
-			params: { code, subtotal },
-			context: this.publicContext()
+			params: { code, subtotal }
 		});
-	}
-
-	private publicContext(): HttpContext {
-		return new HttpContext().set(SKIP_AUTH_HEADER, true).set(SKIP_AUTH_REFRESH, true).set(SKIP_GUEST_HEADER, true);
 	}
 }

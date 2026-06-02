@@ -9,6 +9,7 @@ import java.util.HexFormat;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +65,12 @@ public class RefreshTokenService {
         refreshTokenRepository.save(token);
 
         return issue(token.getUser());
+    }
+
+    @Scheduled(fixedDelayString = "${app.jwt.refresh-cleanup-interval-ms:3600000}")
+    @Transactional
+    public void cleanupExpiredTokens() {
+        refreshTokenRepository.deleteExpiredOrRevoked(Instant.now());
     }
 
     private String hash(String rawToken) {

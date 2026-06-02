@@ -1,5 +1,6 @@
 package com.petites.backend.orders.dto;
 
+import com.petites.backend.addresses.dto.AddressResponse;
 import com.petites.backend.common.enums.DeliveryMode;
 import com.petites.backend.orders.enums.OrderStatus;
 import com.petites.backend.orders.enums.OrderType;
@@ -15,6 +16,7 @@ public record OrderResponse(
         String userId,
         String guestSessionId,
         String addressId,
+        AddressResponse address,
         DeliveryMode deliveryMode,
         OrderType orderType,
         OrderStatus status,

@@ -11,5 +11,9 @@ public interface AddressRepository extends JpaRepository<Address, String> {
 
     List<Address> findByUserId(String userId);
 
+    List<Address> findByGuestSessionId(String guestSessionId);
+
     Optional<Address> findByIdAndUserId(String id, String userId);
+
+    Optional<Address> findByIdAndGuestSessionId(String id, String guestSessionId);
 }

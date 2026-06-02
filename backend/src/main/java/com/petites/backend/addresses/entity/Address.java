@@ -9,8 +9,11 @@ import jakarta.persistence.Table;
 @Table(name = "addresses")
 public class Address extends BaseEntity {
 
-    @Column(name = "user_id", length = 36, nullable = false)
+    @Column(name = "user_id", length = 36)
     private String userId;
+
+    @Column(name = "guest_session_id", length = 36)
+    private String guestSessionId;
 
     @Column(name = "city", length = 100, nullable = false)
     private String city;
@@ -33,6 +36,14 @@ public class Address extends BaseEntity {
 
     public void setUserId(String userId) {
         this.userId = userId;
+    }
+
+    public String getGuestSessionId() {
+        return guestSessionId;
+    }
+
+    public void setGuestSessionId(String guestSessionId) {
+        this.guestSessionId = guestSessionId;
     }
 
     public String getCity() {

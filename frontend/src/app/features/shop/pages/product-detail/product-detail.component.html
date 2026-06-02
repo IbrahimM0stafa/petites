@@ -70,11 +70,61 @@
             {{ product.isAvailable ? 'In Stock & Fresh' : 'Out of Stock' }}
           </span>
         </div>
+        <div class="info-row" *ngIf="!product.isAvailable">
+          <span class="info-label">Status</span>
+          <span class="status-badge out-of-stock">This product is no longer available.</span>
+        </div>
       </div>
 
       <div class="description-section">
         <h3>Description</h3>
         <p>{{ product.description }}</p>
+      </div>
+
+      <div class="fulfillment-section" *ngIf="product.isAvailable && product.scheduledEligible">
+        <h3 class="fulfillment-title">Fulfillment Method</h3>
+        <div class="delivery-options-grid">
+          <button 
+            type="button" 
+            class="delivery-option-card" 
+            [class.active]="deliveryMode === 'INSTANT'" 
+            [disabled]="!product.instantAvailableToday" 
+            (click)="deliveryMode = 'INSTANT'">
+            <div class="option-header">
+              <svg class="option-icon lightning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+              </svg>
+              <span class="option-name">Instant Delivery</span>
+            </div>
+            <p class="option-desc">Baked & delivered fresh today.</p>
+            <div class="option-footer" *ngIf="product.instantAvailableToday">
+              <span class="option-status success">{{ product.instantQuantityToday }} left today</span>
+            </div>
+            <div class="option-footer" *ngIf="!product.instantAvailableToday">
+              <span class="option-status out-of-stock">Unavailable today</span>
+            </div>
+          </button>
+
+          <button 
+            type="button" 
+            class="delivery-option-card" 
+            [class.active]="deliveryMode === 'SCHEDULED'" 
+            (click)="deliveryMode = 'SCHEDULED'">
+            <div class="option-header">
+              <svg class="option-icon calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                <line x1="16" y1="2" x2="16" y2="6"/>
+                <line x1="8" y1="2" x2="8" y2="6"/>
+                <line x1="3" y1="10" x2="21" y2="10"/>
+              </svg>
+              <span class="option-name">Scheduled Delivery</span>
+            </div>
+            <p class="option-desc">Specify any future date at checkout.</p>
+            <div class="option-footer">
+              <span class="option-status info">Earliest: {{ product.earliestScheduledDate }}</span>
+            </div>
+          </button>
+        </div>
       </div>
 
       <div class="purchase-controls" *ngIf="product.isAvailable">
@@ -83,14 +133,6 @@
           <span class="qty-number">{{ quantity }}</span>
           <button type="button" class="qty-btn plus" (click)="incrementQuantity()" aria-label="Increase quantity">+</button>
         </div>
-
-        <label class="delivery-selector" *ngIf="product.scheduledEligible">
-          <span>Delivery mode</span>
-          <select name="deliveryMode" [(ngModel)]="deliveryMode">
-            <option value="INSTANT" [disabled]="!product.instantAvailableToday">Instant</option>
-            <option value="SCHEDULED">Scheduled</option>
-          </select>
-        </label>
 
         <button type="button" class="add-to-cart-btn" [disabled]="addingToCart" (click)="addToCart()">
           {{ addingToCart ? 'ADDING…' : 'ADD TO CART' }}

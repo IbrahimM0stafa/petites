@@ -1,0 +1,136 @@
+<section class="page-card">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>Orders</h2>
+      <p class="subtitle">Monitor incoming orders, delivery progress, and loyalty impact</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="admin-btn admin-btn-ghost" (click)="loadOrders()" [disabled]="loading">Refresh</button>
+    </div>
+  </div>
+
+    <div class="filters-bar">
+      <label class="filter-field">
+        <span>Status</span>
+        <select [(ngModel)]="selectedStatus" name="statusFilter" (change)="onFilterChange()">
+          <option *ngFor="let option of statusOptions" [ngValue]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>Order type</span>
+        <select [(ngModel)]="selectedOrderType" name="orderTypeFilter" (change)="onFilterChange()">
+          <option *ngFor="let option of orderTypeOptions" [ngValue]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>Delivery mode</span>
+        <select [(ngModel)]="selectedDeliveryMode" name="deliveryModeFilter" (change)="onFilterChange()">
+          <option *ngFor="let option of deliveryModeOptions" [ngValue]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+
+      <label class="filter-field">
+        <span>Placed date</span>
+        <input type="date" [(ngModel)]="placedDateFilter" name="placedDateFilter" (change)="onFilterChange()" />
+      </label>
+
+      <label class="filter-field">
+        <span>Scheduled date</span>
+        <input type="date" [(ngModel)]="scheduledDateFilter" name="scheduledDateFilter" (change)="onFilterChange()" />
+      </label>
+
+      <label class="filter-field">
+        <span>Sort by</span>
+        <select [(ngModel)]="sort" name="sortFilter" (change)="onFilterChange()">
+          <option *ngFor="let option of sortOptions" [value]="option.value">{{ option.label }}</option>
+        </select>
+      </label>
+
+      <div class="filter-actions">
+        <button type="button" class="admin-btn admin-btn-ghost" (click)="clearFilters()" [disabled]="loading">Clear</button>
+      </div>
+    </div>
+
+  <div *ngIf="loading && orders.length === 0" class="page-status">
+    <div class="spinner"></div>
+    <p>Loading orders...</p>
+  </div>
+
+  <p *ngIf="error" class="page-error" role="alert">{{ error }}</p>
+
+  <div class="table-wrap" *ngIf="!error && orders.length > 0">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Order #</th>
+          <th>Customer</th>
+          <th>Type</th>
+          <th>Status</th>
+          <th>Scheduled</th>
+          <th>Total</th>
+          <th>Placed</th>
+          <th style="width: 120px; text-align: right;">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let order of orders" class="order-row">
+          <td>
+            <div class="order-number">{{ order.orderNumber }}</div>
+            <small class="order-id">{{ order.orderId }}</small>
+          </td>
+          <td>
+            <div class="order-customer">{{ order.customerName || 'Guest' }}</div>
+            <small class="order-phone" *ngIf="order.customerPhone">{{ order.customerPhone }}</small>
+            <small class="order-address" *ngIf="formatAddressShort(order.address)">
+              {{ formatAddressShort(order.address) }}
+            </small>
+          </td>
+          <td>
+            <span class="badge badge-type">{{ order.orderType || 'N/A' }}</span>
+            <span class="badge badge-mode" *ngIf="order.deliveryMode">{{ order.deliveryMode }}</span>
+          </td>
+          <td>
+            <span [class]="statusClass(order.status)">{{ order.status }}</span>
+            <small class="reward-flag" *ngIf="order.rewardApplied">Reward Applied</small>
+          </td>
+          <td>
+            <span>{{ order.scheduledDate ? (order.scheduledDate | date:'mediumDate') : '—' }}</span>
+          </td>
+          <td>
+            <span class="order-total">{{ order.totalAmount | currency:'EGP':'symbol':'1.2-2' }}</span>
+          </td>
+          <td>
+            <span>{{ order.createdAt | date:'medium' }}</span>
+          </td>
+          <td style="text-align: right;">
+            <a [routerLink]="[order.orderId]" class="admin-btn admin-btn-ghost">View</a>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination-container" *ngIf="totalElements > 0 && !loading">
+    <div class="pagination-info">
+      Showing {{ page * size + 1 }} - {{ mathMin((page + 1) * size, totalElements) }} of {{ totalElements }} orders
+    </div>
+    <div class="pagination-controls">
+      <button [disabled]="page === 0" (click)="setPage(page - 1)" class="page-btn">Previous</button>
+      <button *ngFor="let p of [].constructor(totalPages); let i = index"
+              [class.active]="i === page"
+              (click)="setPage(i)"
+              class="page-btn num-btn">
+        {{ i + 1 }}
+      </button>
+      <button [disabled]="page === totalPages - 1" (click)="setPage(page + 1)" class="page-btn">Next</button>
+    </div>
+  </div>
+
+  <div *ngIf="!loading && orders.length === 0 && !error" class="empty-state">
+    <div class="empty-icon">🧾</div>
+    <h3>No orders yet</h3>
+    <p>New orders will appear here once customers checkout.</p>
+  </div>
+</section>

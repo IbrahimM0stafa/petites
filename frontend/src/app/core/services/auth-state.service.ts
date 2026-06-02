@@ -27,11 +27,20 @@ export class AuthStateService {
 	private readonly authSessionState = signal<StoredAuthSession>(this.readAuthSession());
 	private readonly guestSessionState = signal<StoredGuestSession>(this.readGuestSession());
 
-	readonly accessToken = computed(() => this.authSessionState().token);
+	private readonly hasValidAccessToken = computed(() => {
+		const token = this.authSessionState().token;
+		if (!token) {
+			return false;
+		}
+
+		return !this.isExpired(this.authSessionState().expiresAt);
+	});
+
+	readonly accessToken = computed(() => (this.hasValidAccessToken() ? this.authSessionState().token : null));
 	readonly refreshToken = computed(() => this.authSessionState().refreshToken);
-	readonly userId = computed(() => this.authSessionState().userId);
-	readonly roles = computed(() => this.authSessionState().roles);
-	readonly isAuthenticated = computed(() => Boolean(this.authSessionState().token));
+	readonly userId = computed(() => (this.hasValidAccessToken() ? this.authSessionState().userId : null));
+	readonly roles = computed(() => (this.hasValidAccessToken() ? this.authSessionState().roles : []));
+	readonly isAuthenticated = computed(() => this.hasValidAccessToken());
 	readonly guestSessionToken = computed(() => this.guestSessionState().sessionToken);
 	readonly guestSessionExpiresAt = computed(() => this.guestSessionState().expiresAt);
 	readonly accessTokenExpiresAt = computed(() => this.authSessionState().expiresAt);
@@ -127,6 +136,19 @@ export class AuthStateService {
 				roles: []
 			};
 		}
+	}
+
+	private isExpired(expiresAt: string | null): boolean {
+		if (!expiresAt) {
+			return true;
+		}
+
+		const timestamp = Date.parse(expiresAt);
+		if (Number.isNaN(timestamp)) {
+			return true;
+		}
+
+		return timestamp <= Date.now();
 	}
 
 	private readGuestSession(): StoredGuestSession {

@@ -35,6 +35,9 @@ public class Coupon extends BaseEntity {
     @Column(name = "usage_limit")
     private Integer usageLimit;
 
+    @Column(name = "per_user_limit")
+    private Integer perUserLimit;
+
     @Column(name = "used_count", nullable = false)
     private int usedCount = 0;
 
@@ -108,6 +111,14 @@ public class Coupon extends BaseEntity {
 
     public void setUsageLimit(Integer usageLimit) {
         this.usageLimit = usageLimit;
+    }
+
+    public Integer getPerUserLimit() {
+        return perUserLimit;
+    }
+
+    public void setPerUserLimit(Integer perUserLimit) {
+        this.perUserLimit = perUserLimit;
     }
 
     public int getUsedCount() {

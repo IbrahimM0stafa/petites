@@ -1,0 +1,174 @@
+<section class="page-card">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>Order Details</h2>
+      <p class="subtitle">Review order information, items, and update fulfillment status</p>
+    </div>
+    <a routerLink="/orders" class="admin-btn admin-btn-ghost">Back to orders</a>
+  </div>
+
+  <div *ngIf="loading" class="page-status">
+    <div class="spinner"></div>
+    <p>Loading order...</p>
+  </div>
+
+  <p *ngIf="error" class="page-error" role="alert">{{ error }}</p>
+
+  <div *ngIf="!loading && order" class="order-detail">
+    <div class="order-summary">
+      <div class="summary-card">
+        <h3>Order Summary</h3>
+        <dl class="summary-grid">
+          <div>
+            <dt>Order #</dt>
+            <dd>{{ order.orderNumber }}</dd>
+          </div>
+          <div>
+            <dt>Status</dt>
+            <dd>{{ order.status }}</dd>
+          </div>
+          <div>
+            <dt>Total</dt>
+            <dd>{{ order.totalAmount | currency:'EGP':'symbol':'1.2-2' }}</dd>
+          </div>
+          <div>
+            <dt>Placed</dt>
+            <dd>{{ order.createdAt | date:'medium' }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="summary-card">
+        <h3>Customer</h3>
+        <dl class="summary-grid">
+          <div>
+            <dt>Name</dt>
+            <dd>{{ order.customerName || 'Guest' }}</dd>
+          </div>
+          <div>
+            <dt>Phone</dt>
+            <dd>{{ order.customerPhone || 'N/A' }}</dd>
+          </div>
+          <div>
+            <dt>Order Type</dt>
+            <dd>{{ order.orderType || 'N/A' }}</dd>
+          </div>
+          <div>
+            <dt>Delivery Mode</dt>
+            <dd>{{ order.deliveryMode || 'N/A' }}</dd>
+          </div>
+        </dl>
+      </div>
+
+      <div class="summary-card">
+        <h3>Delivery Address</h3>
+        <dl class="summary-grid">
+          <div>
+            <dt>City / Area</dt>
+            <dd>{{ formatAddressShort(order.address) || 'N/A' }}</dd>
+          </div>
+          <div>
+            <dt>Street / Building</dt>
+            <dd>{{ formatAddressLine2(order.address) || 'N/A' }}</dd>
+          </div>
+          <div>
+            <dt>Notes</dt>
+            <dd>{{ order.address?.notes || 'None' }}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="order-actions">
+      <div class="status-panel">
+        <h3>Update Status</h3>
+        <p class="status-note">Changing to <strong>COMPLETED</strong> will increment loyalty progress for this customer.</p>
+        <div class="status-controls">
+          <select [(ngModel)]="selectedStatus" class="form-control">
+            <option *ngFor="let status of statuses" [value]="status">{{ status }}</option>
+          </select>
+          <button type="button" class="admin-btn" (click)="updateStatus()" [disabled]="actionLoading || selectedStatus === order.status">
+            {{ actionLoading ? 'Updating...' : 'Update Status' }}
+          </button>
+        </div>
+      </div>
+      <div class="summary-card compact">
+        <h3>Payment</h3>
+        <dl class="summary-grid">
+          <div>
+            <dt>Method</dt>
+            <dd>{{ order.paymentMethod || 'N/A' }}</dd>
+          </div>
+          <div>
+            <dt>Subtotal</dt>
+            <dd>{{ order.subtotal | currency:'EGP':'symbol':'1.2-2' }}</dd>
+          </div>
+          <div>
+            <dt>Delivery Fee</dt>
+            <dd>{{ order.deliveryFee | currency:'EGP':'symbol':'1.2-2' }}</dd>
+          </div>
+          <div>
+            <dt>Discount</dt>
+            <dd>{{ order.discountAmount | currency:'EGP':'symbol':'1.2-2' }}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <h3>Items</h3>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width: 80px;">Image</th>
+              <th>Product</th>
+              <th>Quantity</th>
+              <th>Unit Price</th>
+              <th>Line Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of order.items">
+              <td>
+                <div class="thumb-container">
+                  <img *ngIf="item.productImage" [src]="item.productImage" alt="{{ item.productName }}" />
+                  <div *ngIf="!item.productImage" class="no-image">No Image</div>
+                </div>
+              </td>
+              <td>
+                <div class="item-name">{{ item.productName }}</div>
+                <small class="item-id">{{ item.productId }}</small>
+              </td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ item.unitPrice | currency:'EGP':'symbol':'1.2-2' }}</td>
+              <td>{{ item.lineTotal | currency:'EGP':'symbol':'1.2-2' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <h3>Additional Details</h3>
+      <dl class="summary-grid">
+        <div>
+          <dt>Notes</dt>
+          <dd>{{ order.notes || 'No notes provided.' }}</dd>
+        </div>
+        <div>
+          <dt>Coupon</dt>
+          <dd>{{ order.couponId || 'None' }}</dd>
+        </div>
+        <div>
+          <dt>Reward Applied</dt>
+          <dd>{{ order.rewardApplied ? 'Yes' : 'No' }}</dd>
+        </div>
+        <div>
+          <dt>Scheduled Date</dt>
+          <dd>{{ order.scheduledDate ? (order.scheduledDate | date:'medium') : 'N/A' }}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+</section>

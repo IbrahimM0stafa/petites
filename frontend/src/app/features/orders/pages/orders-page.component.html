@@ -1,103 +1,280 @@
 <section class="orders-page">
+  <div class="purchase-bg-glow"></div>
+  
   <header class="orders-hero">
-    <p class="orders-eyebrow">Orders</p>
+    <p class="orders-eyebrow">Order History</p>
     <h1>Your recent orders</h1>
-    <p>New orders appear first. Guests see their guest-session order history, and signed-in users see their account orders.</p>
+    <p class="purchase-subtitle">Browse latest receipts first. Open any order to inspect status, items, pricing, and fulfillment details.</p>
   </header>
 
-  <div class="orders-banner" *ngIf="errorMessage" role="alert">{{ errorMessage }}</div>
-
-  <div class="orders-loading" *ngIf="loading || detailLoading">
-    <span class="orders-spinner" aria-hidden="true"></span>
-    <p>{{ detailLoading ? 'Loading order…' : 'Loading orders…' }}</p>
+  <div class="purchase-banner purchase-banner--error" *ngIf="errorMessage" role="alert">
+    <svg class="banner-icon" viewBox="0 0 20 20" fill="currentColor">
+      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+    </svg>
+    <span>{{ errorMessage }}</span>
   </div>
 
-  <div class="orders-layout" *ngIf="!loading">
+  <div class="purchase-loading" *ngIf="loading || detailLoading">
+    <span class="purchase-spinner" aria-hidden="true"></span>
+    <p>{{ detailLoading ? 'Loading order details…' : 'Loading your orders…' }}</p>
+  </div>
+
+  <div class="orders-layout" [class.order-selected]="selectedOrder" *ngIf="!loading">
     <div class="orders-list">
-      <article class="order-card" *ngFor="let order of orders">
+      <article class="order-card" *ngFor="let order of orders" [class.active]="selectedOrder?.orderId === order.orderId">
         <div class="order-card-head">
-          <div>
+          <div class="order-number-wrap">
+            <span class="order-number-label">Order Number</span>
             <p class="order-number">{{ order.orderNumber }}</p>
-            <p>{{ order.createdAt | date:'medium' }}</p>
+            <span class="order-date">{{ order.createdAt | date:'mediumDate' }} · {{ order.createdAt | date:'shortTime' }}</span>
           </div>
           <span class="order-status" [class]="statusClass(order.status)">{{ order.status }}</span>
         </div>
 
         <dl class="order-meta">
-          <div>
-            <dt>Total</dt>
-            <dd>{{ order.totalAmount | currency }}</dd>
+          <div class="meta-item">
+            <dt>Grand Total</dt>
+            <dd class="price-val">{{ order.totalAmount | currency }}</dd>
           </div>
-          <div>
-            <dt>Type</dt>
+          <div class="meta-item">
+            <dt>Method</dt>
             <dd>{{ order.orderType }}</dd>
           </div>
-          <div>
-            <dt>Items</dt>
-            <dd>{{ order.items.length }}</dd>
+          <div class="meta-item">
+            <dt>Items count</dt>
+            <dd>{{ order.items.length }} {{ order.items.length === 1 ? 'item' : 'items' }}</dd>
           </div>
         </dl>
 
-        <a class="purchase-link" [routerLink]="['/orders', order.orderId]">View details</a>
+        <div class="order-card-actions">
+          <a class="view-details-link" [routerLink]="['/orders', order.orderId]">
+            <span>View Receipt</span>
+            <svg class="arrow-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
       </article>
 
       <div class="purchase-empty" *ngIf="!orders.length">
+        <div class="empty-icon-wrap">
+          <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
         <h2>No orders yet</h2>
-        <p>Your completed checkouts will appear here.</p>
-        <a routerLink="/shop" class="purchase-link">Shop now</a>
+        <p>Your completed bakery checkouts will appear here.</p>
+        <a routerLink="/shop" class="purchase-btn purchase-btn--primary">Shop Fresh Treats</a>
       </div>
     </div>
 
     <aside class="order-detail" *ngIf="selectedOrder; else ordersHint">
       <header class="order-detail-head">
-        <div>
+        <div class="detail-number-wrap">
+          <span class="detail-number-label">Artisanal Bakery Receipt</span>
           <p class="order-number">{{ selectedOrder.orderNumber }}</p>
-          <h2>{{ selectedOrder.status }}</h2>
+          <span class="detail-date">{{ selectedOrder.createdAt | date:'medium' }}</span>
         </div>
         <span class="order-status" [class]="statusClass(selectedOrder.status)">{{ selectedOrder.status }}</span>
       </header>
 
-      <dl class="order-detail-grid">
-        <div>
-          <dt>Subtotal</dt>
-          <dd>{{ selectedOrder.subtotal | currency }}</dd>
+      <!-- Dynamic Visual Progress Timeline Tracker -->
+      <section class="order-tracker-section" *ngIf="selectedOrder.status !== 'CANCELLED'; else cancelledBanner">
+        <h3 class="section-micro-title">Preparation & Delivery Progress</h3>
+        
+        <div class="tracking-timeline">
+          <!-- Step 1: Received -->
+          <div class="timeline-step" [class.active]="true" [class.completed]="['PENDING', 'CONFIRMED', 'IN_PREPARATION', 'OUT_FOR_DELIVERY', 'READY_FOR_PICKUP', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.status)">
+            <div class="step-circle">
+              <svg class="step-check" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <span class="step-label">Received</span>
+          </div>
+          
+          <div class="timeline-line" [class.completed]="['IN_PREPARATION', 'OUT_FOR_DELIVERY', 'READY_FOR_PICKUP', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.status)"></div>
+          
+          <!-- Step 2: Preparing -->
+          <div class="timeline-step" [class.active]="['IN_PREPARATION', 'OUT_FOR_DELIVERY', 'READY_FOR_PICKUP', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.status)" [class.completed]="['OUT_FOR_DELIVERY', 'READY_FOR_PICKUP', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.status)">
+            <div class="step-circle">
+              <svg class="step-check" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <span class="step-label">Baking</span>
+          </div>
+          
+          <div class="timeline-line" [class.completed]="['OUT_FOR_DELIVERY', 'READY_FOR_PICKUP', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.status)"></div>
+          
+          <!-- Step 3: Ready / Out -->
+          <div class="timeline-step" [class.active]="['OUT_FOR_DELIVERY', 'READY_FOR_PICKUP', 'DELIVERED', 'COMPLETED'].includes(selectedOrder.status)" [class.completed]="['DELIVERED', 'COMPLETED'].includes(selectedOrder.status)">
+            <div class="step-circle">
+              <svg class="step-check" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <span class="step-label">{{ selectedOrder.orderType === 'DELIVERY' ? 'Out for Delivery' : 'Ready' }}</span>
+          </div>
+          
+          <div class="timeline-line" [class.completed]="['DELIVERED', 'COMPLETED'].includes(selectedOrder.status)"></div>
+          
+          <!-- Step 4: Completed -->
+          <div class="timeline-step" [class.active]="['DELIVERED', 'COMPLETED'].includes(selectedOrder.status)" [class.completed]="['DELIVERED', 'COMPLETED'].includes(selectedOrder.status)">
+            <div class="step-circle">
+              <svg class="step-check" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <span class="step-label">Finished</span>
+          </div>
         </div>
-        <div>
-          <dt>Delivery fee</dt>
-          <dd>{{ selectedOrder.deliveryFee | currency }}</dd>
-        </div>
-        <div>
-          <dt>Discount</dt>
-          <dd>-{{ selectedOrder.discountAmount | currency }}</dd>
-        </div>
-        <div>
-          <dt>Total</dt>
-          <dd>{{ selectedOrder.totalAmount | currency }}</dd>
-        </div>
-        <div>
-          <dt>Customer</dt>
-          <dd>{{ selectedOrder.customerName }}</dd>
-        </div>
-        <div>
-          <dt>Phone</dt>
-          <dd>{{ selectedOrder.customerPhone }}</dd>
-        </div>
-      </dl>
+      </section>
 
-      <div class="order-items">
-        <article *ngFor="let item of selectedOrder.items">
-          <strong>{{ item.productName || item.productId }}</strong>
-          <p>{{ item.quantity }} x {{ item.unitPrice | currency }} · {{ item.lineTotal | currency }}</p>
-        </article>
+      <ng-template #cancelledBanner>
+        <section class="cancelled-tracker-banner">
+          <svg class="cancelled-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+          </svg>
+          <div>
+            <h4>Order Cancelled</h4>
+            <p>This order has been voided. If you have questions, please reach out to our boutique customer support.</p>
+          </div>
+        </section>
+      </ng-template>
+
+      <!-- InstaPay Transfer Block & QR Code for Pending Orders -->
+      <section class="order-instapay-payment-card" *ngIf="selectedOrder.status === 'PENDING'">
+        <h3 class="section-micro-title">InstaPay Payment Required</h3>
+        <div class="orders-instapay-grid">
+          <div class="orders-qr-section">
+            <p class="orders-qr-instruction">Scan to transfer</p>
+            <div class="orders-qr-wrapper">
+              <img src="/assets/images/instapay_qr.jpg" alt="InstaPay QR Code" class="orders-qr-img" />
+            </div>
+          </div>
+          <div class="orders-payment-link-section">
+            <p class="orders-payment-copy">
+              To complete your order, please transfer <strong>{{ selectedOrder.totalAmount | currency }}</strong> to <strong>renadkd29&#64;instapay</strong>.
+            </p>
+            <a href="https://ipn.eg/S/renadkd29/instapay/3BqRUg" target="_blank" rel="noopener noreferrer" class="purchase-btn purchase-btn--primary instapay-cta-btn">
+              <span>Send via InstaPay Link</span>
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width: 1.1rem; height: 1.1rem;">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+            <span class="orders-powered-tag">Powered by InstaPay</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="order-hero-summary">
+        <div class="summary-stat-card">
+          <span>Payment Mode</span>
+          <strong>{{ selectedOrder.paymentMethod }}</strong>
+        </div>
+        <div class="summary-stat-card">
+          <span>Delivery Type</span>
+          <strong>{{ selectedOrder.deliveryMode || '—' }}</strong>
+        </div>
+        <div class="summary-stat-card">
+          <span>Fulfillment</span>
+          <strong>{{ selectedOrder.orderType }}</strong>
+        </div>
       </div>
 
-      <a class="purchase-link purchase-link--muted" [routerLink]="['/orders']">Back to orders</a>
+      <section class="detail-receipt-card">
+        <h3 class="section-micro-title">Pricing & Customer Receipt</h3>
+        
+        <dl class="order-detail-grid">
+          <div class="receipt-row">
+            <dt>Subtotal</dt>
+            <dd>{{ selectedOrder.subtotal | currency }}</dd>
+          </div>
+          <div class="receipt-row">
+            <dt>Delivery Fee</dt>
+            <dd>{{ selectedOrder.deliveryFee | currency }}</dd>
+          </div>
+          <div class="receipt-row discount" *ngIf="selectedOrder.discountAmount > 0">
+            <dt>Loyalty Discount</dt>
+            <dd>-{{ selectedOrder.discountAmount | currency }}</dd>
+          </div>
+          <div class="receipt-row total-row">
+            <dt>Grand Total</dt>
+            <dd>{{ selectedOrder.totalAmount | currency }}</dd>
+          </div>
+        </dl>
+
+        <dl class="order-customer-details">
+          <h3 class="section-micro-title">Fulfillment details</h3>
+          <div class="customer-info-row">
+            <dt>Recipient</dt>
+            <dd>{{ selectedOrder.customerName }}</dd>
+          </div>
+          <div class="customer-info-row">
+            <dt>Phone number</dt>
+            <dd>{{ selectedOrder.customerPhone }}</dd>
+          </div>
+          <div class="customer-info-row">
+            <dt>Delivery Address</dt>
+            <dd class="address-text">{{ selectedOrder.addressId || 'Boutique pickup order' }}</dd>
+          </div>
+          <div class="customer-info-row" *ngIf="selectedOrder.scheduledDate">
+            <dt>Scheduled For</dt>
+            <dd class="scheduled-highlight">{{ selectedOrder.scheduledDate | date:'mediumDate' }}</dd>
+          </div>
+          <div class="customer-info-row" *ngIf="selectedOrder.rewardApplied">
+            <dt>Loyalty Reward</dt>
+            <dd class="reward-applied-badge">
+              <svg viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+              <span>Free item applied</span>
+            </dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="order-notes-box" *ngIf="selectedOrder.notes">
+        <h3 class="section-micro-title">Special instructions</h3>
+        <p>{{ selectedOrder.notes }}</p>
+      </section>
+
+      <section class="order-items-box">
+        <h3 class="section-micro-title">Baking Basket Items</h3>
+        <div class="receipt-items-list">
+          <article class="receipt-item-row" *ngFor="let item of selectedOrder.items">
+            <div class="item-name-group">
+              <strong class="item-name">{{ item.productName || 'Bakery Item' }}</strong>
+              <p class="item-calc">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
+            </div>
+            <div class="item-price-group">
+              <span class="item-line-total">{{ item.lineTotal | currency }}</span>
+              <span class="item-mode-badge">{{ item.deliveryMode || selectedOrder.deliveryMode || 'Instant' }}</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <div class="order-detail-footer">
+        <a class="purchase-btn purchase-btn--secondary back-btn" [routerLink]="['/orders']">
+          <svg class="arrow-back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          <span>Back to order list</span>
+        </a>
+      </div>
     </aside>
 
     <ng-template #ordersHint>
       <aside class="order-detail order-detail--empty">
-        <h2>Order details</h2>
-        <p>Select an order to inspect the full receipt.</p>
+        <div class="hint-icon-wrap">
+          <svg class="hint-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+        <h2>Order Details</h2>
+        <p>Select any purchase from the list to view its complete receipt and preparation tracking timeline.</p>
       </aside>
     </ng-template>
   </div>

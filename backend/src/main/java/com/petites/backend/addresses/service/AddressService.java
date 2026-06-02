@@ -5,6 +5,8 @@ import com.petites.backend.addresses.dto.AddressResponse;
 import com.petites.backend.addresses.dto.AddressUpdateRequest;
 import com.petites.backend.addresses.entity.Address;
 import com.petites.backend.addresses.repository.AddressRepository;
+import com.petites.backend.carts.dto.CartOwnerRef;
+import com.petites.backend.carts.service.CartAccessService;
 import com.petites.backend.users.service.UserService;
 import java.util.List;
 import org.springframework.security.core.Authentication;
@@ -17,10 +19,12 @@ public class AddressService {
 
     private final AddressRepository addressRepository;
     private final UserService userService;
+    private final CartAccessService cartAccessService;
 
-    public AddressService(AddressRepository addressRepository, UserService userService) {
+    public AddressService(AddressRepository addressRepository, UserService userService, CartAccessService cartAccessService) {
         this.addressRepository = addressRepository;
         this.userService = userService;
+        this.cartAccessService = cartAccessService;
     }
 
     @Transactional(readOnly = true)
@@ -35,9 +39,11 @@ public class AddressService {
     }
 
     @Transactional
-    public AddressResponse create(AddressCreateRequest request) {
+    public AddressResponse create(String guestToken, AddressCreateRequest request) {
+        CartOwnerRef owner = cartAccessService.resolveOwner(guestToken);
         Address address = new Address();
-        address.setUserId(currentUserId());
+        address.setUserId(owner.isUser() ? owner.userId() : null);
+        address.setGuestSessionId(owner.isGuest() ? owner.guestSessionId() : null);
         address.setCity(request.city().trim());
         address.setArea(request.area().trim());
         address.setStreet(request.street().trim());

@@ -26,6 +26,8 @@ import com.petites.backend.orders.service.OrderService;
 import com.petites.backend.products.entity.Product;
 import com.petites.backend.products.repository.ProductRepository;
 import com.petites.backend.products.service.FulfillmentService;
+import com.petites.backend.loyalty.dto.LoyaltyResponse;
+import com.petites.backend.loyalty.service.LoyaltyService;
 import com.petites.backend.settings.service.SettingService;
 import com.petites.backend.users.entity.User;
 import com.petites.backend.users.service.UserService;
@@ -47,6 +49,7 @@ public class CartService {
     private final FulfillmentService fulfillmentService;
     private final SettingService settingService;
     private final UserService userService;
+    private final LoyaltyService loyaltyService;
     private final OrderRepository orderRepository;
     private final OrderService orderService;
     private final CouponService couponService;
@@ -57,6 +60,7 @@ public class CartService {
                        FulfillmentService fulfillmentService,
                        SettingService settingService,
                        UserService userService,
+                       LoyaltyService loyaltyService,
                        OrderRepository orderRepository,
                        OrderService orderService,
                        CouponService couponService) {
@@ -66,6 +70,7 @@ public class CartService {
         this.fulfillmentService = fulfillmentService;
         this.settingService = settingService;
         this.userService = userService;
+        this.loyaltyService = loyaltyService;
         this.orderRepository = orderRepository;
         this.orderService = orderService;
         this.couponService = couponService;
@@ -153,14 +158,61 @@ public class CartService {
             groupedItems.computeIfAbsent(item.getDeliveryMode(), key -> new ArrayList<>()).add(item);
         }
 
+        // Attempt automatic loyalty reward redemption for authenticated users.
+        Product rewardProduct = null;
+        DeliveryMode rewardAttachMode = null;
+        boolean rewardClaimed = false;
+        if (owner.isUser()) {
+            try {
+                LoyaltyResponse loyalty = loyaltyService.getMyStatus(owner.userId());
+                if (loyalty.rewardAvailable() && loyalty.rewardProductId() != null) {
+                    String rewardProductId = loyalty.rewardProductId();
+                    // choose attach mode: prefer INSTANT if present, otherwise first group
+                    DeliveryMode attachMode = groupedItems.containsKey(DeliveryMode.INSTANT)
+                            ? DeliveryMode.INSTANT
+                            : (groupedItems.keySet().stream().findFirst().orElse(null));
+                    if (attachMode != null) {
+                        // try reserve inventory for reward according to attach mode
+                        if (attachMode == DeliveryMode.INSTANT) {
+                            // ensure product is still available
+                            Product maybeReward = productRepository.findById(rewardProductId).orElse(null);
+                            if (maybeReward != null && maybeReward.isAvailable() && fulfillmentService.isInstantAvailable(rewardProductId, 1)) {
+                                fulfillmentService.reserveInstantQuantity(rewardProductId, 1);
+                                rewardProduct = maybeReward;
+                                rewardAttachMode = attachMode;
+                                userService.incrementRewardRedeemedCount(owner.userId());
+                                rewardClaimed = true;
+                            }
+                        } else {
+                            Product maybeReward = productRepository.findById(rewardProductId).orElse(null);
+                            if (maybeReward != null && maybeReward.isAvailable() && fulfillmentService.isScheduledAvailable(rewardProductId, scheduledDate, 1)) {
+                                fulfillmentService.reserveScheduledCapacity(rewardProductId, scheduledDate, 1);
+                                rewardProduct = maybeReward;
+                                rewardAttachMode = attachMode;
+                                userService.incrementRewardRedeemedCount(owner.userId());
+                                rewardClaimed = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                // if anything goes wrong, skip reward silently
+            }
+        }
+
         List<Order> savedOrders = new ArrayList<>();
         boolean discountApplied = false;
+        boolean rewardAppliedToOrder = false;
         for (Map.Entry<DeliveryMode, List<CartItem>> entry : groupedItems.entrySet()) {
             DeliveryMode deliveryMode = entry.getKey();
             List<CartItem> groupItems = entry.getValue();
             BigDecimal subtotal = BigDecimal.ZERO;
 
             for (CartItem cartItem : groupItems) {
+                // ensure product wasn't disabled after it was added to cart
+                if (!cartItem.getProduct().isAvailable()) {
+                    throw new IllegalArgumentException("Product is not available");
+                }
                 if (deliveryMode == DeliveryMode.INSTANT) {
                     fulfillmentService.reserveInstantQuantity(cartItem.getProduct().getId(), cartItem.getQuantity());
                 } else {
@@ -176,7 +228,7 @@ public class CartService {
             order.setDeliveryMode(deliveryMode);
             order.setOrderType(orderType);
             order.setStatus(OrderStatus.PENDING);
-            order.setPaymentMethod(PaymentMethod.COD);
+            order.setPaymentMethod(PaymentMethod.INSTAPAY);
             order.setSubtotal(subtotal);
             order.setDeliveryFee(deliveryFee);
             BigDecimal orderDiscount = BigDecimal.ZERO;
@@ -203,6 +255,21 @@ public class CartService {
                 orderItem.setUnitPrice(cartItem.getUnitPrice());
                 orderItem.setLineTotal(cartItem.getUnitPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
                 order.getItems().add(orderItem);
+            }
+
+            // attach reward product to the first matching order if claimed
+            if (rewardClaimed && !rewardAppliedToOrder && rewardAttachMode == deliveryMode && rewardProduct != null) {
+                OrderItem rewardItem = new OrderItem();
+                rewardItem.setOrder(order);
+                rewardItem.setProductId(rewardProduct.getId());
+                rewardItem.setProductName(rewardProduct.getName());
+                rewardItem.setProductImage(rewardProduct.getMainImage());
+                rewardItem.setQuantity(1);
+                rewardItem.setUnitPrice(BigDecimal.ZERO);
+                rewardItem.setLineTotal(BigDecimal.ZERO);
+                order.getItems().add(rewardItem);
+                order.setRewardApplied(true);
+                rewardAppliedToOrder = true;
             }
 
             savedOrders.add(orderRepository.save(order));
@@ -300,6 +367,13 @@ public class CartService {
     }
 
     private void validateItemAvailability(String productId, int quantity, DeliveryMode deliveryMode) {
+        // ensure product is still marked available by admin
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new IllegalArgumentException("Product not found"));
+        if (!product.isAvailable()) {
+            throw new IllegalArgumentException("Product is not available");
+        }
+
         if (deliveryMode == DeliveryMode.INSTANT) {
             if (!fulfillmentService.isInstantAvailable(productId, quantity)) {
                 throw new IllegalArgumentException("Instant delivery inventory is not sufficient");

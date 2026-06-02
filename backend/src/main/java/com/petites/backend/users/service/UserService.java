@@ -100,6 +100,13 @@ public class UserService {
     }
 
     @Transactional
+    public UserResponse incrementRewardRedeemedCount(String id) {
+        User user = getEntity(id);
+        user.setRewardsRedeemedCount(user.getRewardsRedeemedCount() + 1);
+        return toResponse(userRepository.save(user));
+    }
+
+    @Transactional
     public UserResponse assignRole(String userId, String roleName) {
         User user = getEntity(userId);
         Role role = roleRepository.findByName(roleName)

@@ -8,6 +8,8 @@
 		</div>
 		<nav class="admin-nav">
 			<a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeSidebar()">Dashboard</a>
+			<a routerLink="/orders" routerLinkActive="active" (click)="closeSidebar()">Orders</a>
+			<a routerLink="/coupons" routerLinkActive="active" (click)="closeSidebar()">Coupons</a>
 			<a routerLink="/users" routerLinkActive="active" (click)="closeSidebar()">Users</a>
 			<a routerLink="/categories" routerLinkActive="active" (click)="closeSidebar()">Categories</a>
 			<a routerLink="/products" routerLinkActive="active" (click)="closeSidebar()">Products</a>

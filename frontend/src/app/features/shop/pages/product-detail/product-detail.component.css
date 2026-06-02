@@ -260,6 +260,136 @@
   color: #6e3c32;
   margin: 0;
 }
+.fulfillment-section {
+  margin-bottom: 2.25rem;
+}
+
+.fulfillment-title {
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  color: #5a3529;
+  font-weight: 700;
+  margin: 0 0 1rem;
+  text-transform: uppercase;
+}
+
+.delivery-options-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.delivery-option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  padding: 1.25rem;
+  border-radius: 16px;
+  border: 1.5px solid rgba(183, 149, 132, 0.22);
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  min-height: 125px;
+}
+
+.delivery-option-card:hover:not(:disabled):not(.active) {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(203, 106, 91, 0.45);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(83, 47, 32, 0.04);
+}
+
+.delivery-option-card.active {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #cb6a5b;
+  box-shadow: 0 8px 24px rgba(203, 106, 91, 0.12), inset 0 0 0 1px rgba(203, 106, 91, 0.1);
+  transform: translateY(-1px);
+}
+
+.delivery-option-card:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(183, 149, 132, 0.12);
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.option-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+  width: 100%;
+}
+
+.option-icon {
+  width: 18px;
+  height: 18px;
+  stroke-width: 2.25;
+  color: #8d5a43;
+  transition: color 0.2s ease;
+}
+
+.delivery-option-card.active .option-icon.lightning {
+  color: #cb6a5b;
+  fill: rgba(203, 106, 91, 0.15);
+}
+
+.delivery-option-card.active .option-icon.calendar {
+  color: #cb6a5b;
+}
+
+.option-name {
+  font-size: 0.95rem;
+  font-weight: 750;
+  color: #4a2b21;
+}
+
+.option-desc {
+  font-size: 0.82rem;
+  color: #6e3c32;
+  line-height: 1.45;
+  margin: 0 0 0.75rem;
+}
+
+.option-footer {
+  margin-top: auto;
+  width: 100%;
+  display: flex;
+}
+
+.option-status {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 20px;
+}
+
+.option-status.success {
+  background: rgba(82, 167, 124, 0.12);
+  color: #2b7754;
+}
+
+.option-status.out-of-stock {
+  background: rgba(201, 86, 69, 0.1);
+  color: #c95645;
+}
+
+.option-status.info {
+  background: rgba(103, 67, 50, 0.06);
+  color: #8d5a43;
+}
+
+.delivery-option-card.active .option-status.info {
+  background: rgba(203, 106, 91, 0.08);
+  color: #cb6a5b;
+}
 
 .purchase-controls {
   margin-top: auto;
@@ -362,6 +492,12 @@
   
   .price-tag {
     font-size: 1.6rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .delivery-options-grid {
+    grid-template-columns: 1fr;
   }
 }
 

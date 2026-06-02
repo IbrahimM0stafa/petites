@@ -7,14 +7,19 @@ import com.petites.backend.common.model.BaseEntity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Index;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 
 @Entity
-@Table(name = "guest_sessions", uniqueConstraints = {
+@Table(name = "guest_sessions",
+    indexes = {
+        @Index(name = "idx_guest_sessions_expires_at", columnList = "expires_at")
+    },
+    uniqueConstraints = {
         @UniqueConstraint(columnNames = "session_token")
-})
+    })
 public class GuestSession extends BaseEntity {
 
     @Column(name = "session_token", length = 255, nullable = false)

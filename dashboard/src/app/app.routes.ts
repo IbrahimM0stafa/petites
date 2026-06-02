@@ -19,6 +19,16 @@ export const routes: Routes = [
 					import('./features/dashboard/pages/overview.component').then((m) => m.OverviewComponent)
 			},
 			{
+				path: 'orders',
+				loadChildren: () =>
+					import('./features/orders/orders.routes').then((m) => m.routes)
+			},
+			{
+				path: 'coupons',
+				loadChildren: () =>
+					import('./features/coupons/coupons.routes').then((m) => m.routes)
+			},
+			{
 				path: 'users',
 				loadComponent: () =>
 					import('./features/users/pages/users-list.component').then((m) => m.UsersListComponent)

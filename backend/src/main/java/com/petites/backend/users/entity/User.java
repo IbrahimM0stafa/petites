@@ -35,6 +35,9 @@ public class User extends AuditedEntity {
     @Column(name = "completed_orders_count", nullable = false)
     private int completedOrdersCount = 0;
 
+    @Column(name = "rewards_redeemed_count", nullable = false, columnDefinition = "integer default 0")
+    private int rewardsRedeemedCount = 0;
+
     @Column(name = "is_active", nullable = false)
     private boolean active = true;
 
@@ -84,6 +87,14 @@ public class User extends AuditedEntity {
 
     public void setCompletedOrdersCount(int completedOrdersCount) {
         this.completedOrdersCount = completedOrdersCount;
+    }
+
+    public int getRewardsRedeemedCount() {
+        return rewardsRedeemedCount;
+    }
+
+    public void setRewardsRedeemedCount(int rewardsRedeemedCount) {
+        this.rewardsRedeemedCount = rewardsRedeemedCount;
     }
 
     public boolean isActive() {

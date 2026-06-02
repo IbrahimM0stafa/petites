@@ -2,8 +2,13 @@
   <div class="page-header">
     <div class="header-title">
       <h2>Global Settings</h2>
-      <p class="subtitle">Configure cutoff times, delivery fees and other business policies</p>
+      <p class="subtitle">Configure loyalty rewards, cutoff times, delivery fees and other business policies</p>
     </div>
+  </div>
+
+  <div class="info-banner">
+    <strong>Auto redemption:</strong>
+    Loyalty rewards are applied automatically at checkout once the target is met. Configure the reward product here.
   </div>
 
   <p *ngIf="errorMessage" class="page-error" role="alert">{{ errorMessage }}</p>
@@ -16,6 +21,67 @@
 
   <form *ngIf="!loading" [formGroup]="settingsForm" (ngSubmit)="onSubmit()" class="settings-form">
     <div class="form-grid">
+      <!-- Reward Target Card -->
+      <div class="settings-card">
+        <div class="card-icon">🎁</div>
+        <h3>Reward Order Target</h3>
+        <p class="card-desc">Number of completed orders required before a reward is automatically applied.</p>
+        <div class="form-group">
+          <label for="reward_order_target">Target Orders</label>
+          <input
+            type="number"
+            id="reward_order_target"
+            formControlName="reward_order_target"
+            class="form-control"
+            placeholder="5" />
+          <div *ngIf="settingsForm.get('reward_order_target')?.touched && settingsForm.get('reward_order_target')?.invalid" class="field-error">
+            Reward target must be 1 or higher.
+          </div>
+        </div>
+      </div>
+
+      <!-- Reward Product Card -->
+      <div class="settings-card">
+        <div class="card-icon">🍰</div>
+        <h3>Reward Product ID</h3>
+        <p class="card-desc">Product that is auto-applied when loyalty is eligible. Pick from the catalog below.</p>
+        <div class="product-picker">
+          <div class="form-group">
+            <label for="reward_product_search">Search Product</label>
+            <input
+              type="text"
+              id="reward_product_search"
+              class="form-control"
+              placeholder="Search by name or ID"
+              (input)="productSearch = $any($event.target).value" />
+          </div>
+          <div class="form-group">
+            <label for="reward_product_id">Reward Product</label>
+            <select
+              id="reward_product_id"
+              formControlName="reward_product_id"
+              class="form-control"
+              (change)="onRewardProductSelected()">
+              <option value="">Select a product</option>
+              <option *ngFor="let product of filteredProducts()" [value]="product.id">
+                {{ product.name }} ({{ product.id }})
+              </option>
+            </select>
+          </div>
+          <p class="picker-note">Admins should not need to know product IDs; use the picker.</p>
+          <div class="product-picker-actions">
+            <button type="button" class="admin-btn admin-btn-ghost" (click)="loadProducts(true)" [disabled]="productLoading">
+              {{ productLoading ? 'Refreshing...' : 'Refresh list' }}
+            </button>
+            <button type="button" class="admin-btn admin-btn-ghost" (click)="loadProducts()" [disabled]="productLoading || !productHasMore">
+              {{ productHasMore ? 'Load more' : 'All products loaded' }}
+            </button>
+          </div>
+          <p *ngIf="productError" class="field-error" role="alert">{{ productError }}</p>
+          <p *ngIf="!productLoading && filteredProducts().length === 0" class="picker-note">No products match your search.</p>
+        </div>
+      </div>
+
       <!-- Cutoff Time Card -->
       <div class="settings-card">
         <div class="card-icon">🕒</div>
@@ -52,6 +118,25 @@
             Delivery fee must be 0 or higher.
           </div>
         </div>
+      </div>
+    </div>
+
+    <div class="reward-preview" *ngIf="rewardProduct || rewardProductLoading">
+      <h3>Reward Product Preview</h3>
+      <div class="reward-preview-body" *ngIf="rewardProduct">
+        <div class="reward-thumb">
+          <img *ngIf="rewardProduct.mainImage" [src]="rewardProduct.mainImage" alt="Reward product" />
+          <div *ngIf="!rewardProduct.mainImage" class="no-image">No Image</div>
+        </div>
+        <div>
+          <p class="reward-name">{{ rewardProduct.name }}</p>
+          <p class="reward-meta">{{ rewardProduct.id }}</p>
+          <a [routerLink]="['/products', rewardProduct.id, 'edit']" class="admin-btn admin-btn-ghost">View Product</a>
+        </div>
+      </div>
+      <div class="page-status" *ngIf="rewardProductLoading">
+        <div class="spinner"></div>
+        <p>Loading reward product...</p>
       </div>
     </div>
 

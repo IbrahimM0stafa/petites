@@ -77,6 +77,22 @@
           [fulfillmentMode]="currentFulfillmentMode">
         </app-product-card>
       </div>
+      <!-- pagination controls -->
+      <div class="pagination" *ngIf="(totalPages && totalPages > 1) || (totalElements && totalElements > size)">
+        <div class="pagination-inner">
+          <button class="page-btn primary" (click)="prevPage()" [disabled]="page === 0" aria-label="Previous page">
+            <span class="chev">‹</span>
+            <span class="btn-label">Previous</span>
+          </button>
+
+          <div class="page-info">Page <strong>{{ page + 1 }}</strong> of <strong>{{ totalPages || 1 }}</strong></div>
+
+          <button class="page-btn primary" (click)="nextPage()" [disabled]="page + 1 >= totalPages" aria-label="Next page">
+            <span class="btn-label">Next</span>
+            <span class="chev">›</span>
+          </button>
+        </div>
+      </div>
     </section>
   </div>
 </main>
