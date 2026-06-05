@@ -10,6 +10,7 @@ import com.petites.backend.carts.dto.CheckoutResponse;
 import com.petites.backend.carts.entity.Cart;
 import com.petites.backend.carts.entity.CartItem;
 import com.petites.backend.carts.enums.CartStatus;
+import com.petites.backend.carts.exception.CheckoutAvailabilityException;
 import com.petites.backend.carts.repository.CartItemRepository;
 import com.petites.backend.carts.repository.CartRepository;
 import com.petites.backend.common.enums.DeliveryMode;
@@ -216,7 +217,7 @@ public class CartService {
                 if (deliveryMode == DeliveryMode.INSTANT) {
                     fulfillmentService.reserveInstantQuantity(cartItem.getProduct().getId(), cartItem.getQuantity());
                 } else {
-                    fulfillmentService.reserveScheduledCapacity(cartItem.getProduct().getId(), scheduledDate, cartItem.getQuantity());
+                    reserveScheduledCapacityForCheckout(cartItem, scheduledDate);
                 }
                 subtotal = subtotal.add(cartItem.getUnitPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
             }
@@ -379,6 +380,41 @@ public class CartService {
                 throw new IllegalArgumentException("Instant delivery inventory is not sufficient");
             }
         }
+    }
+
+    private void reserveScheduledCapacityForCheckout(CartItem cartItem, LocalDate scheduledDate) {
+        Product product = cartItem.getProduct();
+        int availableQuantity = fulfillmentService.getScheduledAvailableQuantity(product.getId(), scheduledDate);
+        if (availableQuantity < cartItem.getQuantity()) {
+            throw scheduledCapacityException(product, scheduledDate, cartItem.getQuantity(), availableQuantity);
+        }
+
+        try {
+            fulfillmentService.reserveScheduledCapacity(product.getId(), scheduledDate, cartItem.getQuantity());
+        } catch (IllegalArgumentException ex) {
+            int latestAvailableQuantity = fulfillmentService.getScheduledAvailableQuantity(product.getId(), scheduledDate);
+            throw scheduledCapacityException(product, scheduledDate, cartItem.getQuantity(), latestAvailableQuantity);
+        }
+    }
+
+    private CheckoutAvailabilityException scheduledCapacityException(
+            Product product,
+            LocalDate scheduledDate,
+            int requestedQuantity,
+            int availableQuantity
+    ) {
+        String message = "%s has only %d available for %s. Requested quantity: %d."
+                .formatted(product.getName(), availableQuantity, scheduledDate, requestedQuantity);
+        int dailyCapacity = fulfillmentService.getScheduledDailyCapacity(product.getId());
+
+        return new CheckoutAvailabilityException(message, Map.of(
+                "productId", product.getId(),
+                "productName", product.getName(),
+                "scheduledDate", scheduledDate.toString(),
+                "requestedQuantity", String.valueOf(requestedQuantity),
+                "availableQuantity", String.valueOf(availableQuantity),
+                "dailyCapacity", String.valueOf(dailyCapacity)
+        ));
     }
 
     private String resolveCustomerName(CartOwnerRef owner, String customerName) {

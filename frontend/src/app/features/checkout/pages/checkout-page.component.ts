@@ -2,14 +2,15 @@ import { CommonModule } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { switchMap } from 'rxjs';
+import { forkJoin, switchMap } from 'rxjs';
+import { ShopService } from '../../../core/services/shop.service';
 
 import { AddressCreateRequest, AddressResponse } from '../../../core/models/address.models';
 import { CartResponse } from '../../../core/models/cart.models';
 import { CouponValidationResponse } from '../../../core/models/coupon.models';
 import { LoyaltyResponse } from '../../../core/models/loyalty.models';
 import { CheckoutResponse, OrderResponse, OrderType } from '../../../core/models/order.models';
-import { readApiErrorMessage } from '../../../core/models/api-error.model';
+import { readApiErrorMessage, readApiFieldErrors } from '../../../core/models/api-error.model';
 import { AddressService } from '../../../core/services/address.service';
 import { AuthStateService } from '../../../core/services/auth-state.service';
 import { CartService } from '../../../core/services/cart.service';
@@ -37,6 +38,9 @@ export class CheckoutPageComponent implements OnInit {
 	private readonly checkoutService = inject(CheckoutService);
 	private readonly loyaltyService = inject(LoyaltyService);
 	private readonly purchaseSession = inject(PurchaseSessionService);
+	private readonly shopService = inject(ShopService);
+
+	minScheduledDate = '';
 
 	readonly checkoutForm = this.formBuilder.group({
 		customerName: ['', [Validators.minLength(2)]],
@@ -59,6 +63,8 @@ export class CheckoutPageComponent implements OnInit {
 	validatingCoupon = false;
 	placingOrder = false;
 	errorMessage = '';
+	showErrorPopup = false;
+	errorPopupMode: 'checkout' | 'basket' = 'checkout';
 	statusMessage = '';
 	showGuestPrompt = false;
 	loyalty: LoyaltyResponse | null = null;
@@ -200,12 +206,48 @@ export class CheckoutPageComponent implements OnInit {
 					this.orders = [];
 					this.orderReference = null;
 				}
+				this.updateMinScheduledDate(cart);
 			},
 			error: (error) => {
 				this.loading = false;
 				this.errorMessage = readApiErrorMessage(error, 'Unable to load cart for checkout.');
 			}
 		});
+	}
+
+	private updateMinScheduledDate(cart: CartResponse | null): void {
+		const scheduledItems = cart?.items.filter((item) => item.deliveryMode === 'SCHEDULED') ?? [];
+		if (scheduledItems.length === 0) {
+			this.minScheduledDate = '';
+			return;
+		}
+
+		const requests = scheduledItems.map((item) => this.shopService.getProductDetail(item.productId));
+		forkJoin(requests).subscribe({
+			next: (products) => {
+				const dates = products.map((p) => p.earliestScheduledDate).filter(Boolean);
+				if (dates.length > 0) {
+					dates.sort();
+					this.minScheduledDate = dates[dates.length - 1];
+				} else {
+					this.minScheduledDate = this.getTodayCairoFormatted();
+				}
+			},
+			error: () => {
+				this.minScheduledDate = this.getTodayCairoFormatted();
+			}
+		});
+	}
+
+	private getTodayCairoFormatted(): string {
+		const options: Intl.DateTimeFormatOptions = {
+			timeZone: 'Africa/Cairo',
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit'
+		};
+		const formatter = new Intl.DateTimeFormat('fr-CA', options);
+		return formatter.format(new Date());
 	}
 
 	loadAddresses(): void {
@@ -272,15 +314,20 @@ export class CheckoutPageComponent implements OnInit {
 	onOrderTypeChange(): void {
 		this.syncCheckoutValidation();
 		this.errorMessage = '';
+		this.showErrorPopup = false;
 	}
 
 	dismissGuestPrompt(): void {
 		this.showGuestPrompt = false;
 	}
 
+	dismissErrorPopup(): void {
+		this.showErrorPopup = false;
+	}
+
 	submitCheckout(): void {
 		if (!this.cart?.items?.length) {
-			this.errorMessage = 'Your cart is empty.';
+			this.showCheckoutError('Your cart is empty.', 'basket');
 			return;
 		}
 
@@ -290,19 +337,26 @@ export class CheckoutPageComponent implements OnInit {
 		}
 
 		if (this.isAuthenticated && this.orderType === 'DELIVERY' && !this.checkoutForm.controls.addressId.value) {
-			this.errorMessage = 'Select a delivery address.';
+			this.showCheckoutError('Select a delivery address.');
 			return;
 		}
 
 		if (this.showGuestDeliveryFields && !this.hasGuestDeliveryAddress()) {
-			this.errorMessage = 'Enter a delivery address to place a guest delivery order.';
+			this.showCheckoutError('Enter a delivery address to place a guest delivery order.');
 			this.checkoutForm.markAllAsTouched();
 			return;
 		}
 
-		if (this.hasScheduledItems && !this.checkoutForm.controls.scheduledDate.value) {
-			this.errorMessage = 'Choose a scheduled date for scheduled items.';
-			return;
+		if (this.hasScheduledItems) {
+			const selectedDateVal = this.checkoutForm.controls.scheduledDate.value;
+			if (!selectedDateVal) {
+				this.showCheckoutError('Choose a scheduled date for scheduled items.');
+				return;
+			}
+			if (this.minScheduledDate && selectedDateVal < this.minScheduledDate) {
+				this.showCheckoutError(`Scheduled date cannot be earlier than ${this.formatCheckoutDate(this.minScheduledDate)}.`);
+				return;
+			}
 		}
 
 		if (this.showGuestDeliveryFields) {
@@ -321,6 +375,7 @@ export class CheckoutPageComponent implements OnInit {
 
 		this.placingOrder = true;
 		this.errorMessage = '';
+		this.showErrorPopup = false;
 		this.statusMessage = '';
 
 		this.purchaseSession
@@ -333,7 +388,7 @@ export class CheckoutPageComponent implements OnInit {
 				next: (response) => this.handleCheckoutSuccess(response),
 				error: (error) => {
 					this.placingOrder = false;
-					this.errorMessage = readApiErrorMessage(error, 'Unable to complete checkout.');
+					this.showCheckoutError(this.readCheckoutErrorMessage(error), this.isCheckoutAvailabilityError(error) ? 'basket' : 'checkout');
 				}
 			});
 	}
@@ -341,15 +396,61 @@ export class CheckoutPageComponent implements OnInit {
 	private submitCheckoutWithAddressId(addressId: string | null): void {
 		this.placingOrder = true;
 		this.errorMessage = '';
+		this.showErrorPopup = false;
 		this.statusMessage = '';
 
 		this.checkoutService.submitCheckout(this.buildCheckoutRequest(addressId)).subscribe({
 			next: (response) => this.handleCheckoutSuccess(response),
 			error: (error) => {
 				this.placingOrder = false;
-				this.errorMessage = readApiErrorMessage(error, 'Unable to complete checkout.');
+				this.showCheckoutError(this.readCheckoutErrorMessage(error), this.isCheckoutAvailabilityError(error) ? 'basket' : 'checkout');
 			}
 		});
+	}
+
+	private showCheckoutError(message: string, mode: 'checkout' | 'basket' = 'checkout'): void {
+		this.errorMessage = message;
+		this.errorPopupMode = mode;
+		this.showErrorPopup = true;
+	}
+
+	private isCheckoutAvailabilityError(error: unknown): boolean {
+		const fields = readApiFieldErrors(error);
+		return Boolean(fields?.['productName']?.[0] && fields?.['requestedQuantity']?.[0] && fields?.['availableQuantity']?.[0]);
+	}
+
+	private readCheckoutErrorMessage(error: unknown): string {
+		const fields = readApiFieldErrors(error);
+		const productName = fields?.['productName']?.[0];
+		const scheduledDate = fields?.['scheduledDate']?.[0];
+		const requestedQuantity = fields?.['requestedQuantity']?.[0];
+		const availableQuantity = fields?.['availableQuantity']?.[0];
+		const dailyCapacity = fields?.['dailyCapacity']?.[0];
+
+		if (productName && scheduledDate && requestedQuantity && availableQuantity) {
+			const requested = Number(requestedQuantity);
+			const capacity = Number(dailyCapacity);
+			if (Number.isFinite(requested) && Number.isFinite(capacity) && requested > capacity) {
+				return `${productName} can only be ordered up to ${dailyCapacity} per day. Your cart has ${requestedQuantity}. Please reduce the quantity.`;
+			}
+
+			return `${productName} has only ${availableQuantity} available on ${this.formatCheckoutDate(scheduledDate)}. Your cart has ${requestedQuantity}. Choose another date or reduce the quantity.`;
+		}
+
+		return readApiErrorMessage(error, 'Unable to complete checkout.');
+	}
+
+	private formatCheckoutDate(value: string): string {
+		const date = new Date(`${value}T00:00:00`);
+		if (Number.isNaN(date.getTime())) {
+			return value;
+		}
+
+		return new Intl.DateTimeFormat('en-EG', {
+			month: 'short',
+			day: 'numeric',
+			year: 'numeric'
+		}).format(date);
 	}
 
 	private handleCheckoutSuccess(response: CheckoutResponse): void {

@@ -69,21 +69,30 @@ public class FulfillmentService {
      */
     @Transactional(readOnly = true)
     public boolean isScheduledAvailable(String productId, LocalDate requestedDate, int quantity) {
+        return getScheduledAvailableQuantity(productId, requestedDate) >= quantity;
+    }
+
+    @Transactional(readOnly = true)
+    public int getScheduledAvailableQuantity(String productId, LocalDate requestedDate) {
         LocalDate earliestAllowed = calculateEarliestScheduledDate();
         if (requestedDate.isBefore(earliestAllowed)) {
-            return false;
+            return 0;
         }
 
-        // Get daily capacity (default to 100 if not specified)
-        int dailyCapacity = productFulfillmentRepository.findByProductId(productId)
-                .map(ProductFulfillment::getDailyCapacity)
-                .orElse(100);
+        int dailyCapacity = getScheduledDailyCapacity(productId);
 
         int reserved = productDailyCapacityUsageRepository.findByProductIdAndProductionDate(productId, requestedDate)
                 .map(ProductDailyCapacityUsage::getReservedQuantity)
                 .orElse(0);
 
-        return (reserved + quantity) <= dailyCapacity;
+        return Math.max(0, dailyCapacity - reserved);
+    }
+
+    @Transactional(readOnly = true)
+    public int getScheduledDailyCapacity(String productId) {
+        return productFulfillmentRepository.findByProductId(productId)
+                .map(ProductFulfillment::getDailyCapacity)
+                .orElse(100);
     }
 
     /**
@@ -178,9 +187,7 @@ public class FulfillmentService {
         @Transactional(propagation = Propagation.REQUIRES_NEW)
     public FulfillmentStatusResponse getFulfillmentStatus(String productId) {
 
-        int dailyCapacity = productFulfillmentRepository.findByProductId(productId)
-                .map(ProductFulfillment::getDailyCapacity)
-                .orElse(100);
+        int dailyCapacity = getScheduledDailyCapacity(productId);
 
         LocalDate tomorrow = LocalDate.now(CAIRO_ZONE).plusDays(1);
         int reservedTomorrow = productDailyCapacityUsageRepository.findByProductIdAndProductionDate(productId, tomorrow)

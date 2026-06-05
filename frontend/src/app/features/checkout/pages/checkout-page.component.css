@@ -172,6 +172,34 @@
 	flex: 1 1 140px;
 }
 
+.checkout-error-card {
+	border: 1px solid rgba(201, 86, 69, 0.24);
+}
+
+.checkout-error-close {
+	background: rgba(201, 86, 69, 0.1);
+	color: #c95645;
+}
+
+.checkout-error-icon {
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 14px;
+	background: rgba(201, 86, 69, 0.1);
+	color: #c95645;
+}
+
+.checkout-error-icon svg {
+	width: 22px;
+	height: 22px;
+}
+
+.checkout-error-eyebrow {
+	color: #c95645;
+}
+
 @keyframes slideIn {
 	from { transform: translateY(-8px); opacity: 0; }
 	to { transform: translateY(0); opacity: 1; }

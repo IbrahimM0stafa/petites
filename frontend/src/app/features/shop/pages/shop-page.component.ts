@@ -14,6 +14,8 @@ import { Category, Product } from '../../../core/models/shop.models';
 })
 export class ShopPageComponent implements OnInit {
   isFilterOpen = false;
+  priceRangeMax = 50;
+  private hasPriceFilterBeenTouched = false;
 
   // Active / Applied filter states
   selectedCategory: Category | null = null;
@@ -70,6 +72,7 @@ export class ShopPageComponent implements OnInit {
     this.shopService.getProducts(catId, this.currentFulfillmentMode, this.page, this.size).subscribe({
       next: (prodResponse) => {
         this.products = prodResponse.content;
+        this.syncPriceRangeDefaults();
         // Normalize pagination information from backend. Some APIs return totals
         // at the top-level (totalPages/totalElements) while others nest under
         // a `page` object ({ number, size, totalElements, totalPages }).
@@ -108,6 +111,18 @@ export class ShopPageComponent implements OnInit {
     });
   }
 
+  private syncPriceRangeDefaults(): void {
+    const highestProductPrice = this.products.reduce((max, product) => Math.max(max, product.price ?? 0), 50);
+    this.priceRangeMax = Math.max(50, highestProductPrice);
+
+    if (!this.hasPriceFilterBeenTouched && this.appliedPrice === 50) {
+      this.appliedPrice = this.priceRangeMax;
+      this.tempPrice = this.priceRangeMax;
+    } else if (!this.hasPriceFilterBeenTouched) {
+      this.tempPrice = this.appliedPrice;
+    }
+  }
+
   toggleFilters(): void {
     this.isFilterOpen = !this.isFilterOpen;
     if (this.isFilterOpen) {
@@ -124,6 +139,7 @@ export class ShopPageComponent implements OnInit {
   onPriceChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.tempPrice = parseFloat(target.value);
+    this.hasPriceFilterBeenTouched = true;
   }
 
   applyFilters(): void {

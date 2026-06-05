@@ -6,6 +6,7 @@ import com.petites.backend.carts.dto.CheckoutResponse;
 import com.petites.backend.carts.entity.Cart;
 import com.petites.backend.carts.entity.CartItem;
 import com.petites.backend.carts.enums.CartStatus;
+import com.petites.backend.carts.exception.CheckoutAvailabilityException;
 import com.petites.backend.addresses.dto.AddressResponse;
 import com.petites.backend.carts.repository.CartItemRepository;
 import com.petites.backend.carts.repository.CartRepository;
@@ -37,7 +38,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -100,6 +103,7 @@ class CartServiceTest {
         when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of(instantItem, scheduledItem));
         when(userService.findById(userId)).thenReturn(Optional.of(user));
         when(couponService.resolveForCheckout(null, null, new BigDecimal("80.00"))).thenReturn(null);
+        when(fulfillmentService.getScheduledAvailableQuantity("scheduled-1", scheduledDate)).thenReturn(1);
         when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
             Order order = invocation.getArgument(0);
             if (order.getId() == null) {
@@ -120,6 +124,51 @@ class CartServiceTest {
         verify(fulfillmentService).reserveInstantQuantity("instant-1", 2);
         verify(fulfillmentService).reserveScheduledCapacity("scheduled-1", scheduledDate, 1);
         verify(cartItemRepository).deleteByCartId(cartId);
+    }
+
+    @Test
+    void checkoutReportsScheduledCapacityProblemWithProductDetails() throws Exception {
+        String userId = "user-1";
+        String cartId = "cart-1";
+        LocalDate scheduledDate = LocalDate.now().plusDays(2);
+
+        Cart cart = new Cart();
+        assignId(cart, cartId);
+        cart.setUserId(userId);
+        cart.setStatus(CartStatus.ACTIVE);
+        cart.setCreatedAt(Instant.now());
+
+        Product scheduledProduct = product("scheduled-1", "Cake", "cake.jpg", new BigDecimal("20.00"));
+        CartItem scheduledItem = cartItem(cart, scheduledProduct, 3, DeliveryMode.SCHEDULED);
+
+        User user = new User();
+        user.setName("Mona");
+        user.setPhone("01000000000");
+
+        when(cartRepository.findByUserIdAndStatus(userId, CartStatus.ACTIVE)).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of(scheduledItem));
+        when(userService.findById(userId)).thenReturn(Optional.of(user));
+        when(couponService.resolveForCheckout(null, null, new BigDecimal("60.00"))).thenReturn(null);
+        when(settingService.getSetting("delivery_fee", "50")).thenReturn("50");
+        when(fulfillmentService.getScheduledAvailableQuantity("scheduled-1", scheduledDate)).thenReturn(1);
+        when(fulfillmentService.getScheduledDailyCapacity("scheduled-1")).thenReturn(2);
+
+        CheckoutAvailabilityException exception = assertThrows(
+                CheckoutAvailabilityException.class,
+                () -> cartService.checkout(
+                        CartOwnerRef.forUser(userId),
+                        new CheckoutRequest(null, null, OrderType.DELIVERY, null, null, null, null, scheduledDate)
+                )
+        );
+
+        assertEquals("Cake has only 1 available for " + scheduledDate + ". Requested quantity: 3.", exception.getMessage());
+        assertEquals("scheduled-1", exception.getFields().get("productId"));
+        assertEquals("Cake", exception.getFields().get("productName"));
+        assertEquals(scheduledDate.toString(), exception.getFields().get("scheduledDate"));
+        assertEquals("3", exception.getFields().get("requestedQuantity"));
+        assertEquals("1", exception.getFields().get("availableQuantity"));
+        assertEquals("2", exception.getFields().get("dailyCapacity"));
+        verify(fulfillmentService, never()).reserveScheduledCapacity("scheduled-1", scheduledDate, 3);
     }
 
     private Product product(String id, String name, String image, BigDecimal price) throws Exception {

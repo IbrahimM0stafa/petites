@@ -1,5 +1,6 @@
 package com.petites.backend.config;
 
+import com.petites.backend.carts.exception.CheckoutAvailabilityException;
 import java.time.Instant;
 import java.util.Map;
 
@@ -41,6 +42,18 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST.value(),
                 ex.getMessage(),
                 null
+        );
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
+    }
+
+    @ExceptionHandler(CheckoutAvailabilityException.class)
+    public ResponseEntity<ApiError> handleCheckoutAvailability(CheckoutAvailabilityException ex) {
+        ApiError body = new ApiError(
+                Instant.now().toString(),
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                ex.getFields()
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);

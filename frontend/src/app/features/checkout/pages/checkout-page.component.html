@@ -23,6 +23,27 @@
     </section>
   </div>
 
+  <div class="guest-auth-modal checkout-error-modal" *ngIf="showErrorPopup && errorMessage" role="dialog" aria-modal="true" aria-labelledby="checkout-error-title">
+    <div class="guest-auth-backdrop" aria-hidden="true" (click)="dismissErrorPopup()"></div>
+    <section class="guest-auth-card checkout-error-card">
+      <button type="button" class="guest-auth-close checkout-error-close" (click)="dismissErrorPopup()" aria-label="Close error">×</button>
+      <div class="checkout-error-icon" aria-hidden="true">
+        <svg viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <p class="guest-auth-eyebrow checkout-error-eyebrow">Checkout issue</p>
+      <h2 id="checkout-error-title">{{ errorPopupMode === 'basket' ? 'Please review your basket' : 'Please complete checkout details' }}</h2>
+      <p class="guest-auth-copy">{{ errorMessage }}</p>
+      <div class="guest-auth-actions checkout-error-actions">
+        <a *ngIf="errorPopupMode === 'basket'" routerLink="/cart" class="purchase-btn purchase-btn--secondary" (click)="dismissErrorPopup()">Modify basket</a>
+        <button type="button" class="purchase-btn purchase-btn--primary" (click)="dismissErrorPopup()">
+          {{ errorPopupMode === 'basket' ? 'Review checkout' : 'Got it' }}
+        </button>
+      </div>
+    </section>
+  </div>
+
   <div class="purchase-banner purchase-banner--error" *ngIf="errorMessage" role="alert">
     <svg class="banner-icon" viewBox="0 0 20 20" fill="currentColor">
       <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
@@ -200,7 +221,7 @@
             <label class="form-label-wrap" *ngIf="hasScheduledItems">
               <span class="form-label-text">Scheduled Baking Date <span class="required-star">*</span></span>
               <div class="input-with-icon">
-                <input type="date" formControlName="scheduledDate" />
+                <input type="date" formControlName="scheduledDate" [min]="minScheduledDate" />
                 <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
