@@ -88,8 +88,8 @@
             </small>
           </td>
           <td>
-            <span class="badge badge-type">{{ order.orderType || 'N/A' }}</span>
-            <span class="badge badge-mode" *ngIf="order.deliveryMode">{{ order.deliveryMode }}</span>
+            <span class="badge badge-type" *ngIf="order.orderType" [ngClass]="{'type-delivery': order.orderType === 'DELIVERY', 'type-pickup': order.orderType === 'PICKUP'}">{{ order.orderType }}</span>
+            <span class="badge badge-mode" *ngIf="order.deliveryMode" [ngClass]="{'mode-instant': order.deliveryMode === 'INSTANT', 'mode-scheduled': order.deliveryMode === 'SCHEDULED'}">{{ order.deliveryMode }}</span>
           </td>
           <td>
             <span [class]="statusClass(order.status)">{{ order.status }}</span>

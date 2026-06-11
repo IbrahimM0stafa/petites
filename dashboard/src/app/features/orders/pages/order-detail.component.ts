@@ -7,7 +7,6 @@ import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { OrderResponse, OrderStatus } from '../../../core/models/order.model';
 import { OrderService } from '../../../core/services/order.service';
 import { formatAddressShort, formatAddressLine2 } from '../../../core/models/address.model';
-import { AddressService } from '../../../core/services/address.service';
 
 @Component({
   selector: 'app-order-detail',
@@ -19,7 +18,6 @@ import { AddressService } from '../../../core/services/address.service';
 export class OrderDetailComponent implements OnInit {
   private readonly orderService = inject(OrderService);
   private readonly route = inject(ActivatedRoute);
-  private readonly addressService = inject(AddressService);
 
   order: OrderResponse | null = null;
   loading = true;
@@ -60,13 +58,6 @@ export class OrderDetailComponent implements OnInit {
     this.orderService.getAdminOrder(id).subscribe({
       next: (order) => {
         this.order = order;
-        // fetch address if backend returned only addressId
-        if (!this.order.address && this.order.addressId) {
-          this.addressService.getAddress(this.order.addressId).subscribe({
-            next: (addr) => { this.order = { ...this.order!, address: addr }; },
-            error: () => { /* ignore address load errors */ }
-          });
-        }
         this.selectedStatus = order.status;
         this.loading = false;
       },

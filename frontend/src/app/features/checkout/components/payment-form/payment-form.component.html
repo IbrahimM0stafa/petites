@@ -1,0 +1,28 @@
+<div class="success-payment-container">
+  <div class="success-payment-card">
+    <div class="instapay-header-wrap">
+      <span class="instapay-brand">InstaPay Payment</span>
+    </div>
+    
+    <div class="qr-code-section">
+      <p class="qr-instruction">Scan the QR code to transfer instantly</p>
+      <div class="qr-image-wrapper">
+        <img src="/assets/images/instapay_qr.jpg" alt="InstaPay QR Code for Transfer" class="instapay-qr-img" />
+      </div>
+    </div>
+
+    <div class="payment-hint-box">
+      <p class="payment-hint-title">Transfer via Link</p>
+      <p class="payment-hint-copy">
+        Click the link to send money to <strong>{{ instapayHandle }}</strong>.
+      </p>
+      <a [href]="instapayPaymentLink" target="_blank" rel="noopener noreferrer" class="purchase-btn purchase-btn--primary instapay-cta-btn">
+        <span>Send via InstaPay Link</span>
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width: 1.25rem; height: 1.25rem;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+        </svg>
+      </a>
+      <span class="powered-by-tag">Powered by InstaPay.</span>
+    </div>
+  </div>
+</div>

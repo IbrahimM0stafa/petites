@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { AddressCreateRequest, AddressResponse, AddressUpdateRequest } from '../models/address.models';
+import { AddressCreateRequest, AddressUpdateRequest, SavedAddressResponse } from '../models/address.models';
 import { ApiClientService } from './api-client.service';
 
 @Injectable({
@@ -10,16 +10,16 @@ import { ApiClientService } from './api-client.service';
 export class AddressService {
 	constructor(private readonly apiClient: ApiClientService) {}
 
-	listAddresses(): Observable<AddressResponse[]> {
-		return this.apiClient.get<AddressResponse[]>('/api/addresses');
+	listAddresses(): Observable<SavedAddressResponse[]> {
+		return this.apiClient.get<SavedAddressResponse[]>('/api/addresses');
 	}
 
-	createAddress(request: AddressCreateRequest): Observable<AddressResponse> {
-		return this.apiClient.post<AddressResponse>('/api/addresses', request);
+	createAddress(request: AddressCreateRequest): Observable<SavedAddressResponse> {
+		return this.apiClient.post<SavedAddressResponse>('/api/addresses', request);
 	}
 
-	updateAddress(id: string, request: AddressUpdateRequest): Observable<AddressResponse> {
-		return this.apiClient.put<AddressResponse>(`/api/addresses/${id}`, request);
+	updateAddress(id: string, request: AddressUpdateRequest): Observable<SavedAddressResponse> {
+		return this.apiClient.put<SavedAddressResponse>(`/api/addresses/${id}`, request);
 	}
 
 	deleteAddress(id: string): Observable<void> {

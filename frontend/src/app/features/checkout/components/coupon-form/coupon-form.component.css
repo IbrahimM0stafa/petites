@@ -1,0 +1,190 @@
+:host {
+	display: block;
+}
+
+.checkout-card {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	padding: 1.75rem;
+	border-radius: 1.75rem;
+	background: rgba(255, 250, 246, 0.7);
+	backdrop-filter: blur(12px);
+	border: 1px solid rgba(183, 149, 132, 0.22);
+	box-shadow: 0 10px 30px rgba(83, 47, 32, 0.04);
+}
+
+.card-title-wrap {
+	display: flex;
+	align-items: center;
+	gap: 0.75rem;
+	border-bottom: 1px solid rgba(103, 67, 50, 0.1);
+	padding-bottom: 1rem;
+	margin-bottom: 0.25rem;
+}
+
+.card-title-icon {
+	width: 24px;
+	height: 24px;
+	color: #cb6a5b;
+}
+
+.checkout-card h2 {
+	margin: 0;
+	font-family: Georgia, serif;
+	font-size: 1.45rem;
+	color: #4a2b21;
+}
+
+/* Inputs with inline icons */
+.input-with-icon {
+	position: relative;
+	display: flex;
+	align-items: center;
+	width: 100%;
+}
+
+.input-with-icon input {
+	width: 100%;
+	padding: 0.85rem 1rem 0.85rem 2.85rem;
+	border-radius: 12px;
+	border: 1px solid rgba(103, 67, 50, 0.18);
+	background: rgba(255, 255, 255, 0.75);
+	font: inherit;
+	color: #4a2b21;
+	outline: none;
+	transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.input-with-icon input:focus {
+	border-color: #cb6a5b;
+	background: #fff;
+	box-shadow: 0 0 0 4px rgba(203, 106, 91, 0.12);
+}
+
+.input-icon {
+	position: absolute;
+	left: 14px;
+	width: 18px;
+	height: 18px;
+	color: var(--petites-brown-soft, #674332);
+	pointer-events: none;
+}
+
+/* Coupon Row & Validation Box */
+.coupon-row {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+.coupon-input {
+	padding-right: 1rem !important;
+}
+
+.validate-btn {
+	padding: 0.85rem 1.5rem !important;
+	border-radius: 12px !important;
+	font-size: 0.9rem !important;
+	height: 48px;
+}
+
+.coupon-preview-box {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	padding: 1rem 1.25rem;
+	border-radius: 1.15rem;
+	background: rgba(201, 86, 69, 0.04);
+	border: 1px solid rgba(201, 86, 69, 0.15);
+	color: #c95645;
+	animation: slideIn 0.25s ease;
+}
+
+.coupon-preview-box.valid {
+	background: rgba(82, 167, 124, 0.06);
+	border-color: rgba(82, 167, 124, 0.22);
+	color: #2b7754;
+}
+
+.coupon-preview-head {
+	display: flex;
+	align-items: center;
+	gap: 0.45rem;
+	font-size: 0.95rem;
+}
+
+.coupon-preview-head svg {
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
+}
+
+.coupon-message {
+	margin: 0;
+	font-size: 0.9rem;
+	opacity: 0.95;
+	line-height: 1.4;
+}
+
+.coupon-details {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.85rem;
+	border-top: 1px dashed rgba(103, 67, 50, 0.12);
+	padding-top: 0.5rem;
+	margin-top: 0.25rem;
+}
+
+.coupon-details strong {
+	color: inherit;
+}
+
+/* Button styles */
+.purchase-btn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 1.05rem 1.75rem;
+	border-radius: 99px;
+	font-size: 1rem;
+	font-weight: 700;
+	cursor: pointer;
+	border: none;
+	text-decoration: none;
+	transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	position: relative;
+	overflow: hidden;
+}
+
+.purchase-btn--secondary {
+	background: rgba(103, 67, 50, 0.06);
+	color: var(--petites-brown, #674332);
+	border: 1px solid rgba(103, 67, 50, 0.1);
+}
+
+.purchase-btn--secondary:hover:not(:disabled) {
+	background: rgba(103, 67, 50, 0.12);
+	color: #4a2b21;
+}
+
+@keyframes slideIn {
+	from { transform: translateY(-8px); opacity: 0; }
+	to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 640px) {
+	.checkout-card {
+		padding: 1.25rem;
+	}
+
+	.coupon-row {
+		grid-template-columns: 1fr;
+	}
+
+	.validate-btn {
+		width: 100%;
+	}
+}

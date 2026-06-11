@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { HeroComponent } from '../components/hero/hero.component';
+import { InstantDeliveryComponent } from '../components/instant-delivery/instant-delivery.component';
 import { CategoriesComponent } from '../components/categories/categories.component';
 import { FeaturedTreatsComponent } from '../components/featured-treats/featured-treats.component';
 import { HomeInfoPanelComponent } from '../components/home-info-panel/home-info-panel.component';
@@ -9,7 +10,14 @@ import { HomeInfoPanelComponent } from '../components/home-info-panel/home-info-
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, HeroComponent, CategoriesComponent, FeaturedTreatsComponent, HomeInfoPanelComponent],
+  imports: [
+    CommonModule,
+    HeroComponent,
+    InstantDeliveryComponent,
+    CategoriesComponent,
+    FeaturedTreatsComponent,
+    HomeInfoPanelComponent
+  ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })

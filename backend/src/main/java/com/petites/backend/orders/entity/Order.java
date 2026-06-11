@@ -35,6 +35,21 @@ public class Order extends AuditedEntity {
     @Column(name = "address_id", length = 36)
     private String addressId;
 
+    @Column(name = "delivery_city", length = 100)
+    private String deliveryCity;
+
+    @Column(name = "delivery_area", length = 100)
+    private String deliveryArea;
+
+    @Column(name = "delivery_street", length = 255)
+    private String deliveryStreet;
+
+    @Column(name = "delivery_building", length = 50)
+    private String deliveryBuilding;
+
+    @Column(name = "delivery_notes", columnDefinition = "TEXT")
+    private String deliveryNotes;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "delivery_mode", nullable = false, length = 20)
     private DeliveryMode deliveryMode;
@@ -124,6 +139,46 @@ public class Order extends AuditedEntity {
 
     public void setAddressId(String addressId) {
         this.addressId = addressId;
+    }
+
+    public String getDeliveryCity() {
+        return deliveryCity;
+    }
+
+    public void setDeliveryCity(String deliveryCity) {
+        this.deliveryCity = deliveryCity;
+    }
+
+    public String getDeliveryArea() {
+        return deliveryArea;
+    }
+
+    public void setDeliveryArea(String deliveryArea) {
+        this.deliveryArea = deliveryArea;
+    }
+
+    public String getDeliveryStreet() {
+        return deliveryStreet;
+    }
+
+    public void setDeliveryStreet(String deliveryStreet) {
+        this.deliveryStreet = deliveryStreet;
+    }
+
+    public String getDeliveryBuilding() {
+        return deliveryBuilding;
+    }
+
+    public void setDeliveryBuilding(String deliveryBuilding) {
+        this.deliveryBuilding = deliveryBuilding;
+    }
+
+    public String getDeliveryNotes() {
+        return deliveryNotes;
+    }
+
+    public void setDeliveryNotes(String deliveryNotes) {
+        this.deliveryNotes = deliveryNotes;
     }
 
     public DeliveryMode getDeliveryMode() {

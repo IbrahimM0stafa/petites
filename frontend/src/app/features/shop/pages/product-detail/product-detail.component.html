@@ -18,17 +18,14 @@
     <button class="retry-btn" (click)="ngOnInit()">Retry</button>
   </div>
 
-  <div *ngIf="successMessage" class="success-state">
-    <p class="success-msg">{{ successMessage }}</p>
-    <a routerLink="/cart" class="retry-btn">Go to cart</a>
-  </div>
+
 
   <article *ngIf="!isLoading && !errorMessage && product" class="detail-container">
     <!-- Left Column: Gallery -->
     <section class="gallery-column">
       <div 
         class="main-image-viewport" 
-        [ngClass]="getArtClass()"
+        [ngClass]="!activeImage ? getArtClass() : ''"
         [style.backgroundImage]="activeImage ? 'url(' + activeImage + ')' : null">
       </div>
       

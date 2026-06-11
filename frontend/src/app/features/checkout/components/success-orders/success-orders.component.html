@@ -1,0 +1,85 @@
+<div class="success-orders-container">
+  <h3 class="section-title">📦 Placed Order Details</h3>
+  <div class="orders-results-list">
+    <article class="order-result-card" *ngFor="let order of orders">
+      <div class="order-result-head">
+        <div class="result-number-wrap">
+          <span class="result-number-label">Order Number</span>
+          <p class="order-number">{{ order.orderNumber }}</p>
+        </div>
+        <span class="status-badge" [class.success]="['PENDING', 'CONFIRMED', 'COMPLETED', 'DELIVERED'].includes(order.status)">{{ order.status }}</span>
+      </div>
+
+      <!-- Order Items Breakdown -->
+      <div class="order-details-box">
+        <h4 class="details-box-title">Items in Shipment</h4>
+        <div class="success-items-list">
+          <div class="success-item-row" *ngFor="let item of order.items">
+            <img class="success-item-img" [src]="item.productImage || '/assets/images/logo.png'" [alt]="item.productName" />
+            <div class="success-item-meta">
+              <strong class="success-item-name">{{ item.productName }}</strong>
+              <span class="success-item-mode" *ngIf="item.deliveryMode">Mode: {{ item.deliveryMode }}</span>
+            </div>
+            <div class="success-item-pricing">
+              <span class="success-item-qty">{{ item.quantity }} × {{ item.unitPrice | currency }}</span>
+              <strong class="success-item-total">{{ item.lineTotal | currency }}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Delivery Meta Details -->
+      <div class="order-meta-info-grid">
+        <div class="meta-info-item">
+          <span class="meta-info-label">Type</span>
+          <strong class="meta-info-val">{{ order.orderType }}</strong>
+        </div>
+        <div class="meta-info-item" *ngIf="order.scheduledDate">
+          <span class="meta-info-label">Scheduled Date</span>
+          <strong class="meta-info-val">{{ order.scheduledDate | date:'mediumDate' }}</strong>
+        </div>
+        <div class="meta-info-item" *ngIf="order.notes">
+          <span class="meta-info-label">Notes</span>
+          <p class="meta-info-val notes-para">{{ order.notes }}</p>
+        </div>
+      </div>
+
+      <!-- Costs Breakdown -->
+      <dl class="checkout-cost-list success-cost-list">
+        <div class="cost-row">
+          <dt>Subtotal</dt>
+          <dd>{{ order.subtotal | currency }}</dd>
+        </div>
+        <div class="cost-row discount" *ngIf="order.discountAmount > 0">
+          <dt>Discount</dt>
+          <dd>-{{ order.discountAmount | currency }}</dd>
+        </div>
+        <div class="cost-row delivery-fee-row" *ngIf="order.deliveryFee > 0">
+          <dt>Delivery Fee</dt>
+          <dd>{{ order.deliveryFee | currency }}</dd>
+        </div>
+        <div class="cost-row total-row">
+          <dt>Shipment Total</dt>
+          <dd>{{ order.totalAmount | currency }}</dd>
+        </div>
+      </dl>
+
+      <p class="reward-line" *ngIf="rewardLine(order) as rewardLine">
+        <svg class="reward-line-gift-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V4a1 1 0 10-2 0v2h2zm3 0h2a1 1 0 100-2h-2v2z" clip-rule="evenodd" />
+          <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
+        </svg>
+        <span>{{ rewardLine }}</span>
+      </p>
+
+      <div class="order-result-actions">
+        <a class="purchase-btn purchase-btn--secondary open-order-btn" [routerLink]="['/orders', order.orderId]">
+          <span>View detailed receipt & status</span>
+          <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        </a>
+      </div>
+    </article>
+  </div>
+</div>

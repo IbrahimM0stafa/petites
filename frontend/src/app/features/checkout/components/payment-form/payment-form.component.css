@@ -1,0 +1,152 @@
+:host {
+	display: block;
+}
+
+.success-payment-container {
+	width: 100%;
+}
+
+.success-payment-card {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	padding: 2rem 1.75rem;
+	border-radius: 1.75rem;
+	background: white;
+	border: 1px solid rgba(183, 149, 132, 0.25);
+	box-shadow: 0 12px 36px rgba(83, 47, 32, 0.06);
+	text-align: center;
+}
+
+.instapay-header-wrap {
+	border-bottom: 1px solid rgba(103, 67, 50, 0.1);
+	padding-bottom: 1rem;
+}
+
+.instapay-brand {
+	font-family: Georgia, serif;
+	font-size: 1.4rem;
+	font-weight: 700;
+	color: #4a2b21;
+}
+
+.qr-code-section {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.75rem;
+	background: rgba(255, 248, 241, 0.8);
+	padding: 1.25rem;
+	border-radius: 1.25rem;
+	border: 1px dashed rgba(203, 106, 91, 0.25);
+}
+
+.qr-instruction {
+	margin: 0;
+	font-size: 0.85rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: #cb6a5b;
+}
+
+.qr-image-wrapper {
+	background: white;
+	padding: 0.75rem;
+	border-radius: 1rem;
+	box-shadow: 0 6px 20px rgba(0, 0, 0, 0.05);
+	display: inline-flex;
+}
+
+.instapay-qr-img {
+	width: 200px;
+	height: 200px;
+	object-fit: contain;
+	border-radius: 0.5rem;
+}
+
+.payment-hint-box {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.payment-hint-title {
+	margin: 0;
+	font-size: 0.85rem;
+	font-weight: 800;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--petites-brown-soft, #674332);
+}
+
+.payment-hint-copy {
+	margin: 0;
+	color: var(--petites-brown-soft, #674332);
+	font-size: 0.95rem;
+	line-height: 1.5;
+}
+
+.payment-hint-copy strong {
+	color: #4a2b21;
+}
+
+.instapay-cta-btn {
+	width: 100%;
+	padding: 1rem 1.5rem !important;
+	box-shadow: 0 6px 18px rgba(203, 106, 91, 0.2) !important;
+}
+
+.instapay-cta-btn:hover {
+	box-shadow: 0 10px 24px rgba(203, 106, 91, 0.35) !important;
+}
+
+.powered-by-tag {
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: var(--petites-brown-soft, #674332);
+	margin-top: 0.5rem;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+/* Custom base generic premium button classes used above */
+.purchase-btn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 1.05rem 1.75rem;
+	border-radius: 99px;
+	font-size: 1rem;
+	font-weight: 700;
+	cursor: pointer;
+	border: none;
+	text-decoration: none;
+	transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	position: relative;
+	overflow: hidden;
+}
+
+.purchase-btn--primary {
+	background: #cb6a5b;
+	color: white;
+	box-shadow: 0 4px 16px rgba(203, 106, 91, 0.3);
+}
+
+.purchase-btn--primary:hover:not(:disabled) {
+	background: #b55446;
+	box-shadow: 0 6px 20px rgba(203, 106, 91, 0.45);
+	transform: translateY(-1px);
+}
+
+.purchase-btn--primary:active:not(:disabled) {
+	transform: translateY(1px);
+}
+
+@media (max-width: 990px) {
+	.success-payment-container {
+		position: static;
+		width: 100%;
+	}
+}

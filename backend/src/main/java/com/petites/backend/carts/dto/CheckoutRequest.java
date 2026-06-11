@@ -11,6 +11,11 @@ public record CheckoutRequest(
         String notes,
         String couponId,
         String couponCode,
-        LocalDate scheduledDate
+        LocalDate scheduledDate,
+        String deliveryCity,
+        String deliveryArea,
+        String deliveryStreet,
+        String deliveryBuilding,
+        String deliveryNotes
 ) {
 }

@@ -57,11 +57,33 @@ public class FulfillmentService {
 
         ZonedDateTime cutoffToday = todayCairo.atTime(cutoffTime).atZone(CAIRO_ZONE);
 
+        LocalDate earliest;
         if (nowCairo.isAfter(cutoffToday)) {
-            return todayCairo.plusDays(2);
+            earliest = todayCairo.plusDays(2);
         } else {
-            return todayCairo.plusDays(1);
+            earliest = todayCairo.plusDays(1);
         }
+
+        int checkedDays = 0;
+        while (isDayBlocked(earliest) && checkedDays < 7) {
+            earliest = earliest.plusDays(1);
+            checkedDays++;
+        }
+        return earliest;
+    }
+
+    /**
+     * Checks if a given date falls on a blocked day of the week.
+     */
+    public boolean isDayBlocked(LocalDate date) {
+        String blockedDaysStr = settingService.getSetting("blocked_days", "");
+        if (blockedDaysStr == null || blockedDaysStr.trim().isEmpty()) {
+            return false;
+        }
+        String dayName = date.getDayOfWeek().name();
+        return java.util.Arrays.stream(blockedDaysStr.split(","))
+                .map(String::trim)
+                .anyMatch(day -> day.equalsIgnoreCase(dayName));
     }
 
     /**
@@ -76,6 +98,10 @@ public class FulfillmentService {
     public int getScheduledAvailableQuantity(String productId, LocalDate requestedDate) {
         LocalDate earliestAllowed = calculateEarliestScheduledDate();
         if (requestedDate.isBefore(earliestAllowed)) {
+            return 0;
+        }
+
+        if (isDayBlocked(requestedDate)) {
             return 0;
         }
 

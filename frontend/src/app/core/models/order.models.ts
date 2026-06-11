@@ -1,3 +1,4 @@
+import { AddressResponse } from './address.models';
 import { DeliveryMode } from './cart.models';
 
 export type OrderType = 'DELIVERY' | 'PICKUP';
@@ -29,6 +30,7 @@ export interface OrderResponse {
 	userId: string | null;
 	guestSessionId: string | null;
 	addressId: string | null;
+	address?: AddressResponse | null;
 	deliveryMode: DeliveryMode | null;
 	orderType: OrderType;
 	status: OrderStatus;
@@ -52,6 +54,11 @@ export interface CheckoutRequest {
 	customerPhone?: string;
 	orderType?: OrderType;
 	addressId?: string | null;
+	deliveryCity?: string;
+	deliveryArea?: string;
+	deliveryStreet?: string;
+	deliveryBuilding?: string;
+	deliveryNotes?: string;
 	notes?: string;
 	couponId?: string | null;
 	couponCode?: string | null;

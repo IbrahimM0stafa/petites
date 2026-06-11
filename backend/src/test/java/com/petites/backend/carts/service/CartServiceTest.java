@@ -8,6 +8,7 @@ import com.petites.backend.carts.entity.CartItem;
 import com.petites.backend.carts.enums.CartStatus;
 import com.petites.backend.carts.exception.CheckoutAvailabilityException;
 import com.petites.backend.addresses.dto.AddressResponse;
+import com.petites.backend.addresses.repository.AddressRepository;
 import com.petites.backend.carts.repository.CartItemRepository;
 import com.petites.backend.carts.repository.CartRepository;
 import com.petites.backend.common.enums.DeliveryMode;
@@ -74,6 +75,9 @@ class CartServiceTest {
     @Mock
     private CouponService couponService;
 
+    @Mock
+    private AddressRepository addressRepository;
+
     @InjectMocks
     private CartService cartService;
 
@@ -115,7 +119,7 @@ class CartServiceTest {
 
         CheckoutResponse response = cartService.checkout(
                 CartOwnerRef.forUser(userId),
-            new CheckoutRequest(null, null, OrderType.PICKUP, null, "Handle carefully", null, null, scheduledDate)
+            new CheckoutRequest(null, null, OrderType.PICKUP, null, "Handle carefully", null, null, scheduledDate, null, null, null, null, null)
         );
 
         assertNotNull(response);
@@ -157,7 +161,7 @@ class CartServiceTest {
                 CheckoutAvailabilityException.class,
                 () -> cartService.checkout(
                         CartOwnerRef.forUser(userId),
-                        new CheckoutRequest(null, null, OrderType.DELIVERY, null, null, null, null, scheduledDate)
+                        new CheckoutRequest(null, null, OrderType.DELIVERY, null, null, null, null, scheduledDate, "Cairo", "Maadi", "Street 1", null, null)
                 )
         );
 

@@ -77,7 +77,7 @@
             Your basket contains a mix of <strong>Instant Delivery</strong> (delivered fresh today) and <strong>Scheduled Delivery</strong> items. 
             To ensure peak quality, your order will be prepared and delivered in <strong>two separate shipments</strong>.
             <span *ngIf="orderType === 'DELIVERY'">
-              Because two separate physical delivery runs will be made, a delivery fee of <strong>{{ 50 | currency }}</strong> applies to each shipment (totaling <strong>{{ 100 | currency }}</strong>).
+              Because two separate physical delivery runs will be made, a delivery fee of <strong>{{ deliveryFeeRate | currency }}</strong> applies to each shipment (totaling <strong>{{ deliveryFeeRate * 2 | currency }}</strong>).
             </span>
             <span *ngIf="orderType === 'PICKUP'">
               Since you selected pickup from the bakery, both split orders will be ready for collection at their respective times for <strong>Free</strong>!
@@ -86,312 +86,70 @@
         </div>
       </div>
 
-      <div class="checkout-layout">
         <form class="checkout-form" [formGroup]="checkoutForm" (ngSubmit)="submitCheckout()" novalidate>
-          <section class="checkout-card">
-            <div class="card-title-wrap">
-              <svg class="card-title-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <h2>Customer Details</h2>
-            </div>
+          <div class="checkout-layout">
+            <div class="checkout-main-col">
+              <app-address-form
+                [checkoutForm]="checkoutForm"
+                [isAuthenticated]="isAuthenticated"
+                [addresses]="addresses"
+                [addressesLoading]="addressesLoading"
+                [showRewardTeaser]="showRewardTeaser"
+                [rewardProductName]="rewardProductName"
+                [rewardProductImage]="rewardProductImage"
+                [hasScheduledItems]="hasScheduledItems"
+                [minScheduledDate]="minScheduledDate"
+                [blockedDays]="blockedDays"
+                [showGuestDeliveryFields]="showGuestDeliveryFields"
+                (orderTypeChange)="onOrderTypeChange()">
+              </app-address-form>
 
-            <div class="checkout-reward" *ngIf="showRewardTeaser">
-              <div class="reward-image-wrap">
-                <img class="checkout-reward-image" [src]="rewardProductImage || '/assets/images/logo.png'" [alt]="rewardProductName" *ngIf="rewardProductImage; else checkoutRewardFallback" />
-                <ng-template #checkoutRewardFallback>
-                  <div class="checkout-reward-fallback" aria-hidden="true">Gift</div>
-                </ng-template>
-                <div class="reward-gift-badge">
-                  <svg viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V4a1 1 0 10-2 0v2h2zm3 0h2a1 1 0 100-2h-2v2z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-              </div>
-              <div class="checkout-reward-copy">
-                <p class="reward-teaser-eyebrow">Loyalty Reward Available</p>
-                <p class="reward-teaser-text">A free <strong>{{ rewardProductName }}</strong> will be baked and added to your order automatically!</p>
-              </div>
-            </div>
+              <app-coupon-form
+                [checkoutForm]="checkoutForm"
+                [validatingCoupon]="validatingCoupon"
+                [couponPreview]="couponPreview"
+                [subtotal]="subtotal"
+                (validate)="validateCoupon()">
+              </app-coupon-form>
 
-            <div class="checkout-grid" *ngIf="!isAuthenticated">
-              <label class="form-label-wrap">
-                <span class="form-label-text">Customer Name <span class="required-star">*</span></span>
-                <div class="input-with-icon">
-                  <input type="text" formControlName="customerName" placeholder="Jane Doe" />
-                  <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-              </label>
-              <label class="form-label-wrap">
-                <span class="form-label-text">Customer Phone <span class="required-star">*</span></span>
-                <div class="input-with-icon">
-                  <input type="tel" formControlName="customerPhone" placeholder="01xxxxxxxxx" />
-                  <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                  </svg>
-                </div>
-              </label>
-            </div>
-
-            <div class="checkout-grid">
-              <label class="form-label-wrap">
-                <span class="form-label-text">Order Type</span>
-                <div class="select-styled-container">
-                  <select class="form-select-el" formControlName="orderType" (change)="onOrderTypeChange()">
-                    <option value="PICKUP">Pickup from Bakery</option>
-                    <option value="DELIVERY">Home Delivery</option>
-                  </select>
-                  <svg class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-              </label>
-              
-              <label class="form-label-wrap" *ngIf="isAuthenticated && orderType === 'DELIVERY'">
-                <span class="form-label-text">Delivery Address <span class="required-star">*</span></span>
-                <div class="select-styled-container">
-                  <select class="form-select-el" formControlName="addressId">
-                    <option value="">Select a saved address</option>
-                    <option *ngFor="let address of addresses" [value]="address.id">{{ address.city }}, {{ address.area }} - {{ address.street }}</option>
-                  </select>
-                  <svg class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
-                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                  </svg>
-                </div>
-              </label>
-            </div>
-
-            <div class="guest-delivery-panel" *ngIf="showGuestDeliveryFields">
-              <div class="guest-delivery-panel__head">
-                <h3>Guest delivery address</h3>
-                <p>Enter the delivery address for this order. Sign in or sign up to keep it for later.</p>
-              </div>
-              <div class="checkout-grid checkout-grid--guest-address">
-                <label class="form-label-wrap">
-                  <span class="form-label-text">City <span class="required-star">*</span></span>
-                  <div class="input-with-icon">
-                    <input type="text" formControlName="guestDeliveryCity" placeholder="Cairo" />
-                    <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                </label>
-                <label class="form-label-wrap">
-                  <span class="form-label-text">Area <span class="required-star">*</span></span>
-                  <div class="input-with-icon">
-                    <input type="text" formControlName="guestDeliveryArea" placeholder="Downtown" />
-                    <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M12 3v18" />
-                    </svg>
-                  </div>
-                </label>
-                <label class="form-label-wrap">
-                  <span class="form-label-text">Street <span class="required-star">*</span></span>
-                  <div class="input-with-icon">
-                    <input type="text" formControlName="guestDeliveryStreet" placeholder="Main Street" />
-                    <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20V10m0 0L8 14m4-4l4 4M5 6h14" />
-                    </svg>
-                  </div>
-                </label>
-                <label class="form-label-wrap">
-                  <span class="form-label-text">Building / Floor</span>
-                  <div class="input-with-icon">
-                    <input type="text" formControlName="guestDeliveryBuilding" placeholder="Building 7, floor 3" />
-                    <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V3h9v18M13 8h7v13h-7" />
-                    </svg>
-                  </div>
-                </label>
-              </div>
-              <label class="form-label-wrap">
-                <span class="form-label-text">Delivery Notes</span>
-                <textarea formControlName="guestDeliveryNotes" rows="3" placeholder="Gate code, landmarks, or delivery instructions…"></textarea>
-              </label>
-            </div>
-
-            <label class="form-label-wrap">
-              <span class="form-label-text">Special Baking Notes</span>
-              <textarea formControlName="notes" rows="3" placeholder="Any delivery instructions or customization details…"></textarea>
-            </label>
-
-            <label class="form-label-wrap" *ngIf="hasScheduledItems">
-              <span class="form-label-text">Scheduled Baking Date <span class="required-star">*</span></span>
-              <div class="input-with-icon">
-                <input type="date" formControlName="scheduledDate" [min]="minScheduledDate" />
-                <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <button type="submit" class="purchase-btn purchase-btn--primary submit-checkout-btn submit-checkout-btn--desktop" [disabled]="placingOrder">
+                <span>{{ placingOrder ? 'Placing your order…' : 'Place Order via Instapay' }}</span>
+                <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" *ngIf="!placingOrder">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
-              </div>
-            </label>
-          </section>
-
-          <section class="checkout-card">
-            <div class="card-title-wrap">
-              <svg class="card-title-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-              </svg>
-              <h2>Boutique Coupon</h2>
-            </div>
-            
-            <div class="coupon-row">
-              <div class="input-with-icon">
-                <input type="text" class="coupon-input" formControlName="couponCode" placeholder="Enter coupon code" />
-                <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
-                </svg>
-              </div>
-              <button type="button" class="purchase-btn purchase-btn--secondary validate-btn" [disabled]="validatingCoupon" (click)="validateCoupon()">
-                <span>{{ validatingCoupon ? 'Validating…' : 'Validate' }}</span>
               </button>
             </div>
 
-            <div class="coupon-preview-box" *ngIf="couponPreview" [class.valid]="couponPreview.valid">
-              <div class="coupon-preview-head">
-                <svg viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+            <div class="checkout-side-col">
+              <app-checkout-summary
+                [cart]="cart"
+                [couponPreview]="couponPreview"
+                [orderType]="orderType"
+                [subtotal]="subtotal"
+                [deliveryFee]="deliveryFee"
+                [finalAmount]="finalAmount"
+                [isMixedOrder]="isMixedOrder"
+                [instantItems]="instantItems"
+                [scheduledItems]="scheduledItems"
+                [instantSubtotal]="instantSubtotal"
+                [scheduledSubtotal]="scheduledSubtotal"
+                [instantDeliveryFee]="instantDeliveryFee"
+                [scheduledDeliveryFee]="scheduledDeliveryFee"
+                [instantDiscount]="instantDiscount"
+                [scheduledDiscount]="scheduledDiscount"
+                [instantTotal]="instantTotal"
+                [scheduledTotal]="scheduledTotal">
+              </app-checkout-summary>
+
+              <button type="submit" class="purchase-btn purchase-btn--primary submit-checkout-btn submit-checkout-btn--mobile" [disabled]="placingOrder">
+                <span>{{ placingOrder ? 'Placing your order…' : 'Place Order via Instapay' }}</span>
+                <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" *ngIf="!placingOrder">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
                 </svg>
-                <strong>Coupon Applied Successfully!</strong>
-              </div>
-              <p class="coupon-message">{{ couponPreview.message }}</p>
-              <div class="coupon-details">
-                <span>Saved: <strong>{{ couponPreview.discountAmount | currency }}</strong></span>
-                <span>New total: <strong>{{ couponPreview.finalAmount | currency }}</strong></span>
-              </div>
+              </button>
             </div>
-          </section>
-
-          <button type="submit" class="purchase-btn purchase-btn--primary submit-checkout-btn" [disabled]="placingOrder">
-            <span>{{ placingOrder ? 'Placing your order…' : 'Place Order via Instapay' }}</span>
-            <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" *ngIf="!placingOrder">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-            </svg>
-          </button>
+          </div>
         </form>
-
-        <aside class="checkout-card checkout-summary">
-          <h2>Basket Review</h2>
-          
-          <div class="single-receipt-container" *ngIf="!isMixedOrder">
-            <div class="checkout-items scroll-custom">
-              <article class="checkout-item-mini" *ngFor="let item of cart?.items">
-                <div class="item-mini-copy">
-                  <strong class="item-mini-name">{{ item.productName }}</strong>
-                  <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
-                </div>
-                <div class="item-mini-badge" [class.scheduled]="item.deliveryMode === 'SCHEDULED'">
-                  {{ item.deliveryMode }}
-                </div>
-              </article>
-            </div>
-
-            <dl class="checkout-cost-list">
-              <div class="cost-row">
-                <dt>Subtotal</dt>
-                <dd>{{ subtotal | currency }}</dd>
-              </div>
-              <div class="cost-row discount" *ngIf="couponPreview">
-                <dt>Discount</dt>
-                <dd>-{{ couponPreview.discountAmount | currency }}</dd>
-              </div>
-              <div class="cost-row delivery-fee-row">
-                <dt>Delivery Fee</dt>
-                <dd>{{ deliveryFee > 0 ? (deliveryFee | currency) : 'Free' }}</dd>
-              </div>
-              <div class="cost-row total-row">
-                <dt>Grand Total</dt>
-                <dd>{{ finalAmount | currency }}</dd>
-              </div>
-            </dl>
-          </div>
-
-          <div class="split-receipts-container" *ngIf="isMixedOrder">
-            <!-- Instant Delivery Package Receipt -->
-            <div class="split-receipt-block">
-              <h3 class="split-receipt-title">⚡ Instant Package</h3>
-              <div class="checkout-items scroll-custom">
-                <article class="checkout-item-mini" *ngFor="let item of instantItems">
-                  <div class="item-mini-copy">
-                    <strong class="item-mini-name">{{ item.productName }}</strong>
-                    <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
-                  </div>
-                </article>
-              </div>
-              <dl class="checkout-cost-list split-cost-list">
-                <div class="cost-row">
-                  <dt>Subtotal</dt>
-                  <dd>{{ instantSubtotal | currency }}</dd>
-                </div>
-                <div class="cost-row discount" *ngIf="instantDiscount > 0">
-                  <dt>Discount</dt>
-                  <dd>-{{ instantDiscount | currency }}</dd>
-                </div>
-                <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
-                  <dt>Delivery Fee</dt>
-                  <dd>{{ instantDeliveryFee | currency }}</dd>
-                </div>
-                <div class="cost-row total-row split-total-row">
-                  <dt>Package Total</dt>
-                  <dd>{{ instantTotal | currency }}</dd>
-                </div>
-              </dl>
-            </div>
-
-            <!-- Scheduled Delivery Package Receipt -->
-            <div class="split-receipt-block">
-              <h3 class="split-receipt-title">📅 Scheduled Package</h3>
-              <div class="checkout-items scroll-custom">
-                <article class="checkout-item-mini" *ngFor="let item of scheduledItems">
-                  <div class="item-mini-copy">
-                    <strong class="item-mini-name">{{ item.productName }}</strong>
-                    <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
-                  </div>
-                </article>
-              </div>
-              <dl class="checkout-cost-list split-cost-list">
-                <div class="cost-row">
-                  <dt>Subtotal</dt>
-                  <dd>{{ scheduledSubtotal | currency }}</dd>
-                </div>
-                <div class="cost-row discount" *ngIf="scheduledDiscount > 0">
-                  <dt>Discount</dt>
-                  <dd>-{{ scheduledDiscount | currency }}</dd>
-                </div>
-                <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
-                  <dt>Delivery Fee</dt>
-                  <dd>{{ scheduledDeliveryFee | currency }}</dd>
-                </div>
-                <div class="cost-row total-row split-total-row">
-                  <dt>Package Total</dt>
-                  <dd>{{ scheduledTotal | currency }}</dd>
-                </div>
-              </dl>
-            </div>
-
-            <!-- Grand Combined Total -->
-            <div class="grand-total-block">
-              <dl class="checkout-cost-list grand-cost-list">
-                <div class="cost-row total-row grand-total-row">
-                  <dt>Grand Total (Combined)</dt>
-                  <dd>{{ finalAmount | currency }}</dd>
-                </div>
-              </dl>
-            </div>
-          </div>
-
-          <div class="checkout-actions">
-            <a routerLink="/cart" class="purchase-btn purchase-btn--secondary back-to-cart-btn">
-              <svg class="arrow-back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              <span>Modify basket</span>
-            </a>
-          </div>
-        </aside>
-      </div>
     </div>
 
     <!-- Gorgeous Premium Checkout Success Experience -->
@@ -406,122 +164,17 @@
       <p class="order-placed-note">Thank you for ordering our artisanal pastries. We are preparing everything with care.</p>
 
       <div class="success-grid-layout">
-        <!-- Left: Placed Order Details -->
-        <div class="success-orders-container">
-          <h3 class="section-title">📦 Placed Order Details</h3>
-          <div class="orders-results-list">
-            <article class="order-result-card" *ngFor="let order of orders">
-              <div class="order-result-head">
-                <div class="result-number-wrap">
-                  <span class="result-number-label">Order Number</span>
-                  <p class="order-number">{{ order.orderNumber }}</p>
-                </div>
-                <span class="status-badge" [class.success]="['PENDING', 'CONFIRMED', 'COMPLETED', 'DELIVERED'].includes(order.status)">{{ order.status }}</span>
-              </div>
+        <app-success-orders
+          [orders]="orders"
+          [rewardProductName]="rewardProductName"
+          [rewardProductId]="rewardProductId">
+        </app-success-orders>
 
-              <!-- Order Items Breakdown -->
-              <div class="order-details-box">
-                <h4 class="details-box-title">Items in Shipment</h4>
-                <div class="success-items-list">
-                  <div class="success-item-row" *ngFor="let item of order.items">
-                    <img class="success-item-img" [src]="item.productImage || '/assets/images/logo.png'" [alt]="item.productName" />
-                    <div class="success-item-meta">
-                      <strong class="success-item-name">{{ item.productName }}</strong>
-                      <span class="success-item-mode" *ngIf="item.deliveryMode">Mode: {{ item.deliveryMode }}</span>
-                    </div>
-                    <div class="success-item-pricing">
-                      <span class="success-item-qty">{{ item.quantity }} × {{ item.unitPrice | currency }}</span>
-                      <strong class="success-item-total">{{ item.lineTotal | currency }}</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Delivery Meta Details -->
-              <div class="order-meta-info-grid">
-                <div class="meta-info-item">
-                  <span class="meta-info-label">Type</span>
-                  <strong class="meta-info-val">{{ order.orderType }}</strong>
-                </div>
-                <div class="meta-info-item" *ngIf="order.scheduledDate">
-                  <span class="meta-info-label">Scheduled Date</span>
-                  <strong class="meta-info-val">{{ order.scheduledDate | date:'mediumDate' }}</strong>
-                </div>
-                <div class="meta-info-item" *ngIf="order.notes">
-                  <span class="meta-info-label">Notes</span>
-                  <p class="meta-info-val notes-para">{{ order.notes }}</p>
-                </div>
-              </div>
-
-              <!-- Costs Breakdown -->
-              <dl class="checkout-cost-list success-cost-list">
-                <div class="cost-row">
-                  <dt>Subtotal</dt>
-                  <dd>{{ order.subtotal | currency }}</dd>
-                </div>
-                <div class="cost-row discount" *ngIf="order.discountAmount > 0">
-                  <dt>Discount</dt>
-                  <dd>-{{ order.discountAmount | currency }}</dd>
-                </div>
-                <div class="cost-row delivery-fee-row" *ngIf="order.deliveryFee > 0">
-                  <dt>Delivery Fee</dt>
-                  <dd>{{ order.deliveryFee | currency }}</dd>
-                </div>
-                <div class="cost-row total-row">
-                  <dt>Shipment Total</dt>
-                  <dd>{{ order.totalAmount | currency }}</dd>
-                </div>
-              </dl>
-
-              <p class="reward-line" *ngIf="rewardLine(order) as rewardLine">
-                <svg class="reward-line-gift-icon" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V4a1 1 0 10-2 0v2h2zm3 0h2a1 1 0 100-2h-2v2z" clip-rule="evenodd" />
-                  <path d="M9 11H3v5a2 2 0 002 2h4v-7zM11 18h4a2 2 0 002-2v-5h-6v7z" />
-                </svg>
-                <span>{{ rewardLine }}</span>
-              </p>
-
-              <div class="order-result-actions">
-                <a class="purchase-btn purchase-btn--secondary open-order-btn" [routerLink]="['/orders', order.orderId]">
-                  <span>View detailed receipt & status</span>
-                  <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </a>
-              </div>
-            </article>
-          </div>
-        </div>
-
-        <!-- Right: InstaPay Transfer Block & QR Code -->
-        <div class="success-payment-container">
-          <div class="success-payment-card">
-            <div class="instapay-header-wrap">
-              <span class="instapay-brand">InstaPay Payment</span>
-            </div>
-            
-            <div class="qr-code-section">
-              <p class="qr-instruction">Scan the QR code to transfer instantly</p>
-              <div class="qr-image-wrapper">
-                <img src="/assets/images/instapay_qr.jpg" alt="InstaPay QR Code for Transfer" class="instapay-qr-img" />
-              </div>
-            </div>
-
-            <div class="payment-hint-box">
-              <p class="payment-hint-title">Transfer via Link</p>
-              <p class="payment-hint-copy">
-                Click the link to send money to <strong>renadkd29&#64;instapay</strong>.
-              </p>
-              <a href="https://ipn.eg/S/renadkd29/instapay/3BqRUg" target="_blank" rel="noopener noreferrer" class="purchase-btn purchase-btn--primary instapay-cta-btn">
-                <span>Send via InstaPay Link</span>
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width: 1.25rem; height: 1.25rem;">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
-              </a>
-              <span class="powered-by-tag">Powered by InstaPay.</span>
-            </div>
-          </div>
-        </div>
+        <app-payment-form
+          [orders]="orders"
+          [instapayPaymentLink]="instapayPaymentLink"
+          [instapayHandle]="instapayHandle">
+        </app-payment-form>
       </div>
     </div>
   </ng-container>

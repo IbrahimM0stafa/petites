@@ -3,7 +3,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
-import { AddressResponse, AddressUpdateRequest } from '../../../core/models/address.models';
+import { AddressUpdateRequest, SavedAddressResponse } from '../../../core/models/address.models';
 import { isRefreshTokenRejected, readApiErrorMessage } from '../../../core/models/api-error.model';
 import { LoyaltyResponse } from '../../../core/models/loyalty.models';
 import { UserResponse } from '../../../core/models/user.models';
@@ -34,7 +34,7 @@ export class AccountPageComponent implements OnInit {
 	});
 
 	user: UserResponse | null = null;
-	addresses: AddressResponse[] = [];
+	addresses: SavedAddressResponse[] = [];
 	loyalty: LoyaltyResponse | null = null;
 	loading = true;
 	addressesLoading = false;
@@ -117,7 +117,7 @@ export class AccountPageComponent implements OnInit {
 		});
 	}
 
-	startAddressEdit(address: AddressResponse): void {
+	startAddressEdit(address: SavedAddressResponse): void {
 		this.editingAddressId = address.id;
 		this.addressError = '';
 		this.addressMessage = '';

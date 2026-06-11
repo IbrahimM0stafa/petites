@@ -7,6 +7,7 @@ import { Product } from '../../../../core/models/shop.models';
 import { DeliveryMode } from '../../../../core/models/cart.models';
 import { CartService } from '../../../../core/services/cart.service';
 import { readApiErrorMessage } from '../../../../core/models/api-error.model';
+import { SeoService } from '../../../../core/services/seo.service';
 
 @Component({
   selector: 'app-product-detail',
@@ -28,8 +29,9 @@ export class ProductDetailComponent implements OnInit {
   constructor(
     private readonly route: ActivatedRoute,
     private readonly shopService: ShopService,
-    private readonly cartService: CartService
-  ) {}
+    private readonly cartService: CartService,
+    private readonly seoService: SeoService
+  ) { }
 
   ngOnInit(): void {
     this.route.paramMap.subscribe(params => {
@@ -49,6 +51,14 @@ export class ProductDetailComponent implements OnInit {
         this.activeImage = product.mainImage || '';
         this.deliveryMode = product.scheduledEligible && !product.instantAvailableToday ? 'SCHEDULED' : 'INSTANT';
         this.isLoading = false;
+
+        // Dynamically update SEO meta tags
+        this.seoService.generateTags({
+          title: `${product.name} | Petites Sweet Treats`,
+          description: product.description || `Order ${product.name} fresh from Petites. Handmade sweet treats and pastries.`,
+          image: product.mainImage || '',
+          url: `/products/${product.id}`
+        });
       },
       error: (err) => {
         console.error('Error loading product details', err);

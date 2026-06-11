@@ -28,13 +28,11 @@
         <p class="card-desc">Number of completed orders required before a reward is automatically applied.</p>
         <div class="form-group">
           <label for="reward_order_target">Target Orders</label>
-          <input
-            type="number"
-            id="reward_order_target"
-            formControlName="reward_order_target"
-            class="form-control"
+          <input type="number" id="reward_order_target" formControlName="reward_order_target" class="form-control"
             placeholder="5" />
-          <div *ngIf="settingsForm.get('reward_order_target')?.touched && settingsForm.get('reward_order_target')?.invalid" class="field-error">
+          <div
+            *ngIf="settingsForm.get('reward_order_target')?.touched && settingsForm.get('reward_order_target')?.invalid"
+            class="field-error">
             Reward target must be 1 or higher.
           </div>
         </div>
@@ -43,42 +41,37 @@
       <!-- Reward Product Card -->
       <div class="settings-card">
         <div class="card-icon">🍰</div>
-        <h3>Reward Product ID</h3>
+        <h3>Reward Product</h3>
         <p class="card-desc">Product that is auto-applied when loyalty is eligible. Pick from the catalog below.</p>
         <div class="product-picker">
           <div class="form-group">
             <label for="reward_product_search">Search Product</label>
-            <input
-              type="text"
-              id="reward_product_search"
-              class="form-control"
-              placeholder="Search by name or ID"
+            <input type="text" id="reward_product_search" class="form-control" placeholder="Search by name or ID"
               (input)="productSearch = $any($event.target).value" />
           </div>
           <div class="form-group">
             <label for="reward_product_id">Reward Product</label>
-            <select
-              id="reward_product_id"
-              formControlName="reward_product_id"
-              class="form-control"
+            <select id="reward_product_id" formControlName="reward_product_id" class="form-control"
               (change)="onRewardProductSelected()">
               <option value="">Select a product</option>
               <option *ngFor="let product of filteredProducts()" [value]="product.id">
-                {{ product.name }} ({{ product.id }})
+                {{ product.name }}
               </option>
             </select>
           </div>
-          <p class="picker-note">Admins should not need to know product IDs; use the picker.</p>
           <div class="product-picker-actions">
-            <button type="button" class="admin-btn admin-btn-ghost" (click)="loadProducts(true)" [disabled]="productLoading">
+            <button type="button" class="admin-btn admin-btn-ghost" (click)="loadProducts(true)"
+              [disabled]="productLoading">
               {{ productLoading ? 'Refreshing...' : 'Refresh list' }}
             </button>
-            <button type="button" class="admin-btn admin-btn-ghost" (click)="loadProducts()" [disabled]="productLoading || !productHasMore">
+            <button type="button" class="admin-btn admin-btn-ghost" (click)="loadProducts()"
+              [disabled]="productLoading || !productHasMore">
               {{ productHasMore ? 'Load more' : 'All products loaded' }}
             </button>
           </div>
           <p *ngIf="productError" class="field-error" role="alert">{{ productError }}</p>
-          <p *ngIf="!productLoading && filteredProducts().length === 0" class="picker-note">No products match your search.</p>
+          <p *ngIf="!productLoading && filteredProducts().length === 0" class="picker-note">No products match your
+            search.</p>
         </div>
       </div>
 
@@ -89,13 +82,11 @@
         <p class="card-desc">Orders placed after this time will be scheduled for subsequent delivery cycles.</p>
         <div class="form-group">
           <label for="delivery_cutoff_time">Cutoff Time (24h format)</label>
-          <input 
-            type="text" 
-            id="delivery_cutoff_time" 
-            formControlName="delivery_cutoff_time" 
-            class="form-control" 
+          <input type="text" id="delivery_cutoff_time" formControlName="delivery_cutoff_time" class="form-control"
             placeholder="e.g. 19:00" />
-          <div *ngIf="settingsForm.get('delivery_cutoff_time')?.touched && settingsForm.get('delivery_cutoff_time')?.invalid" class="field-error">
+          <div
+            *ngIf="settingsForm.get('delivery_cutoff_time')?.touched && settingsForm.get('delivery_cutoff_time')?.invalid"
+            class="field-error">
             Please enter a valid 24h format time (HH:MM).
           </div>
         </div>
@@ -108,14 +99,27 @@
         <p class="card-desc">The standard base delivery fee applied during checkout to customer orders.</p>
         <div class="form-group">
           <label for="delivery_fee">Delivery Fee (EGP)</label>
-          <input 
-            type="number" 
-            id="delivery_fee" 
-            formControlName="delivery_fee" 
-            class="form-control" 
-            placeholder="50" />
-          <div *ngIf="settingsForm.get('delivery_fee')?.touched && settingsForm.get('delivery_fee')?.invalid" class="field-error">
+          <input type="number" id="delivery_fee" formControlName="delivery_fee" class="form-control" placeholder="50" />
+          <div *ngIf="settingsForm.get('delivery_fee')?.touched && settingsForm.get('delivery_fee')?.invalid"
+            class="field-error">
             Delivery fee must be 0 or higher.
+          </div>
+        </div>
+      </div>
+
+      <!-- Blocked Days Card -->
+      <div class="settings-card">
+        <div class="card-icon">🚫</div>
+        <h3>Blocked Days</h3>
+        <p class="card-desc">Select which days of the week are closed for order fulfillment and delivery.</p>
+        <div class="form-group" formGroupName="blocked_days">
+          <label>Closed Days</label>
+          <div class="checkbox-grid">
+            <label class="checkbox-label"
+              *ngFor="let day of ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']">
+              <input type="checkbox" [formControlName]="day" />
+              <span>{{ day | titlecase }}</span>
+            </label>
           </div>
         </div>
       </div>
@@ -159,7 +163,8 @@
               <td><small>{{ setting.updatedAt | date:'medium' }}</small></td>
             </tr>
             <tr *ngIf="settings.length === 0">
-              <td colspan="3" style="text-align: center; color: var(--admin-muted);">No settings loaded from backend yet.</td>
+              <td colspan="3" style="text-align: center; color: var(--admin-muted);">No settings loaded from backend
+                yet.</td>
             </tr>
           </tbody>
         </table>

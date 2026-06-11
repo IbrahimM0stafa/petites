@@ -1,0 +1,124 @@
+<aside class="checkout-card checkout-summary">
+  <h2>Basket Review</h2>
+  
+  <div class="single-receipt-container" *ngIf="!isMixedOrder">
+    <div class="checkout-items scroll-custom">
+      <article class="checkout-item-mini" *ngFor="let item of cart?.items">
+        <div class="item-mini-copy">
+          <strong class="item-mini-name">{{ item.productName }}</strong>
+          <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
+        </div>
+        <div class="item-mini-badge" [class.scheduled]="item.deliveryMode === 'SCHEDULED'">
+          {{ item.deliveryMode }}
+        </div>
+      </article>
+    </div>
+
+    <dl class="checkout-cost-list">
+      <div class="cost-row">
+        <dt>Subtotal</dt>
+        <dd>{{ subtotal | currency }}</dd>
+      </div>
+      <div class="cost-row discount" *ngIf="couponPreview">
+        <dt>Discount</dt>
+        <dd>-{{ couponPreview.discountAmount | currency }}</dd>
+      </div>
+      <div class="cost-row delivery-fee-row">
+        <dt>Delivery Fee</dt>
+        <dd>{{ deliveryFee > 0 ? (deliveryFee | currency) : 'Free' }}</dd>
+      </div>
+      <div class="cost-row total-row">
+        <dt>Grand Total</dt>
+        <dd>{{ finalAmount | currency }}</dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="split-receipts-container" *ngIf="isMixedOrder">
+    <!-- Instant Delivery Package Receipt -->
+    <div class="split-receipt-block">
+      <h3 class="split-receipt-title">⚡ Instant Package</h3>
+      <div class="checkout-items scroll-custom">
+        <article class="checkout-item-mini" *ngFor="let item of instantItems">
+          <div class="item-mini-copy">
+            <strong class="item-mini-name">{{ item.productName }}</strong>
+            <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
+          </div>
+        </article>
+      </div>
+      <dl class="checkout-cost-list split-cost-list">
+        <div class="cost-row">
+          <dt>Subtotal</dt>
+          <dd>{{ instantSubtotal | currency }}</dd>
+        </div>
+        <div class="cost-row discount" *ngIf="instantDiscount > 0">
+          <dt>Discount</dt>
+          <dd>-{{ instantDiscount | currency }}</dd>
+        </div>
+        <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
+          <dt>Delivery Fee</dt>
+          <dd>{{ instantDeliveryFee | currency }}</dd>
+        </div>
+        <div class="cost-row total-row split-total-row">
+          <dt>Package Total</dt>
+          <dd>{{ instantTotal | currency }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Scheduled Delivery Package Receipt -->
+    <div class="split-receipt-block">
+      <h3 class="split-receipt-title">📅 Scheduled Package</h3>
+      <div class="checkout-items scroll-custom">
+        <article class="checkout-item-mini" *ngFor="let item of scheduledItems">
+          <div class="item-mini-copy">
+            <strong class="item-mini-name">{{ item.productName }}</strong>
+            <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
+          </div>
+        </article>
+      </div>
+      <dl class="checkout-cost-list split-cost-list">
+        <div class="cost-row">
+          <dt>Subtotal</dt>
+          <dd>{{ scheduledSubtotal | currency }}</dd>
+        </div>
+        <div class="cost-row discount" *ngIf="scheduledDiscount > 0">
+          <dt>Discount</dt>
+          <dd>-{{ scheduledDiscount | currency }}</dd>
+        </div>
+        <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
+          <dt>Delivery Fee</dt>
+          <dd>{{ scheduledDeliveryFee | currency }}</dd>
+        </div>
+        <div class="cost-row total-row split-total-row">
+          <dt>Package Total</dt>
+          <dd>{{ scheduledTotal | currency }}</dd>
+        </div>
+      </dl>
+    </div>
+
+    <!-- Grand Combined Total -->
+    <div class="grand-total-block">
+      <dl class="checkout-cost-list grand-cost-list">
+        <div class="cost-row total-row grand-total-row">
+          <dt>Grand Total (Combined)</dt>
+          <dd>{{ finalAmount | currency }}</dd>
+        </div>
+      </dl>
+    </div>
+  </div>
+
+  <div class="delivery-notice-box" *ngIf="orderType === 'DELIVERY' && deliveryFee === 0">
+    <h3>Delivery Notice</h3>
+    <p>Delivery fees are determined based on the delivery area and are charged directly by the delivery service provider. We do not receive any portion of these fees. Customers are responsible for paying the delivery fee as calculated by the delivery provider.</p>
+  </div>
+
+  <div class="checkout-actions">
+    <a routerLink="/cart" class="purchase-btn purchase-btn--secondary back-to-cart-btn">
+      <svg class="arrow-back-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+      </svg>
+      <span>Modify basket</span>
+    </a>
+  </div>
+</aside>

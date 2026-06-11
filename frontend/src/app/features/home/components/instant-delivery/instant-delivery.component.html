@@ -1,0 +1,26 @@
+<section *ngIf="products.length > 0" class="instant-delivery" aria-labelledby="instant-delivery-title">
+  <div class="instant-header">
+    <h2 id="instant-delivery-title" class="section-title">
+      <span class="title-flash" aria-hidden="true">⚡</span>
+      Instant Treats
+      <span class="title-flash" aria-hidden="true">⚡</span>
+    </h2>
+    <p class="section-subtitle">Baked fresh and ready to ship right now. Order before delivery slots fill up!</p>
+  </div>
+
+  <div class="treat-grid">
+    <ng-container *ngFor="let product of products">
+      <app-product-card
+        [product]="product"
+        fulfillmentMode="instant">
+      </app-product-card>
+    </ng-container>
+  </div>
+
+  <div class="section-footer">
+    <a class="view-all" routerLink="/shop" [queryParams]="{ fulfillment: 'instant' }">
+      View All Instant Treats
+      <span class="button-flash" aria-hidden="true">⚡</span>
+    </a>
+  </div>
+</section>

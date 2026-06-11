@@ -1,0 +1,144 @@
+<section class="checkout-card" [formGroup]="checkoutForm">
+  <div class="card-title-wrap">
+    <svg class="card-title-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+    </svg>
+    <h2>Customer Details</h2>
+  </div>
+
+  <div class="checkout-reward" *ngIf="showRewardTeaser">
+    <div class="reward-image-wrap">
+      <img class="checkout-reward-image" [src]="rewardProductImage || '/assets/images/logo.png'" [alt]="rewardProductName" *ngIf="rewardProductImage; else checkoutRewardFallback" />
+      <ng-template #checkoutRewardFallback>
+        <div class="checkout-reward-fallback" aria-hidden="true">Gift</div>
+      </ng-template>
+      <div class="reward-gift-badge">
+        <svg viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5 5a3 3 0 015-2.236A3 3 0 0114.83 6H16a2 2 0 110 4h-5V9a1 1 0 10-2 0v1H4a2 2 0 110-4h1.17C5.06 5.687 5 5.35 5 5zm4 1V4a1 1 0 10-2 0v2h2zm3 0h2a1 1 0 100-2h-2v2z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    </div>
+    <div class="checkout-reward-copy">
+      <p class="reward-teaser-eyebrow">Loyalty Reward Available</p>
+      <p class="reward-teaser-text">A free <strong>{{ rewardProductName }}</strong> will be baked and added to your order automatically!</p>
+    </div>
+  </div>
+
+  <div class="checkout-grid" *ngIf="!isAuthenticated">
+    <label class="form-label-wrap">
+      <span class="form-label-text">Customer Name <span class="required-star">*</span></span>
+      <div class="input-with-icon">
+        <input type="text" formControlName="customerName" placeholder="Jane Doe" />
+        <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      </div>
+    </label>
+    <label class="form-label-wrap">
+      <span class="form-label-text">Customer Phone <span class="required-star">*</span></span>
+      <div class="input-with-icon">
+        <input type="tel" formControlName="customerPhone" placeholder="01xxxxxxxxx" />
+        <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+        </svg>
+      </div>
+    </label>
+  </div>
+
+  <div class="checkout-grid">
+    <label class="form-label-wrap">
+      <span class="form-label-text">Order Type</span>
+      <div class="select-styled-container">
+        <select class="form-select-el" formControlName="orderType" (change)="orderTypeChange.emit()">
+          <option value="PICKUP">Pickup from Bakery</option>
+          <option value="DELIVERY">Home Delivery</option>
+        </select>
+        <svg class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    </label>
+    
+    <label class="form-label-wrap" *ngIf="isAuthenticated && orderType === 'DELIVERY'">
+      <span class="form-label-text">Delivery Address <span class="required-star">*</span></span>
+      <div class="select-styled-container">
+        <select class="form-select-el" formControlName="addressId">
+          <option value="">Select a saved address</option>
+          <option *ngFor="let address of addresses" [value]="address.id">{{ address.city }}, {{ address.area }} - {{ address.street }}</option>
+          <option value="new">+ Add New Address</option>
+        </select>
+        <svg class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+        </svg>
+      </div>
+    </label>
+  </div>
+
+  <div class="guest-delivery-panel" *ngIf="showGuestDeliveryFields">
+    <div class="guest-delivery-panel__head">
+      <h3>{{ isAuthenticated ? 'New delivery address' : 'Guest delivery address' }}</h3>
+      <p>{{ isAuthenticated ? 'Enter the new address details below to use and save for future orders.' : 'Enter the delivery address for this order. Sign in or sign up to keep it for later.' }}</p>
+    </div>
+    <div class="checkout-grid checkout-grid--guest-address">
+      <label class="form-label-wrap">
+        <span class="form-label-text">City <span class="required-star">*</span></span>
+        <div class="input-with-icon">
+          <input type="text" formControlName="guestDeliveryCity" placeholder="Cairo" />
+          <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+      </label>
+      <label class="form-label-wrap">
+        <span class="form-label-text">Area <span class="required-star">*</span></span>
+        <div class="input-with-icon">
+          <input type="text" formControlName="guestDeliveryArea" placeholder="Downtown" />
+          <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M12 3v18" />
+          </svg>
+        </div>
+      </label>
+      <label class="form-label-wrap">
+        <span class="form-label-text">Street <span class="required-star">*</span></span>
+        <div class="input-with-icon">
+          <input type="text" formControlName="guestDeliveryStreet" placeholder="Main Street" />
+          <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20V10m0 0L8 14m4-4l4 4M5 6h14" />
+          </svg>
+        </div>
+      </label>
+      <label class="form-label-wrap">
+        <span class="form-label-text">Building / Floor</span>
+        <div class="input-with-icon">
+          <input type="text" formControlName="guestDeliveryBuilding" placeholder="Building 7, floor 3" />
+          <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V3h9v18M13 8h7v13h-7" />
+          </svg>
+        </div>
+      </label>
+    </div>
+    <label class="form-label-wrap">
+      <span class="form-label-text">Delivery Notes</span>
+      <textarea formControlName="guestDeliveryNotes" rows="3" placeholder="Gate code, landmarks, or delivery instructions…"></textarea>
+    </label>
+  </div>
+
+  <label class="form-label-wrap">
+    <span class="form-label-text">Special Baking Notes</span>
+    <textarea formControlName="notes" rows="3" placeholder="Any delivery instructions or customization details…"></textarea>
+  </label>
+
+  <label class="form-label-wrap" *ngIf="hasScheduledItems">
+    <span class="form-label-text">Scheduled Baking Date <span class="required-star">*</span></span>
+    <div class="input-with-icon">
+      <input type="date" formControlName="scheduledDate" [min]="minScheduledDate" />
+      <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+      </svg>
+    </div>
+    <div *ngIf="checkoutForm.get('scheduledDate')?.touched && checkoutForm.get('scheduledDate')?.errors?.['blockedDay']" style="color: #f43f5e; font-size: 0.825rem; margin-top: 0.375rem; font-weight: 500;">
+      We are closed on {{ getFormattedBlockedDays() }}. Please select another date.
+    </div>
+  </label>
+</section>

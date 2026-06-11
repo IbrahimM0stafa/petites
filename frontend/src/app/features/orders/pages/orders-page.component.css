@@ -374,6 +374,27 @@
 	box-shadow: 0 12px 36px rgba(83, 47, 32, 0.06);
 	position: sticky;
 	top: calc(var(--petites-header-offset) + 1.5rem);
+	max-height: calc(100vh - var(--petites-header-offset) - 3rem);
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(103, 67, 50, 0.2) transparent;
+}
+
+.order-detail::-webkit-scrollbar {
+	width: 6px;
+}
+
+.order-detail::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+.order-detail::-webkit-scrollbar-thumb {
+	background-color: rgba(103, 67, 50, 0.25);
+	border-radius: 99px;
+}
+
+.order-detail::-webkit-scrollbar-thumb:hover {
+	background-color: rgba(203, 106, 91, 0.5);
 }
 
 .order-detail-head {
@@ -907,6 +928,8 @@
 	.order-detail {
 		position: static;
 		width: 100%;
+		max-height: none;
+		overflow-y: visible;
 	}
 }
 

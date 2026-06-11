@@ -118,4 +118,48 @@ public class FulfillmentServiceTest {
 
         assertFalse(fulfillmentService.isInstantAvailable(PRODUCT_ID, 1));
     }
+
+    @Test
+    public void testIsDayBlocked() {
+        when(settingService.getSetting("blocked_days", "")).thenReturn("THURSDAY,FRIDAY");
+        
+        LocalDate thursday = LocalDate.of(2026, 6, 11); // Thursday
+        LocalDate friday = LocalDate.of(2026, 6, 12); // Friday
+        LocalDate saturday = LocalDate.of(2026, 6, 13); // Saturday
+
+        assertTrue(fulfillmentService.isDayBlocked(thursday));
+        assertTrue(fulfillmentService.isDayBlocked(friday));
+        assertFalse(fulfillmentService.isDayBlocked(saturday));
+    }
+
+    @Test
+    public void testCalculateEarliestScheduledDate_SkipsBlockedDays() {
+        when(settingService.getSetting("delivery_cutoff_time", "19:00")).thenReturn("19:00");
+        
+        // Mock blocked days as Thursday and Friday
+        when(settingService.getSetting("blocked_days", "")).thenReturn("THURSDAY,FRIDAY");
+
+        // We will mock ZonedDateTime.now clock or we can just test using the current logic
+        // Let's call calculateEarliestScheduledDate and check the returned date's day of week
+        LocalDate actual = fulfillmentService.calculateEarliestScheduledDate();
+        
+        // Ensure actual date is neither THURSDAY nor FRIDAY
+        assertNotEquals(DayOfWeek.THURSDAY, actual.getDayOfWeek());
+        assertNotEquals(DayOfWeek.FRIDAY, actual.getDayOfWeek());
+    }
+
+    @Test
+    public void testCalculateEarliestScheduledDate_AllDaysBlockedDoesNotInfiniteLoop() {
+        when(settingService.getSetting("delivery_cutoff_time", "19:00")).thenReturn("19:00");
+        
+        // Mock all days blocked
+        when(settingService.getSetting("blocked_days", ""))
+                .thenReturn("MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY,SUNDAY");
+
+        // Should return a date and finish immediately without hanging
+        assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
+            LocalDate actual = fulfillmentService.calculateEarliestScheduledDate();
+            assertNotNull(actual);
+        });
+    }
 }

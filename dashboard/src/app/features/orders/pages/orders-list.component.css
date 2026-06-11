@@ -158,6 +158,14 @@
   border: 1px solid #e2e8f0;
 }
 
+/* Order Type Badge Colors */
+.type-delivery { background: #d1fae5; color: #065f46; border: 1px solid #10b981; }
+.type-pickup { background: #e0e7ff; color: #3730a3; border: 1px solid #818cf8; }
+
+/* Delivery Mode Badge Colors */
+.mode-instant { background: #fef3c7; color: #92400e; border: 1px solid #fbbf24; }
+.mode-scheduled { background: #e0f2fe; color: #0369a1; border: 1px solid #38bdf8; }
+
 .status-badge {
   display: inline-flex;
   align-items: center;

@@ -48,7 +48,16 @@ export class SettingsComponent implements OnInit {
       reward_order_target: [5, [Validators.required, Validators.min(1)]],
       reward_product_id: [''],
       delivery_cutoff_time: ['19:00', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
-      delivery_fee: [0, [Validators.required, Validators.min(0)]]
+      delivery_fee: [0, [Validators.required, Validators.min(0)]],
+      blocked_days: this.fb.group({
+        MONDAY: [false],
+        TUESDAY: [false],
+        WEDNESDAY: [false],
+        THURSDAY: [false],
+        FRIDAY: [false],
+        SATURDAY: [false],
+        SUNDAY: [false]
+      })
     });
   }
 
@@ -62,6 +71,7 @@ export class SettingsComponent implements OnInit {
         const rewardProduct = res.find(s => s.key === 'reward_product_id');
         const cutoffSetting = res.find(s => s.key === 'delivery_cutoff_time');
         const feeSetting = res.find(s => s.key === 'delivery_fee');
+        const blockedDaysSetting = res.find(s => s.key === 'blocked_days');
 
         this.settingsForm.patchValue({
           reward_order_target: rewardTarget ? Number(rewardTarget.value) : 5,
@@ -69,6 +79,22 @@ export class SettingsComponent implements OnInit {
           delivery_cutoff_time: cutoffSetting ? cutoffSetting.value : '19:00',
           delivery_fee: feeSetting ? Number(feeSetting.value) : 50
         });
+
+        const blockedDaysStr = blockedDaysSetting ? blockedDaysSetting.value : '';
+        const blockedDaysList = blockedDaysStr.split(',').map(s => s.trim().toUpperCase());
+        const blockedDaysGroup = this.settingsForm.get('blocked_days') as FormGroup;
+        if (blockedDaysGroup) {
+          blockedDaysGroup.patchValue({
+            MONDAY: blockedDaysList.includes('MONDAY'),
+            TUESDAY: blockedDaysList.includes('TUESDAY'),
+            WEDNESDAY: blockedDaysList.includes('WEDNESDAY'),
+            THURSDAY: blockedDaysList.includes('THURSDAY'),
+            FRIDAY: blockedDaysList.includes('FRIDAY'),
+            SATURDAY: blockedDaysList.includes('SATURDAY'),
+            SUNDAY: blockedDaysList.includes('SUNDAY')
+          });
+        }
+
         this.onRewardProductSelected();
         this.loading = false;
       },
@@ -100,7 +126,8 @@ export class SettingsComponent implements OnInit {
     this.productService.list({
       page: this.productPage,
       size: this.productSize,
-      sort: 'name,asc'
+      sort: 'name,asc',
+      available: true
     }).subscribe({
       next: (res) => {
         const incoming = res.content ?? [];
@@ -128,12 +155,17 @@ export class SettingsComponent implements OnInit {
     this.successMessage = '';
 
     const formVal = this.settingsForm.value;
+    const blockedDaysGroup = formVal.blocked_days || {};
+    const selectedBlockedDays = Object.keys(blockedDaysGroup)
+      .filter(key => blockedDaysGroup[key])
+      .join(',');
 
     forkJoin({
       rewardTarget: this.settingsService.update('reward_order_target', formVal.reward_order_target.toString()),
       rewardProduct: this.settingsService.update('reward_product_id', (formVal.reward_product_id || '').toString()),
       cutoff: this.settingsService.update('delivery_cutoff_time', formVal.delivery_cutoff_time),
-      fee: this.settingsService.update('delivery_fee', formVal.delivery_fee.toString())
+      fee: this.settingsService.update('delivery_fee', formVal.delivery_fee.toString()),
+      blockedDays: this.settingsService.update('blocked_days', selectedBlockedDays)
     }).subscribe({
       next: () => {
         this.saving = false;

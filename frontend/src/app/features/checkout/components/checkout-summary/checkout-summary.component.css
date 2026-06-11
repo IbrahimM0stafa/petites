@@ -1,0 +1,315 @@
+:host {
+	display: block;
+}
+
+.checkout-card {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	padding: 1.75rem;
+	border-radius: 1.75rem;
+	background: rgba(255, 250, 246, 0.7);
+	backdrop-filter: blur(12px);
+	border: 1px solid rgba(183, 149, 132, 0.22);
+	box-shadow: 0 10px 30px rgba(83, 47, 32, 0.04);
+}
+
+.checkout-summary {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	padding: 1.75rem;
+	border-radius: 1.75rem;
+	background: rgba(255, 250, 246, 0.8);
+	backdrop-filter: blur(16px);
+	border: 1px solid rgba(183, 149, 132, 0.25);
+	box-shadow: 0 12px 36px rgba(83, 47, 32, 0.06);
+	width: 100%;
+}
+
+.checkout-summary h2 {
+	margin: 0;
+	font-family: Georgia, serif;
+	font-size: 1.5rem;
+	color: #4a2b21;
+	border-bottom: 1px solid rgba(103, 67, 50, 0.1);
+	padding-bottom: 1rem;
+}
+
+/* Mini Item row lists in right sidebar */
+.checkout-items {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	max-height: 250px;
+	overflow-y: auto;
+	padding-right: 0.5rem;
+}
+
+/* Custom Scrollbar for side list */
+.scroll-custom::-webkit-scrollbar {
+	width: 6px;
+}
+.scroll-custom::-webkit-scrollbar-track {
+	background: rgba(103, 67, 50, 0.05);
+	border-radius: 99px;
+}
+.scroll-custom::-webkit-scrollbar-thumb {
+	background: rgba(103, 67, 50, 0.15);
+	border-radius: 99px;
+}
+
+.checkout-item-mini {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding-bottom: 0.85rem;
+	border-bottom: 1px solid rgba(103, 67, 50, 0.08);
+	gap: 1rem;
+}
+
+.checkout-item-mini:last-child {
+	border-bottom: 0;
+	padding-bottom: 0;
+}
+
+.item-mini-copy {
+	display: flex;
+	flex-direction: column;
+	gap: 0.15rem;
+}
+
+.item-mini-name {
+	font-size: 0.95rem;
+	color: #4a2b21;
+}
+
+.item-mini-details {
+	margin: 0;
+	font-size: 0.85rem;
+	color: var(--petites-brown-soft, #674332);
+	font-weight: 500;
+}
+
+.item-mini-badge {
+	font-size: 0.68rem;
+	font-weight: 800;
+	letter-spacing: 0.04em;
+	padding: 0.35rem 0.6rem;
+	border-radius: 20px;
+	background: rgba(203, 106, 91, 0.08);
+	color: #cb6a5b;
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.item-mini-badge.scheduled {
+	background: rgba(90, 53, 41, 0.08);
+	color: var(--petites-brown, #674332);
+}
+
+/* Costs List details */
+.checkout-cost-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	margin: 0;
+	border-top: 1px dashed rgba(103, 67, 50, 0.15);
+	padding-top: 1.15rem;
+}
+
+.cost-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.cost-row dt {
+	font-size: 0.9rem;
+	color: var(--petites-brown-soft, #674332);
+	font-weight: 500;
+}
+
+.cost-row dd {
+	margin: 0;
+	font-size: 1rem;
+	color: #4a2b21;
+	font-weight: 700;
+}
+
+.cost-row.discount dt,
+.cost-row.discount dd {
+	color: #2b7754;
+}
+
+.cost-row.total-row {
+	border-top: 1px dashed rgba(103, 67, 50, 0.15);
+	padding-top: 0.85rem;
+	margin-top: 0.25rem;
+}
+
+.cost-row.total-row dt {
+	font-size: 1.05rem;
+	color: #4a2b21;
+	font-weight: 800;
+}
+
+.cost-row.total-row dd {
+	font-family: Georgia, serif;
+	font-size: 1.45rem;
+	color: #cb6a5b;
+	font-weight: 800;
+}
+
+.checkout-actions {
+	margin-top: 0.25rem;
+}
+
+.back-to-cart-btn {
+	width: 100%;
+	padding: 0.9rem 1.5rem !important;
+	border-radius: 99px !important;
+	background: rgba(103, 67, 50, 0.05) !important;
+	border: 1px solid rgba(103, 67, 50, 0.08) !important;
+	color: var(--petites-brown, #674332) !important;
+	font-size: 0.9rem !important;
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+	text-decoration: none;
+	font-weight: 700;
+	transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.arrow-back-icon {
+	width: 16px;
+	height: 16px;
+	transition: transform 0.2s ease;
+}
+
+.back-to-cart-btn:hover .arrow-back-icon {
+	transform: translateX(-4px);
+}
+
+.back-to-cart-btn:hover {
+	background: rgba(103, 67, 50, 0.12) !important;
+	color: #4a2b21 !important;
+}
+
+/* Segregated Split Package Receipts styling */
+.split-receipts-container {
+	display: flex;
+	flex-direction: column;
+	gap: 1.5rem;
+	width: 100%;
+}
+
+.split-receipt-block {
+	display: flex;
+	flex-direction: column;
+	gap: 0.85rem;
+	padding: 1.25rem;
+	border-radius: 1.25rem;
+	background: rgba(255, 255, 255, 0.45);
+	border: 1px solid rgba(183, 149, 132, 0.15);
+	box-shadow: 0 4px 15px rgba(83, 47, 32, 0.02);
+}
+
+.split-receipt-title {
+	margin: 0;
+	font-family: Georgia, serif;
+	font-size: 1.05rem;
+	color: #4a2b21;
+	border-bottom: 1px dashed rgba(103, 67, 50, 0.12);
+	padding-bottom: 0.5rem;
+	font-weight: 800;
+}
+
+.split-cost-list {
+	border-top: none !important;
+	padding-top: 0 !important;
+	margin-top: 0.25rem !important;
+}
+
+.split-total-row {
+	border-top: 1px dashed rgba(103, 67, 50, 0.12) !important;
+	padding-top: 0.6rem !important;
+	margin-top: 0.25rem !important;
+}
+
+.split-total-row dt {
+	font-size: 0.85rem !important;
+	font-weight: 700 !important;
+}
+
+.split-total-row dd {
+	font-size: 1.1rem !important;
+	color: #cb6a5b !important;
+	font-weight: 800 !important;
+}
+
+.grand-total-block {
+	padding-top: 1.25rem;
+	border-top: 2px dashed rgba(103, 67, 50, 0.18);
+	margin-top: 0.25rem;
+}
+
+.grand-total-row {
+	border-top: none !important;
+	padding-top: 0 !important;
+	margin-top: 0 !important;
+}
+
+.grand-total-row dt {
+	font-size: 1.15rem !important;
+	color: #4a2b21 !important;
+	font-weight: 850 !important;
+}
+
+.grand-total-row dd {
+	font-family: Georgia, serif;
+	font-size: 1.6rem !important;
+	color: #cb6a5b !important;
+	font-weight: 850 !important;
+}
+
+@media (max-width: 990px) {
+	.checkout-summary {
+		position: static;
+		width: 100%;
+	}
+}
+
+@media (max-width: 640px) {
+	.checkout-card {
+		padding: 1.25rem;
+	}
+}
+
+.delivery-notice-box {
+	margin-top: 0.5rem;
+	padding: 1.15rem;
+	border-radius: 1.15rem;
+	background: rgba(103, 67, 50, 0.04);
+	border: 1px solid rgba(103, 67, 50, 0.08);
+	display: flex;
+	flex-direction: column;
+	gap: 0.45rem;
+}
+
+.delivery-notice-box h3 {
+	margin: 0;
+	font-family: Georgia, serif;
+	font-size: 1.05rem;
+	color: #4a2b21;
+	font-weight: 800;
+}
+
+.delivery-notice-box p {
+	margin: 0;
+	font-size: 0.85rem;
+	line-height: 1.45;
+	color: var(--petites-brown-soft, #674332);
+	font-weight: 500;
+}

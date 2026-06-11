@@ -47,7 +47,7 @@ export class ShopPageComponent implements OnInit {
         const allOption: Category = { id: null as any, name: 'All', sortOrder: -1 };
         this.categories = [allOption, ...catResponse.content];
 
-        // 2. Listen to query params for pre-selecting a category
+        // 2. Listen to query params for pre-selecting a category and fulfillment mode
         this.route.queryParams.subscribe((params) => {
           const categoryIdParam = params['category'];
           if (categoryIdParam) {
@@ -57,6 +57,14 @@ export class ShopPageComponent implements OnInit {
               this.tempCategory = foundCat;
             }
           }
+
+          const fulfillmentParam = params['fulfillment'];
+          if (fulfillmentParam === 'instant' || fulfillmentParam === 'scheduled') {
+            this.currentFulfillmentMode = fulfillmentParam;
+          } else {
+            this.currentFulfillmentMode = 'scheduled';
+          }
+
           this.loadProducts();
         });
       },

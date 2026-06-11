@@ -4,8 +4,9 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, switchMap } from 'rxjs';
 import { ShopService } from '../../../core/services/shop.service';
+import { SettingService } from '../../../core/services/setting.service';
 
-import { AddressCreateRequest, AddressResponse } from '../../../core/models/address.models';
+import { AddressCreateRequest, SavedAddressResponse } from '../../../core/models/address.models';
 import { CartResponse } from '../../../core/models/cart.models';
 import { CouponValidationResponse } from '../../../core/models/coupon.models';
 import { LoyaltyResponse } from '../../../core/models/loyalty.models';
@@ -19,16 +20,31 @@ import { CouponService } from '../../../core/services/coupon.service';
 import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { PurchaseSessionService } from '../../../core/services/purchase-session.service';
 
+import { AddressFormComponent } from '../components/address-form/address-form.component';
+import { CouponFormComponent } from '../components/coupon-form/coupon-form.component';
+import { CheckoutSummaryComponent } from '../components/checkout-summary/checkout-summary.component';
+import { SuccessOrdersComponent } from '../components/success-orders/success-orders.component';
+import { PaymentFormComponent } from '../components/payment-form/payment-form.component';
+
 @Component({
 	selector: 'app-checkout-page',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, RouterLink],
+	imports: [
+		CommonModule,
+		ReactiveFormsModule,
+		RouterLink,
+		AddressFormComponent,
+		CouponFormComponent,
+		CheckoutSummaryComponent,
+		SuccessOrdersComponent,
+		PaymentFormComponent
+	],
 	templateUrl: './checkout-page.component.html',
 	styleUrl: './checkout-page.component.css'
 })
 export class CheckoutPageComponent implements OnInit {
-	private readonly instapayPaymentLink = 'https://ipn.eg/S/renadkd29/instapay/3BqRUg';
-	private readonly instapayHandle = 'renadkd29@instapay';
+	readonly instapayPaymentLink = 'https://ipn.eg/S/renadkd29/instapay/3BqRUg';
+	readonly instapayHandle = 'renadkd29@instapay';
 
 	private readonly formBuilder = inject(FormBuilder);
 	private readonly cartService = inject(CartService);
@@ -39,8 +55,11 @@ export class CheckoutPageComponent implements OnInit {
 	private readonly loyaltyService = inject(LoyaltyService);
 	private readonly purchaseSession = inject(PurchaseSessionService);
 	private readonly shopService = inject(ShopService);
+	private readonly settingService = inject(SettingService);
 
+	deliveryFeeRate = 50;
 	minScheduledDate = '';
+	blockedDays: string[] = [];
 
 	readonly checkoutForm = this.formBuilder.group({
 		customerName: ['', [Validators.minLength(2)]],
@@ -68,7 +87,7 @@ export class CheckoutPageComponent implements OnInit {
 	statusMessage = '';
 	showGuestPrompt = false;
 	loyalty: LoyaltyResponse | null = null;
-	addresses: AddressResponse[] = [];
+	addresses: SavedAddressResponse[] = [];
 	couponPreview: CouponValidationResponse | null = null;
 	orders: OrderResponse[] = [];
 	orderReference: CheckoutResponse | null = null;
@@ -87,8 +106,87 @@ export class CheckoutPageComponent implements OnInit {
 		this.loadCart();
 		this.loadAddresses();
 		this.loadLoyalty();
+		this.loadDeliveryFeeSetting();
+		this.loadBlockedDaysSetting();
 		this.showGuestPrompt = !this.isAuthenticated;
 		this.syncCheckoutValidation();
+
+		this.checkoutForm.controls.addressId.valueChanges.subscribe(() => {
+			this.syncCheckoutValidation();
+		});
+
+		this.checkoutForm.controls.scheduledDate.valueChanges.subscribe((dateStr) => {
+			this.validateSelectedDate(dateStr);
+		});
+	}
+
+	loadDeliveryFeeSetting(): void {
+		this.settingService.getDeliveryFee().subscribe({
+			next: (res) => {
+				this.deliveryFeeRate = res.deliveryFee;
+			},
+			error: () => {
+				// Keep fallback value of 50
+			}
+		});
+	}
+
+	loadBlockedDaysSetting(): void {
+		this.settingService.getBlockedDays().subscribe({
+			next: (res) => {
+				this.blockedDays = res.blockedDays || [];
+				const currentVal = this.checkoutForm.controls.scheduledDate.value;
+				if (currentVal) {
+					this.validateSelectedDate(currentVal);
+				}
+			},
+			error: () => {
+				this.blockedDays = [];
+			}
+		});
+	}
+
+	validateSelectedDate(dateStr: string | null): void {
+		if (!dateStr) return;
+		const parts = dateStr.split('-');
+		if (parts.length !== 3) return;
+		
+		const year = parseInt(parts[0], 10);
+		const month = parseInt(parts[1], 10) - 1;
+		const day = parseInt(parts[2], 10);
+		const date = new Date(year, month, day);
+		
+		if (isNaN(date.getTime())) return;
+
+		const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+		const selectedDayName = daysOfWeek[date.getDay()];
+
+		if (this.blockedDays.includes(selectedDayName)) {
+			this.checkoutForm.controls.scheduledDate.setErrors({ blockedDay: true });
+		} else {
+			const errors = this.checkoutForm.controls.scheduledDate.errors;
+			if (errors && errors['blockedDay']) {
+				delete errors['blockedDay'];
+				this.checkoutForm.controls.scheduledDate.setErrors(Object.keys(errors).length ? errors : null);
+			}
+		}
+	}
+
+	isDateBlocked(dateStr: string | null): boolean {
+		if (!dateStr) return false;
+		const parts = dateStr.split('-');
+		if (parts.length !== 3) return false;
+		
+		const year = parseInt(parts[0], 10);
+		const month = parseInt(parts[1], 10) - 1;
+		const day = parseInt(parts[2], 10);
+		const date = new Date(year, month, day);
+		
+		if (isNaN(date.getTime())) return false;
+
+		const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+		const selectedDayName = daysOfWeek[date.getDay()];
+		return this.blockedDays.includes(selectedDayName);
 	}
 
 	get cart(): CartResponse | null {
@@ -108,7 +206,7 @@ export class CheckoutPageComponent implements OnInit {
 
 	get deliveryFee(): number {
 		if (this.orderType === 'DELIVERY') {
-			return this.isMixedOrder ? 100 : 50;
+			return this.isMixedOrder ? (this.deliveryFeeRate * 2) : this.deliveryFeeRate;
 		}
 		return 0;
 	}
@@ -139,11 +237,11 @@ export class CheckoutPageComponent implements OnInit {
 	}
 
 	get instantDeliveryFee(): number {
-		return this.orderType === 'DELIVERY' ? 50 : 0;
+		return this.orderType === 'DELIVERY' ? this.deliveryFeeRate : 0;
 	}
 
 	get scheduledDeliveryFee(): number {
-		return this.orderType === 'DELIVERY' ? 50 : 0;
+		return this.orderType === 'DELIVERY' ? this.deliveryFeeRate : 0;
 	}
 
 	get instantDiscount(): number {
@@ -191,7 +289,10 @@ export class CheckoutPageComponent implements OnInit {
 	}
 
 	get showGuestDeliveryFields(): boolean {
-		return !this.isAuthenticated && this.orderType === 'DELIVERY';
+		if (this.orderType !== 'DELIVERY') {
+			return false;
+		}
+		return !this.isAuthenticated || this.checkoutForm.controls.addressId.value === 'new';
 	}
 
 	loadCart(): void {
@@ -357,14 +458,44 @@ export class CheckoutPageComponent implements OnInit {
 				this.showCheckoutError(`Scheduled date cannot be earlier than ${this.formatCheckoutDate(this.minScheduledDate)}.`);
 				return;
 			}
+			if (this.isDateBlocked(selectedDateVal)) {
+				this.showCheckoutError('Selected scheduled date falls on a blocked day.');
+				return;
+			}
 		}
 
-		if (this.showGuestDeliveryFields) {
-			this.submitGuestDeliveryCheckout();
+		if (this.orderType === 'DELIVERY' && (this.showGuestDeliveryFields || this.checkoutForm.controls.addressId.value === 'new')) {
+			if (this.isAuthenticated) {
+				this.submitAuthenticatedNewAddressCheckout();
+			} else {
+				this.submitGuestDeliveryCheckout();
+			}
 			return;
 		}
 
 		this.submitCheckoutWithAddressId(this.orderType === 'DELIVERY' ? this.checkoutForm.controls.addressId.value || null : null);
+	}
+
+	private submitAuthenticatedNewAddressCheckout(): void {
+		const newAddress = this.buildGuestDeliveryAddress();
+		if (!newAddress) {
+			return;
+		}
+
+		this.placingOrder = true;
+		this.errorMessage = '';
+		this.showErrorPopup = false;
+		this.statusMessage = '';
+
+		this.addressService.createAddress(newAddress).pipe(
+			switchMap((address) => this.checkoutService.submitCheckout(this.buildCheckoutRequest(address.id)))
+		).subscribe({
+			next: (response) => this.handleCheckoutSuccess(response),
+			error: (error) => {
+				this.placingOrder = false;
+				this.showCheckoutError(this.readCheckoutErrorMessage(error), this.isCheckoutAvailabilityError(error) ? 'basket' : 'checkout');
+			}
+		});
 	}
 
 	private submitGuestDeliveryCheckout(): void {
@@ -381,8 +512,7 @@ export class CheckoutPageComponent implements OnInit {
 		this.purchaseSession
 			.ensureGuestSessionIfAnonymous()
 			.pipe(
-				switchMap(() => this.addressService.createAddress(guestAddress)),
-				switchMap((address) => this.checkoutService.submitCheckout(this.buildCheckoutRequest(address.id)))
+				switchMap(() => this.checkoutService.submitCheckout(this.buildCheckoutRequest(null, guestAddress)))
 			)
 			.subscribe({
 				next: (response) => this.handleCheckoutSuccess(response),
@@ -493,7 +623,7 @@ export class CheckoutPageComponent implements OnInit {
 		}).format(order.totalAmount)}`;
 	}
 
-	private buildCheckoutRequest(addressId: string | null) {
+	private buildCheckoutRequest(addressId: string | null, inlineAddress?: AddressCreateRequest | null) {
 		const couponCode = this.checkoutForm.controls.couponCode.value?.trim() ?? '';
 
 		return {
@@ -501,6 +631,11 @@ export class CheckoutPageComponent implements OnInit {
 			customerPhone: this.checkoutForm.controls.customerPhone.value?.trim() || undefined,
 			orderType: this.orderType,
 			addressId,
+			deliveryCity: inlineAddress?.city,
+			deliveryArea: inlineAddress?.area,
+			deliveryStreet: inlineAddress?.street,
+			deliveryBuilding: inlineAddress?.building,
+			deliveryNotes: inlineAddress?.notes,
 			notes: this.checkoutForm.controls.notes.value?.trim() || undefined,
 			couponId: this.couponPreview?.valid ? this.couponPreview.couponId : null,
 			couponCode: this.couponPreview?.valid ? null : couponCode || null,
@@ -558,14 +693,6 @@ export class CheckoutPageComponent implements OnInit {
 		this.checkoutForm.controls.guestDeliveryStreet.updateValueAndValidity({ emitEvent: false });
 	}
 
-	rewardLine(order: OrderResponse): string | null {
-		const rewardSummary = this.findRewardSummary([order]);
-		if (!rewardSummary) {
-			return null;
-		}
-
-		return `Reward applied — enjoy your free ${rewardSummary.productName}!`;
-	}
 
 	private findRewardSummary(orders: OrderResponse[]): { productName: string } | null {
 		for (const order of orders) {

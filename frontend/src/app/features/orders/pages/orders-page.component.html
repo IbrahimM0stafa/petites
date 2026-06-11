@@ -217,7 +217,7 @@
           </div>
           <div class="customer-info-row">
             <dt>Delivery Address</dt>
-            <dd class="address-text">{{ selectedOrder.addressId || 'Boutique pickup order' }}</dd>
+            <dd class="address-text">{{ formatAddressShort(selectedOrder.address) || 'Boutique pickup order' }}</dd>
           </div>
           <div class="customer-info-row" *ngIf="selectedOrder.scheduledDate">
             <dt>Scheduled For</dt>

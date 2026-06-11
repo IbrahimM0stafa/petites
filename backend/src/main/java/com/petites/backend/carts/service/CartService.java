@@ -14,6 +14,8 @@ import com.petites.backend.carts.exception.CheckoutAvailabilityException;
 import com.petites.backend.carts.repository.CartItemRepository;
 import com.petites.backend.carts.repository.CartRepository;
 import com.petites.backend.common.enums.DeliveryMode;
+import com.petites.backend.addresses.entity.Address;
+import com.petites.backend.addresses.repository.AddressRepository;
 import com.petites.backend.coupons.entity.Coupon;
 import com.petites.backend.coupons.service.CouponService;
 import com.petites.backend.orders.dto.OrderResponse;
@@ -54,6 +56,7 @@ public class CartService {
     private final OrderRepository orderRepository;
     private final OrderService orderService;
     private final CouponService couponService;
+    private final AddressRepository addressRepository;
 
     public CartService(CartRepository cartRepository,
                        CartItemRepository cartItemRepository,
@@ -64,7 +67,8 @@ public class CartService {
                        LoyaltyService loyaltyService,
                        OrderRepository orderRepository,
                        OrderService orderService,
-                       CouponService couponService) {
+                       CouponService couponService,
+                       AddressRepository addressRepository) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
@@ -75,6 +79,7 @@ public class CartService {
         this.orderRepository = orderRepository;
         this.orderService = orderService;
         this.couponService = couponService;
+        this.addressRepository = addressRepository;
     }
 
     @Transactional(readOnly = true)
@@ -147,12 +152,16 @@ public class CartService {
         String customerName = resolveCustomerName(owner, request.customerName());
         String customerPhone = resolveCustomerPhone(owner, request.customerPhone());
         OrderType orderType = request.orderType() == null ? OrderType.DELIVERY : request.orderType();
+        DeliveryAddressSnapshot deliveryAddress = resolveDeliveryAddress(owner, request, orderType);
         BigDecimal deliveryFee = resolveDeliveryFee(orderType);
         String notes = blankToNull(request.notes());
         Coupon coupon = couponService.resolveForCheckout(blankToNull(request.couponId()), blankToNull(request.couponCode()), cartSubtotal);
         BigDecimal discountAmount = coupon == null ? BigDecimal.ZERO : couponService.calculateDiscountAmount(coupon, cartSubtotal);
         String couponId = coupon == null ? null : coupon.getId();
         LocalDate scheduledDate = request.scheduledDate() != null ? request.scheduledDate() : fulfillmentService.calculateEarliestScheduledDate();
+        if (request.scheduledDate() != null && fulfillmentService.isDayBlocked(request.scheduledDate())) {
+            throw new IllegalArgumentException("Orders are not accepted on the selected date: " + request.scheduledDate());
+        }
 
         Map<DeliveryMode, List<CartItem>> groupedItems = new LinkedHashMap<>();
         for (CartItem item : items) {
@@ -225,7 +234,14 @@ public class CartService {
             Order order = new Order();
             order.setUserId(owner.userId());
             order.setGuestSessionId(owner.guestSessionId());
-            order.setAddressId(blankToNull(request.addressId()));
+            if (deliveryAddress != null) {
+                order.setAddressId(deliveryAddress.addressId());
+                order.setDeliveryCity(deliveryAddress.city());
+                order.setDeliveryArea(deliveryAddress.area());
+                order.setDeliveryStreet(deliveryAddress.street());
+                order.setDeliveryBuilding(deliveryAddress.building());
+                order.setDeliveryNotes(deliveryAddress.notes());
+            }
             order.setDeliveryMode(deliveryMode);
             order.setOrderType(orderType);
             order.setStatus(OrderStatus.PENDING);
@@ -453,5 +469,54 @@ public class CartService {
             return null;
         }
         return value.trim();
+    }
+
+    private DeliveryAddressSnapshot resolveDeliveryAddress(CartOwnerRef owner, CheckoutRequest request, OrderType orderType) {
+        if (orderType == OrderType.PICKUP) {
+            return null;
+        }
+
+        String addressId = blankToNull(request.addressId());
+        if (addressId != null) {
+            if (!owner.isUser()) {
+                throw new IllegalArgumentException("Only authenticated users can use saved addresses");
+            }
+            Address saved = addressRepository.findByIdAndUserId(addressId, owner.userId())
+                    .orElseThrow(() -> new IllegalArgumentException("Address not found"));
+            return new DeliveryAddressSnapshot(
+                    saved.getId(),
+                    saved.getCity(),
+                    saved.getArea(),
+                    saved.getStreet(),
+                    saved.getBuilding(),
+                    saved.getNotes()
+            );
+        }
+
+        String city = blankToNull(request.deliveryCity());
+        String area = blankToNull(request.deliveryArea());
+        String street = blankToNull(request.deliveryStreet());
+        if (city == null || area == null || street == null) {
+            throw new IllegalArgumentException("Delivery address is required");
+        }
+
+        return new DeliveryAddressSnapshot(
+                null,
+                city,
+                area,
+                street,
+                blankToNull(request.deliveryBuilding()),
+                blankToNull(request.deliveryNotes())
+        );
+    }
+
+    private record DeliveryAddressSnapshot(
+            String addressId,
+            String city,
+            String area,
+            String street,
+            String building,
+            String notes
+    ) {
     }
 }

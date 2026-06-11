@@ -11,9 +11,8 @@ import com.petites.backend.orders.entity.OrderItem;
 import com.petites.backend.orders.repository.OrderItemRepository;
 import com.petites.backend.orders.repository.OrderRepository;
 import com.petites.backend.loyalty.service.LoyaltyService;
-import com.petites.backend.addresses.repository.AddressRepository;
-import com.petites.backend.addresses.entity.Address;
 import com.petites.backend.addresses.dto.AddressResponse;
+import com.petites.backend.addresses.repository.AddressRepository;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -101,18 +100,7 @@ public class OrderService {
                 .map(this::toResponse)
                 .toList();
 
-        AddressResponse addr = null;
-        if (order.getAddressId() != null) {
-            addr = addressRepository.findById(order.getAddressId()).map(a -> new AddressResponse(
-                a.getId(),
-                a.getUserId(),
-                a.getCity(),
-                a.getArea(),
-                a.getStreet(),
-                a.getBuilding(),
-                a.getNotes()
-            )).orElse(null);
-        }
+        AddressResponse addr = buildAddressResponse(order);
 
         return new OrderResponse(
                 order.getId(),
@@ -178,6 +166,36 @@ public class OrderService {
         Order saved = orderRepository.save(order);
 
         return toResponse(saved);
+    }
+
+    private AddressResponse buildAddressResponse(Order order) {
+        if (order.getDeliveryCity() != null) {
+            return new AddressResponse(
+                    order.getAddressId(),
+                    order.getUserId(),
+                    order.getDeliveryCity(),
+                    order.getDeliveryArea(),
+                    order.getDeliveryStreet(),
+                    order.getDeliveryBuilding(),
+                    order.getDeliveryNotes()
+            );
+        }
+
+        if (order.getAddressId() != null) {
+            return addressRepository.findById(order.getAddressId())
+                    .map(saved -> new AddressResponse(
+                            saved.getId(),
+                            saved.getUserId(),
+                            saved.getCity(),
+                            saved.getArea(),
+                            saved.getStreet(),
+                            saved.getBuilding(),
+                            saved.getNotes()
+                    ))
+                    .orElse(null);
+        }
+
+        return null;
     }
 
     private List<Order> findOrders(CartOwnerRef owner) {

@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { AuthStateService } from '../../../core/services/auth-state.service';
+import { formatAddressShort } from '../../../core/models/address.models';
 import { OrderResponse } from '../../../core/models/order.models';
 import { OrderService } from '../../../core/services/order.service';
 
@@ -20,6 +21,7 @@ export class OrdersPageComponent implements OnInit {
 	private readonly orderService = inject(OrderService);
 	private readonly loyaltyService = inject(LoyaltyService);
 	readonly authState = inject(AuthStateService);
+	readonly formatAddressShort = formatAddressShort;
 
 	loading = true;
 	detailLoading = false;
