@@ -1,7 +1,10 @@
 <section class="page-card">
 	<div class="page-header">
 		<h2>Users</h2>
-		<button type="button" class="admin-btn admin-btn-ghost" (click)="loadUsers()" [disabled]="loading">Refresh</button>
+		<div style="display: flex; gap: 0.5rem; align-items: center;">
+			<a routerLink="/users/new" class="admin-btn">Add Admin/Staff</a>
+			<button type="button" class="admin-btn admin-btn-ghost" (click)="loadUsers()" [disabled]="loading">Refresh</button>
+		</div>
 	</div>
 
 	<p *ngIf="loading" class="page-status">Loading users…</p>

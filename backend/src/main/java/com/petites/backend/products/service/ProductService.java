@@ -52,28 +52,18 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> list(String categoryId, Boolean available, String fulfillmentMode, Pageable pageable) {
+    public Page<ProductResponse> list(String categoryId, Boolean available, String fulfillmentMode, java.math.BigDecimal maxPrice, String search, Pageable pageable) {
         String catId = (categoryId != null && !categoryId.trim().isEmpty()) ? categoryId.trim() : null;
+        String searchStr = (search != null && !search.trim().isEmpty()) ? "%" + search.trim().toLowerCase() + "%" : null;
 
         Page<Product> productPage;
 
         if ("instant".equalsIgnoreCase(fulfillmentMode)) {
-            productPage = productRepository.findInstantAvailable(catId, available, Instant.now(), pageable);
+            productPage = productRepository.findInstantAvailable(catId, available, maxPrice, searchStr, Instant.now(), pageable);
         } else if ("scheduled".equalsIgnoreCase(fulfillmentMode)) {
-            productPage = productRepository.findScheduledEligible(catId, available, pageable);
+            productPage = productRepository.findScheduledEligible(catId, available, maxPrice, searchStr, pageable);
         } else {
-            boolean hasCategory = catId != null;
-            boolean hasAvailable = available != null;
-
-            if (hasCategory && hasAvailable) {
-                productPage = productRepository.findByCategoryIdAndAvailable(catId, available, pageable);
-            } else if (hasCategory) {
-                productPage = productRepository.findByCategoryId(catId, pageable);
-            } else if (hasAvailable) {
-                productPage = productRepository.findByAvailable(available, pageable);
-            } else {
-                productPage = productRepository.findAll(pageable);
-            }
+            productPage = productRepository.findAllFiltered(catId, available, maxPrice, searchStr, pageable);
         }
 
         return productPage.map(this::toResponse);

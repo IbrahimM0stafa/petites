@@ -1,0 +1,14 @@
+target/
+.git/
+.gitignore
+.idea/
+.vscode/
+.mvn/wrapper/maven-wrapper.jar
+*.iml
+*.iws
+*.ipr
+.env
+.env.example
+HELP.md
+README.md
+.zencoder/

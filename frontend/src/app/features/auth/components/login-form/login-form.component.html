@@ -6,6 +6,7 @@
   </div>
 
   <div class="auth-alert" *ngIf="serverError" role="alert">{{ serverError }}</div>
+  <div class="auth-alert auth-alert--success" *ngIf="successMessage" role="alert">{{ successMessage }}</div>
 
   <label class="auth-field">
     <span>Email</span>
@@ -15,7 +16,10 @@
   </label>
 
   <label class="auth-field">
-    <span>Password</span>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <span>Password</span>
+      <a routerLink="/forgot-password" style="font-size: 0.8rem; color: var(--petites-accent-deep); font-weight: 600; text-decoration: none; margin-bottom: 0.35rem;">Forgot password?</a>
+    </div>
     <input type="password" formControlName="password" autocomplete="current-password" placeholder="At least 8 characters" />
     <small *ngIf="loginForm.controls.password.touched && loginForm.controls.password.invalid">Password must be at least 8 characters.</small>
     <small *ngFor="let message of serverFieldErrors['password']">{{ message }}</small>

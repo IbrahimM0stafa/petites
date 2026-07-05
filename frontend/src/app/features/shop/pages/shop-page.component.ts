@@ -1,6 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { ShopService } from '../../../core/services/shop.service';
 import { Category, Product } from '../../../core/models/shop.models';
@@ -8,11 +11,11 @@ import { Category, Product } from '../../../core/models/shop.models';
 @Component({
   selector: 'app-shop-page',
   standalone: true,
-  imports: [CommonModule, ProductCardComponent],
+  imports: [CommonModule, FormsModule, ProductCardComponent],
   templateUrl: './shop-page.component.html',
   styleUrls: ['./shop-page.component.css']
 })
-export class ShopPageComponent implements OnInit {
+export class ShopPageComponent implements OnInit, OnDestroy {
   isFilterOpen = false;
   priceRangeMax = 50;
   private hasPriceFilterBeenTouched = false;
@@ -29,6 +32,12 @@ export class ShopPageComponent implements OnInit {
 
   products: Product[] = [];
   categories: Category[] = [];
+  
+  // Search state
+  searchQuery = '';
+  private readonly searchSubject = new Subject<string>();
+  private searchSubscription?: Subscription;
+
   // Pagination state
   page = 0;
   size = 20;
@@ -41,6 +50,15 @@ export class ShopPageComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    // Set up search debouncing
+    this.searchSubscription = this.searchSubject.pipe(
+      debounceTime(400),
+      distinctUntilChanged()
+    ).subscribe(() => {
+      this.page = 0;
+      this.loadProducts();
+    });
+
     // 1. Load Categories
     this.shopService.getCategories().subscribe({
       next: (catResponse) => {
@@ -75,9 +93,18 @@ export class ShopPageComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.searchSubscription) {
+      this.searchSubscription.unsubscribe();
+    }
+  }
+
   loadProducts(): void {
     const catId = this.selectedCategory && this.selectedCategory.id !== null ? this.selectedCategory.id : undefined;
-    this.shopService.getProducts(catId, this.currentFulfillmentMode, this.page, this.size).subscribe({
+    const maxPriceParam = this.hasPriceFilterBeenTouched ? this.appliedPrice : undefined;
+    const searchParam = this.searchQuery.trim() !== '' ? this.searchQuery.trim() : undefined;
+
+    this.shopService.getProducts(catId, this.currentFulfillmentMode, this.page, this.size, 'createdAt,desc', maxPriceParam, searchParam, true).subscribe({
       next: (prodResponse) => {
         this.products = prodResponse.content;
         this.syncPriceRangeDefaults();
@@ -96,8 +123,6 @@ export class ShopPageComponent implements OnInit {
         if (serverPageNumber !== null && serverPageNumber !== undefined) {
           this.page = serverPageNumber;
         }
-
-        // Removed debug log for production UI.
       },
       error: (err) => {
         console.error('Error loading products', err);
@@ -108,26 +133,22 @@ export class ShopPageComponent implements OnInit {
   changeFulfillmentMode(mode: 'scheduled' | 'instant'): void {
     if (this.currentFulfillmentMode !== mode) {
       this.currentFulfillmentMode = mode;
+      this.page = 0; // Reset page on mode change
       this.loadProducts();
     }
   }
 
   get filteredProducts(): Product[] {
-    return this.products.filter((p) => {
-      // Hide unavailable products and apply the client-side price filter.
-      return p.isAvailable !== false && p.price <= this.appliedPrice;
-    });
+    // The backend now handles the filtering for available and price range.
+    return this.products;
   }
 
   private syncPriceRangeDefaults(): void {
-    const highestProductPrice = this.products.reduce((max, product) => Math.max(max, product.price ?? 0), 50);
-    this.priceRangeMax = Math.max(50, highestProductPrice);
-
-    if (!this.hasPriceFilterBeenTouched && this.appliedPrice === 50) {
+    if (!this.hasPriceFilterBeenTouched) {
+      const highestProductPrice = this.products.reduce((max, product) => Math.max(max, product.price ?? 0), 50);
+      this.priceRangeMax = Math.max(50, highestProductPrice);
       this.appliedPrice = this.priceRangeMax;
       this.tempPrice = this.priceRangeMax;
-    } else if (!this.hasPriceFilterBeenTouched) {
-      this.tempPrice = this.appliedPrice;
     }
   }
 
@@ -153,10 +174,28 @@ export class ShopPageComponent implements OnInit {
   applyFilters(): void {
     this.selectedCategory = this.tempCategory;
     this.appliedPrice = this.tempPrice;
+
+    if (this.appliedPrice >= this.priceRangeMax) {
+      this.hasPriceFilterBeenTouched = false;
+    } else {
+      this.hasPriceFilterBeenTouched = true;
+    }
+
     this.isFilterOpen = false;
     // Reset to first page when filters change
     this.page = 0;
     this.loadProducts();
+  }
+
+  onSearchInput(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    this.searchQuery = target.value;
+    this.searchSubject.next(this.searchQuery);
+  }
+
+  clearSearch(): void {
+    this.searchQuery = '';
+    this.searchSubject.next('');
   }
 
   goToPage(pageNum: number): void {

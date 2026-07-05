@@ -11,6 +11,11 @@
 
     <div class="filters-bar">
       <label class="filter-field">
+        <span>Order #</span>
+        <input type="text" [(ngModel)]="orderNumberFilter" name="orderNumberFilter" placeholder="Search by order #..." (input)="onFilterChange()" />
+      </label>
+
+      <label class="filter-field">
         <span>Status</span>
         <select [(ngModel)]="selectedStatus" name="statusFilter" (change)="onFilterChange()">
           <option *ngFor="let option of statusOptions" [ngValue]="option.value">{{ option.label }}</option>

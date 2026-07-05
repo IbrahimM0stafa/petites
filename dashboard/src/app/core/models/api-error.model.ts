@@ -10,7 +10,7 @@ export interface ApiErrorResponse {
 }
 
 export function isApiErrorResponse(value: unknown): value is ApiErrorResponse {
-	return typeof value === 'object' && value !== null && 'message' in value && 'status' in value;
+	return typeof value === 'object' && value !== null && 'message' in value && 'status' in value && (value as any).name !== 'HttpErrorResponse';
 }
 
 export function readApiErrorMessage(error: unknown, fallback = 'Request failed.'): string {

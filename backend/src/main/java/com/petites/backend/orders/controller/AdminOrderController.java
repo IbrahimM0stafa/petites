@@ -35,8 +35,9 @@ public class AdminOrderController {
             @RequestParam(value = "deliveryMode", required = false) DeliveryMode deliveryMode,
             @RequestParam(value = "scheduledDate", required = false) LocalDate scheduledDate,
             @RequestParam(value = "placedDate", required = false) LocalDate placedDate,
+            @RequestParam(value = "orderNumber", required = false) String orderNumber,
             @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return orderService.listAllOrders(status, orderType, deliveryMode, scheduledDate, placedDate, pageable);
+        return orderService.listAllOrders(status, orderType, deliveryMode, scheduledDate, placedDate, orderNumber, pageable);
     }
 
     @GetMapping("/{id}")

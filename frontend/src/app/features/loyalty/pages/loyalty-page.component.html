@@ -1,0 +1,176 @@
+<section class="loyalty-page">
+  <div class="loyalty-container">
+    <header class="loyalty-hero">
+      <span class="loyalty-eyebrow">Petites Rewards</span>
+      <h1>Sweet Rewards Await</h1>
+      <p class="loyalty-lead">Delight in every tiny bite. Collect stamps on each order and unlock free handmade sweet treats!</p>
+    </header>
+
+    <!-- Authenticated User View -->
+    <ng-container *ngIf="authState.isAuthenticated(); else guestView">
+      <div class="loyalty-loading" *ngIf="loading">
+        <span class="loyalty-spinner" aria-hidden="true"></span>
+        <p>Loading your loyalty progress...</p>
+      </div>
+
+      <div class="loyalty-error" *ngIf="!loading && error">
+        <div class="auth-alert" role="alert">{{ error }}</div>
+        <button type="button" class="auth-btn auth-btn--secondary loyalty-retry-btn" (click)="loadLoyalty()">Try Again</button>
+      </div>
+
+      <div class="loyalty-content" *ngIf="!loading && !error && loyalty">
+        <!-- Reward Claim Ticket -->
+        <div class="reward-ticket-banner" *ngIf="loyalty.rewardAvailable" role="status">
+          <div class="ticket-glow"></div>
+          <div class="ticket-left">
+            <div class="ticket-badge">REWARD</div>
+            <h3>Free Treat Unlocked!</h3>
+            <p>You have earned a free reward: <strong>{{ loyalty.rewardProductName || 'Free Item' }}</strong>!</p>
+            <span class="ticket-instruction">This will be added automatically to your cart on checkout.</span>
+            <a routerLink="/shop" class="auth-btn redeem-btn">Shop Now to Claim</a>
+          </div>
+          <div class="ticket-right" *ngIf="loyalty.rewardProductImage">
+            <img [src]="loyalty.rewardProductImage" [alt]="loyalty.rewardProductName || 'Free Reward'" class="reward-product-img" />
+          </div>
+        </div>
+
+        <!-- Interactive Stamp Card -->
+        <div class="stamp-card-wrapper">
+          <div class="stamp-card">
+            <div class="stamp-card-header">
+              <div class="brand-info">
+                <img src="/assets/images/logo.png" alt="Petites" class="card-logo" />
+                <span>Sweet Loyalty Card</span>
+              </div>
+              <span class="card-chip"></span>
+            </div>
+
+            <div class="stamp-grid">
+              <div 
+                *ngFor="let stampNum of targetStamps; let idx = index" 
+                class="stamp-slot" 
+                [class.stamped]="idx < completedCount"
+                [class.next-stamp]="idx === completedCount && !loyalty.rewardAvailable"
+              >
+                <div class="stamp-inner">
+                  <ng-container *ngIf="idx < completedCount; else emptyStamp">
+                    <!-- Cute Cookie SVG for Filled Stamps -->
+                    <svg viewBox="0 0 24 24" class="cookie-stamp-icon" aria-hidden="true">
+                      <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 4.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5-.672 1.5-1.5 1.5-1.5-.672-1.5-1.5zm-5 4c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5-.672 1.5-1.5 1.5-1.5-.672-1.5-1.5zm1.5 6.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5zm3.5-2.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5zm4.5 2.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5z"/>
+                    </svg>
+                    <span class="stamp-number">{{ stampNum }}</span>
+                  </ng-container>
+                  <ng-template #emptyStamp>
+                    <span class="stamp-number">{{ stampNum }}</span>
+                  </ng-template>
+                </div>
+              </div>
+            </div>
+
+            <div class="stamp-card-footer">
+              <div class="progress-details">
+                <span class="progress-ratio">{{ completedCount }} / {{ loyalty.rewardOrderTarget }} Stamps</span>
+                <span class="progress-status" *ngIf="!loyalty.rewardAvailable">
+                  {{ loyalty.ordersUntilNextReward }} order{{ loyalty.ordersUntilNextReward === 1 ? '' : 's' }} until your next free treat!
+                </span>
+                <span class="progress-status reward-status" *ngIf="loyalty.rewardAvailable">
+                  Reward is ready to claim!
+                </span>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar" [style.width.%]="(completedCount / loyalty.rewardOrderTarget) * 100"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Guest/Anonymous View -->
+    <ng-template #guestView>
+      <div class="loyalty-guest-layout">
+        <!-- Mock Stamp Card for preview -->
+        <div class="stamp-card-wrapper guest-preview">
+          <div class="stamp-card preview-card">
+            <div class="stamp-card-header">
+              <div class="brand-info">
+                <img src="/assets/images/logo.png" alt="Petites" class="card-logo" />
+                <span>Sweet Loyalty Card</span>
+              </div>
+              <span class="card-chip"></span>
+            </div>
+
+            <div class="stamp-grid">
+              <!-- Show a mock progress of 3/5 stamps filled -->
+              <div class="stamp-slot stamped" *ngFor="let idx of [1,2,3]">
+                <div class="stamp-inner">
+                  <svg viewBox="0 0 24 24" class="cookie-stamp-icon" aria-hidden="true">
+                    <path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm1 4.5c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5-.672 1.5-1.5 1.5-1.5-.672-1.5-1.5zm-5 4c0-.828.672-1.5 1.5-1.5s1.5.672 1.5 1.5-.672 1.5-1.5 1.5-1.5-.672-1.5-1.5zm1.5 6.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5zm3.5-2.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5zm4.5 2.5c-.828 0-1.5-.672-1.5-1.5s.672-1.5 1.5-1.5 1.5.672 1.5 1.5-.672 1.5-1.5 1.5z"/>
+                  </svg>
+                  <span class="stamp-number">{{ idx }}</span>
+                </div>
+              </div>
+              <div class="stamp-slot next-stamp">
+                <div class="stamp-inner"><span class="stamp-number">4</span></div>
+              </div>
+              <div class="stamp-slot">
+                <div class="stamp-inner"><span class="stamp-number">5</span></div>
+              </div>
+            </div>
+
+            <div class="stamp-card-footer">
+              <div class="progress-details">
+                <span class="progress-ratio">3 / 5 Stamps</span>
+                <span class="progress-status">2 more orders until a free treat!</span>
+              </div>
+              <div class="progress-bar-container">
+                <div class="progress-bar" style="width: 60%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Call to Action Card -->
+        <div class="guest-cta-card">
+          <h2>Start Earning Sweet Rewards</h2>
+          <p>Create an account or sign in to start collecting stamps. Every completed order gets you closer to a free item from our shop!</p>
+          <div class="guest-cta-buttons">
+            <a routerLink="/signup" class="auth-btn">Create Account</a>
+            <a routerLink="/login" class="auth-btn auth-btn--secondary">Log In</a>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- How It Works & FAQ Section -->
+    <section class="loyalty-info-section">
+      <h2 class="section-title">How It Works</h2>
+      <div class="info-grid">
+        <div class="info-card">
+          <div class="info-icon-wrapper">
+            <span class="info-number">1</span>
+          </div>
+          <h4>Order Treats</h4>
+          <p>Browse our selection and order delicious handmade pastries, cookies, and desserts.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon-wrapper">
+            <span class="info-number">2</span>
+          </div>
+          <h4>Collect Stamps</h4>
+          <p>Each completed delivery automatically adds one stamp to your card. Make sure you are logged in when placing your order.</p>
+        </div>
+        <div class="info-card">
+          <div class="info-icon-wrapper">
+            <span class="info-number">3</span>
+          </div>
+          <h4>Unlock Treats</h4>
+          <p>Once you collect {{ loyalty?.rewardOrderTarget || 5 }} stamps, your next order gets a free product added to the cart!</p>
+        </div>
+      </div>
+      <p class="loyalty-note" style="text-align: center; margin-top: 2rem; color: var(--petites-brown-soft); font-size: 0.95rem; font-style: italic;">
+        * Note: You must be logged in to your account to collect stamps and redeem rewards.
+      </p>
+    </section>
+  </div>
+</section>

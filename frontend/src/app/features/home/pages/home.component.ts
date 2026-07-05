@@ -6,6 +6,7 @@ import { InstantDeliveryComponent } from '../components/instant-delivery/instant
 import { CategoriesComponent } from '../components/categories/categories.component';
 import { FeaturedTreatsComponent } from '../components/featured-treats/featured-treats.component';
 import { HomeInfoPanelComponent } from '../components/home-info-panel/home-info-panel.component';
+import { LoyaltyPromoComponent } from '../components/loyalty-promo/loyalty-promo.component';
 
 @Component({
   selector: 'app-home',
@@ -16,7 +17,8 @@ import { HomeInfoPanelComponent } from '../components/home-info-panel/home-info-
     InstantDeliveryComponent,
     CategoriesComponent,
     FeaturedTreatsComponent,
-    HomeInfoPanelComponent
+    HomeInfoPanelComponent,
+    LoyaltyPromoComponent
   ],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']

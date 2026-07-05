@@ -422,75 +422,7 @@
 /* ============================================================
    MISSION PILLARS
    ============================================================ */
-.about-mission {
-  background: linear-gradient(165deg, #3d2116 0%, #2a1510 60%, #3d2116 100%);
-  padding: 4.5rem 3rem;
-  position: relative;
-  overflow: hidden;
-}
 
-.mission-bg-decor {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(circle at 15% 20%, rgba(203,106,91, 0.08) 0%, transparent 40%),
-    radial-gradient(circle at 85% 80%, rgba(203,106,91, 0.06) 0%, transparent 40%);
-}
-
-.pillars-wrapper {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  max-width: 1100px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--ab-radius);
-  padding: 2.2rem 1.8rem;
-  transition: transform 0.35s cubic-bezier(.25,.8,.25,1), background 0.35s ease, box-shadow 0.35s ease;
-}
-.glass-card:hover {
-  transform: translateY(-6px);
-  background: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 12px 40px rgba(203,106,91, 0.12);
-}
-
-.pillar-icon-wrap {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(203,106,91,0.2), rgba(203,106,91,0.08));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
-}
-.pillar-icon {
-  font-size: 1.3rem;
-  line-height: 1;
-}
-
-.pillar-card h3 {
-  font-family: var(--ab-font-display);
-  font-size: 1.12rem;
-  color: var(--ab-warm);
-  margin: 0 0 0.6rem;
-  font-weight: 700;
-}
-
-.pillar-card p {
-  font-size: 0.9rem;
-  line-height: 1.7;
-  color: #b08070;
-  margin: 0;
-}
 
 /* ============================================================
    WHY PETITES

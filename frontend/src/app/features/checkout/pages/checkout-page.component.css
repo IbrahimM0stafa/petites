@@ -534,3 +534,52 @@
 		padding: 2rem 1rem;
 	}
 }
+
+.instapay-popup-card {
+	border: 1px solid rgba(82, 167, 124, 0.22);
+}
+
+.instapay-popup-close {
+	background: rgba(82, 167, 124, 0.1);
+	color: #2b7754;
+}
+
+.instapay-popup-icon {
+	display: grid;
+	place-items: center;
+	width: 44px;
+	height: 44px;
+	border-radius: 14px;
+	background: rgba(82, 167, 124, 0.1);
+	color: #2b7754;
+}
+
+.instapay-popup-eyebrow {
+	color: #2b7754;
+}
+
+.instapay-popup-link {
+	color: #cb6a5b;
+	font-weight: 700;
+	text-decoration: underline;
+	transition: color 0.2s ease;
+}
+
+.instapay-popup-link:hover {
+	color: #b55446;
+}
+
+.instapay-urgency-note {
+	font-weight: 500;
+	background: rgba(255, 248, 241, 0.85);
+	border: 1px dashed rgba(203, 106, 91, 0.25);
+	padding: 0.85rem 1.15rem;
+	border-radius: 1rem;
+	color: #674332;
+	line-height: 1.5;
+}
+
+.instapay-popup-btn {
+	background: #cb6a5b !important;
+	box-shadow: 0 4px 16px rgba(203, 106, 91, 0.3) !important;
+}

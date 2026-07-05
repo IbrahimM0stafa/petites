@@ -1,0 +1,98 @@
+<section class="loyalty-promo-section">
+  <div class="promo-container">
+    <!-- Authenticated View -->
+    <ng-container *ngIf="authState.isAuthenticated(); else guestView">
+      <div class="promo-loading" *ngIf="loading">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-text"></div>
+      </div>
+
+      <div class="promo-card" *ngIf="!loading && loyalty">
+        <div class="promo-card-inner">
+          <!-- Left: Text Content -->
+          <div class="promo-text">
+            <span class="promo-eyebrow">My Rewards</span>
+            <h2>Your Sweet Progress</h2>
+            <p class="promo-copy" *ngIf="!loyalty.rewardAvailable">
+              You're <strong>{{ completedCount }}</strong> of <strong>{{ loyalty.rewardOrderTarget }}</strong> stamps in.
+              Just <strong>{{ loyalty.ordersUntilNextReward }}</strong> more order{{ loyalty.ordersUntilNextReward === 1 ? '' : 's' }} to unlock a free treat!
+            </p>
+            <p class="promo-copy reward-glow" *ngIf="loyalty.rewardAvailable">
+              ♥ <strong>Free treat unlocked!</strong> Your reward (<em>{{ loyalty.rewardProductName || 'Free Item' }}</em>) will be added at checkout.
+            </p>
+            <a routerLink="/loyalty" class="promo-link">
+              View Loyalty Card
+              <svg viewBox="0 0 20 20" class="link-arrow" aria-hidden="true"><path d="M3 10h12m-4-4 4 4-4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+
+          <!-- Right: Mini Stamp Card -->
+          <div class="promo-visual">
+            <div class="mini-card">
+              <div class="mini-card-header">
+                <img src="/assets/images/logo.png" alt="Petites" class="mini-logo" />
+                <span class="mini-chip"></span>
+              </div>
+              <div class="mini-stamp-row">
+                <div 
+                  *ngFor="let stampNum of targetStamps; let idx = index" 
+                  class="mini-stamp"
+                  [class.filled]="idx < completedCount"
+                  [class.next]="idx === completedCount && !loyalty.rewardAvailable"
+                >
+                  <ng-container *ngIf="idx < completedCount; else emptyDot">
+                    <svg viewBox="0 0 24 24" class="mini-check" aria-hidden="true">
+                      <path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </ng-container>
+                  <ng-template #emptyDot>
+                    <span class="mini-dot-num">{{ stampNum }}</span>
+                  </ng-template>
+                </div>
+              </div>
+              <div class="mini-progress-track">
+                <div class="mini-progress-fill" [style.width.%]="(completedCount / loyalty.rewardOrderTarget) * 100"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- Guest View -->
+    <ng-template #guestView>
+      <div class="promo-card guest-card">
+        <div class="promo-card-inner">
+          <div class="promo-text">
+            <span class="promo-eyebrow">Petites Loyalty Club</span>
+            <h2>Every Bite Earns a Reward</h2>
+            <p class="promo-copy">Join our Loyalty Club to earn stamps on every order. Make sure you are logged in when placing orders to automatically track progress and unlock a free sweet treat.</p>
+            <div class="promo-cta-row">
+              <a routerLink="/signup" class="cta-btn cta-btn--primary">Join Now</a>
+              <a routerLink="/loyalty" class="cta-btn cta-btn--ghost">How it works</a>
+            </div>
+          </div>
+
+          <div class="promo-visual">
+            <div class="mini-card preview">
+              <div class="mini-card-header">
+                <img src="/assets/images/logo.png" alt="Petites" class="mini-logo" />
+                <span class="mini-chip"></span>
+              </div>
+              <div class="mini-stamp-row">
+                <div class="mini-stamp filled"><svg viewBox="0 0 24 24" class="mini-check" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                <div class="mini-stamp filled"><svg viewBox="0 0 24 24" class="mini-check" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                <div class="mini-stamp filled"><svg viewBox="0 0 24 24" class="mini-check" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+                <div class="mini-stamp next"><span class="mini-dot-num">4</span></div>
+                <div class="mini-stamp"><span class="mini-dot-num">5</span></div>
+              </div>
+              <div class="mini-progress-track">
+                <div class="mini-progress-fill" style="width: 60%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</section>

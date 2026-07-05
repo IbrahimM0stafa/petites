@@ -121,6 +121,18 @@ export class AuthService {
 		return this.apiClient.patch<UserResponse>(`/api/users/${id}/reactivate`, {});
 	}
 
+	forgotPassword(email: string): Observable<{ message: string }> {
+		return this.apiClient.post<{ message: string }>('/api/auth/forgot-password', { email }, { context: this.publicContext() });
+	}
+
+	verifyOtp(email: string, otp: string): Observable<{ success: boolean; message: string }> {
+		return this.apiClient.post<{ success: boolean; message: string }>('/api/auth/verify-otp', { email, otp }, { context: this.publicContext() });
+	}
+
+	resetPassword(email: string, otp: string, newPassword: string): Observable<{ success: boolean; message: string }> {
+		return this.apiClient.post<{ success: boolean; message: string }>('/api/auth/reset-password', { email, otp, newPassword }, { context: this.publicContext() });
+	}
+
 	listRoles(): Observable<RoleResponse[]> {
 		return this.apiClient.get<RoleResponse[]>('/api/roles');
 	}

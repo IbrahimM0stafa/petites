@@ -20,13 +20,16 @@
 
   <div class="coupon-preview-box" *ngIf="couponPreview" [class.valid]="couponPreview.valid">
     <div class="coupon-preview-head">
-      <svg viewBox="0 0 20 20" fill="currentColor">
+      <svg viewBox="0 0 20 20" fill="currentColor" *ngIf="couponPreview.valid">
         <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
       </svg>
-      <strong>Coupon Applied Successfully!</strong>
+      <svg viewBox="0 0 20 20" fill="currentColor" *ngIf="!couponPreview.valid">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+      </svg>
+      <strong>{{ couponPreview.valid ? 'Coupon Applied Successfully!' : 'Coupon Not Valid' }}</strong>
     </div>
     <p class="coupon-message">{{ couponPreview.message }}</p>
-    <div class="coupon-details">
+    <div class="coupon-details" *ngIf="couponPreview.valid">
       <span>Saved: <strong>{{ couponPreview.discountAmount | currency }}</strong></span>
       <span>New total: <strong>{{ couponPreview.finalAmount | currency }}</strong></span>
     </div>

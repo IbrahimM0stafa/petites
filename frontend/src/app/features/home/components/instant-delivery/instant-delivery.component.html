@@ -5,14 +5,12 @@
       Instant Treats
       <span class="title-flash" aria-hidden="true">⚡</span>
     </h2>
-    <p class="section-subtitle">Baked fresh and ready to ship right now. Order before delivery slots fill up!</p>
+    <p class="section-subtitle">freshly baked and ready to be delivered right now, order now before they’re gone🤎</p>
   </div>
 
   <div class="treat-grid">
     <ng-container *ngFor="let product of products">
-      <app-product-card
-        [product]="product"
-        fulfillmentMode="instant">
+      <app-product-card [product]="product" fulfillmentMode="instant">
       </app-product-card>
     </ng-container>
   </div>

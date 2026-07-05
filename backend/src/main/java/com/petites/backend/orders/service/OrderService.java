@@ -52,7 +52,7 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public Page<OrderResponse> listAllOrders(OrderStatus status, OrderType orderType, DeliveryMode deliveryMode, LocalDate scheduledDate, LocalDate placedDate, Pageable pageable) {
+    public Page<OrderResponse> listAllOrders(OrderStatus status, OrderType orderType, DeliveryMode deliveryMode, LocalDate scheduledDate, LocalDate placedDate, String orderNumber, Pageable pageable) {
         Specification<Order> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new java.util.ArrayList<>();
 
@@ -78,6 +78,10 @@ public class OrderService {
                 Instant end = placedDate.plusDays(1).atStartOfDay(zone).toInstant();
                 predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get("createdAt"), start));
                 predicates.add(criteriaBuilder.lessThan(root.get("createdAt"), end));
+            }
+
+            if (orderNumber != null && !orderNumber.isBlank()) {
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("orderNumber")), "%" + orderNumber.toLowerCase().trim() + "%"));
             }
 
             return criteriaBuilder.and(predicates.toArray(Predicate[]::new));

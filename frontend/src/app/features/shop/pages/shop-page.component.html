@@ -30,7 +30,7 @@
       </svg>
       <span>Filters & Refine</span>
     </button>
-    <span class="results-count">{{ filteredProducts.length }} {{ filteredProducts.length === 1 ? 'treat' : 'treats' }} available</span>
+    <span class="results-count">{{ totalElements }} {{ totalElements === 1 ? 'treat' : 'treats' }} available</span>
   </div>
 
   <!-- Glassmorphic Backdrop overlay -->
@@ -71,6 +71,29 @@
     </aside>
 
     <section class="shop-grid">
+      <!-- Premium Search Input Bar -->
+      <div class="search-bar-container">
+        <div class="search-input-wrapper">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input 
+            type="text" 
+            placeholder="Search sweet treats..." 
+            [(ngModel)]="searchQuery" 
+            (input)="onSearchInput($event)"
+            aria-label="Search products"
+          />
+          <button *ngIf="searchQuery" class="clear-search-btn" (click)="clearSearch()" aria-label="Clear search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
       <div class="grid">
         <app-product-card *ngFor="let p of filteredProducts"
           [product]="p"

@@ -1,6 +1,6 @@
 <aside class="checkout-card checkout-summary">
   <h2>Basket Review</h2>
-  
+
   <div class="single-receipt-container" *ngIf="!isMixedOrder">
     <div class="checkout-items scroll-custom">
       <article class="checkout-item-mini" *ngFor="let item of cart?.items">
@@ -110,7 +110,7 @@
 
   <div class="delivery-notice-box" *ngIf="orderType === 'DELIVERY' && deliveryFee === 0">
     <h3>Delivery Notice</h3>
-    <p>Delivery fees are determined based on the delivery area and are charged directly by the delivery service provider. We do not receive any portion of these fees. Customers are responsible for paying the delivery fee as calculated by the delivery provider.</p>
+    <p>Please note that delivery fees are paid directly to the courier and may vary depending on your location.</p>
   </div>
 
   <div class="checkout-actions">

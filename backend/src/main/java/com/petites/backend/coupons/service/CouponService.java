@@ -110,8 +110,9 @@ public class CouponService {
         if (couponId != null && !couponId.isBlank()) {
             Coupon coupon = getEntity(couponId.trim());
             String userId = currentUserIdOrNull();
-            if (validateCoupon(coupon, subtotal, userId) != null) {
-                throw new IllegalArgumentException("Coupon is not valid for this order");
+            String validationError = validateCoupon(coupon, subtotal, userId);
+            if (validationError != null) {
+                throw new IllegalArgumentException(validationError);
             }
             return coupon;
         }
@@ -120,8 +121,9 @@ public class CouponService {
             Coupon coupon = couponRepository.findByCodeIgnoreCase(couponCode.trim())
                     .orElseThrow(() -> new IllegalArgumentException("Coupon not found"));
             String userId = currentUserIdOrNull();
-            if (validateCoupon(coupon, subtotal, userId) != null) {
-                throw new IllegalArgumentException("Coupon is not valid for this order");
+            String validationError = validateCoupon(coupon, subtotal, userId);
+            if (validationError != null) {
+                throw new IllegalArgumentException(validationError);
             }
             return coupon;
         }
@@ -150,6 +152,9 @@ public class CouponService {
     }
 
     private String validateCoupon(Coupon coupon, BigDecimal subtotal, String userId) {
+        if (userId == null) {
+            return "you must login to use a coupon code";
+        }
         if (!coupon.isActive()) {
             return "Coupon is inactive";
         }
@@ -166,7 +171,7 @@ public class CouponService {
 
         // Per-user limit check
         if (userId != null && coupon.getPerUserLimit() != null) {
-            CouponUsage usage = couponUsageRepository.findByCouponIdAndUserId(coupon.getId(), userId)
+            CouponUsage usage = couponUsageRepository.findByCouponIdAndUserIdReadOnly(coupon.getId(), userId)
                     .orElse(null);
             int usedByUser = usage == null ? 0 : usage.getUsedCount();
             if (usedByUser >= coupon.getPerUserLimit()) {

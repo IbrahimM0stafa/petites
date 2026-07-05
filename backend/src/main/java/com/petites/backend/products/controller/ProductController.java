@@ -41,8 +41,10 @@ public class ProductController {
             @RequestParam(required = false) String categoryId,
             @RequestParam(required = false) Boolean available,
             @RequestParam(required = false) String fulfillmentMode,
+            @RequestParam(required = false) java.math.BigDecimal maxPrice,
+            @RequestParam(required = false) String search,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
-        return productService.list(categoryId, available, fulfillmentMode, pageable);
+        return productService.list(categoryId, available, fulfillmentMode, maxPrice, search, pageable);
     }
 
     @GetMapping("/featured")

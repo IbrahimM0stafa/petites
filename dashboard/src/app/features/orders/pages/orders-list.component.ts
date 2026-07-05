@@ -30,6 +30,7 @@ export class OrdersListComponent implements OnInit {
   selectedDeliveryMode: DeliveryMode | '' = '';
   scheduledDateFilter = '';
   placedDateFilter = '';
+  orderNumberFilter = '';
   sort = 'createdAt,desc';
 
   readonly statusOptions: Array<{ value: OrderStatus | ''; label: string }> = [
@@ -83,9 +84,9 @@ export class OrdersListComponent implements OnInit {
 		status: this.selectedStatus,
       orderType: this.selectedOrderType,
     deliveryMode: this.selectedDeliveryMode,
-		scheduledDate: this.scheduledDateFilter || undefined
-      ,
-      placedDate: this.placedDateFilter || undefined
+		scheduledDate: this.scheduledDateFilter || undefined,
+      placedDate: this.placedDateFilter || undefined,
+      orderNumber: this.orderNumberFilter || undefined
 	}).subscribe({
       next: (response) => {
         this.orders = response.content;
@@ -133,6 +134,7 @@ export class OrdersListComponent implements OnInit {
   this.selectedDeliveryMode = '';
 	this.scheduledDateFilter = '';
   this.placedDateFilter = '';
+  this.orderNumberFilter = '';
 	this.sort = 'createdAt,desc';
 	this.page = 0;
 	this.loadOrders();

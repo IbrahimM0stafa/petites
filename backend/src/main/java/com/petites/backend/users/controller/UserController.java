@@ -15,6 +15,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.petites.backend.users.dto.AdminUserCreateRequest;
+import com.petites.backend.users.dto.AssignRoleByEmailRequest;
 import com.petites.backend.users.dto.UserCreateRequest;
 import com.petites.backend.users.dto.UserResponse;
 import com.petites.backend.users.dto.UserUpdateRequest;
@@ -38,6 +40,18 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.create(request));
     }
 
+    @PostMapping("/admin")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public ResponseEntity<UserResponse> createAdminStaff(@Valid @RequestBody AdminUserCreateRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createAdminStaff(request));
+    }
+
+    @PostMapping("/admin/assign-role")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
+    public UserResponse assignRoleByEmail(@Valid @RequestBody AssignRoleByEmailRequest request) {
+        return userService.assignRoleByEmail(request.email(), request.role());
+    }
+
     @GetMapping
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF')")
     public List<UserResponse> list() {
@@ -59,6 +73,13 @@ public class UserController {
     @PatchMapping("/{id}/deactivate")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF') or #id == principal")
     public UserResponse deactivate(@PathVariable String id) {
+        String currentUserId = (String) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (id.equals(currentUserId)) {
+            UserResponse currentUser = userService.get(currentUserId);
+            if (currentUser.roles().contains("SUPER_ADMIN")) {
+                throw new IllegalArgumentException("Superadmin cannot deactivate their own account");
+            }
+        }
         return userService.setActive(id, false);
     }
 

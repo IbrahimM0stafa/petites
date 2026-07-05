@@ -85,6 +85,8 @@ export class CheckoutPageComponent implements OnInit {
 	showErrorPopup = false;
 	errorPopupMode: 'checkout' | 'basket' = 'checkout';
 	statusMessage = '';
+	showInstapayPopup = false;
+	totalAmountToTransfer = '';
 	showGuestPrompt = false;
 	loyalty: LoyaltyResponse | null = null;
 	addresses: SavedAddressResponse[] = [];
@@ -399,11 +401,14 @@ export class CheckoutPageComponent implements OnInit {
 
 		this.validatingCoupon = true;
 		this.errorMessage = '';
+		this.couponPreview = null;
 		this.couponService.validateCoupon(couponCode, this.subtotal).subscribe({
 			next: (preview) => {
 				this.validatingCoupon = false;
-				this.couponPreview = preview.valid ? preview : null;
-				this.statusMessage = preview.message;
+				this.couponPreview = preview;
+				if (preview.valid) {
+					this.statusMessage = preview.message;
+				}
 			},
 			error: (error) => {
 				this.validatingCoupon = false;
@@ -424,6 +429,10 @@ export class CheckoutPageComponent implements OnInit {
 
 	dismissErrorPopup(): void {
 		this.showErrorPopup = false;
+	}
+
+	dismissInstapayPopup(): void {
+		this.showInstapayPopup = false;
 	}
 
 	submitCheckout(): void {
@@ -592,15 +601,21 @@ export class CheckoutPageComponent implements OnInit {
 		} catch (e) {
 			// ignore storage quota errors
 		}
-		const instapayHint = this.buildInstapayHint(response.orders);
 		const rewardSummary = this.findRewardSummary(response.orders);
 		if (rewardSummary) {
-			this.statusMessage = `Reward applied - enjoy your free ${rewardSummary.productName}! ${instapayHint}`;
+			this.statusMessage = `Reward applied - enjoy your free ${rewardSummary.productName}!`;
 		} else if (this.showRewardTeaser) {
-			this.statusMessage = `We could not add the free item (out of stock). Your loyalty status remains; try again next time or contact support. ${instapayHint}`;
+			this.statusMessage = `We could not add the free item (out of stock). Your loyalty status remains; try again next time or contact support.`;
 		} else {
-			this.statusMessage = `Checkout completed. Your cart has been cleared. ${instapayHint}`;
+			this.statusMessage = `Checkout completed. Your cart has been cleared.`;
 		}
+		const amountToTransfer = response.orders.reduce((sum, order) => sum + (order.totalAmount ?? 0), 0);
+		this.totalAmountToTransfer = new Intl.NumberFormat('en-EG', {
+			style: 'currency',
+			currency: 'EGP'
+		}).format(amountToTransfer);
+
+		this.showInstapayPopup = true;
 		this.couponPreview = null;
 		this.checkoutForm.patchValue({ couponCode: '' });
 		this.loadCart();

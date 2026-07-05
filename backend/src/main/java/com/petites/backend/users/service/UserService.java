@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.petites.backend.users.dto.AdminUserCreateRequest;
 import com.petites.backend.users.dto.UserCreateRequest;
 import com.petites.backend.users.dto.UserResponse;
 import com.petites.backend.users.dto.UserUpdateRequest;
@@ -45,6 +46,31 @@ public class UserService {
 
         // Assign default USER role if it exists
         roleRepository.findByName("USER").ifPresent(user.getRoles()::add);
+
+        return toResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public UserResponse createAdminStaff(AdminUserCreateRequest request) {
+        String email = normalizeEmail(request.email());
+        if (email != null && userRepository.existsByEmail(email)) {
+            throw new IllegalArgumentException("Email is already registered. You can manage this user's roles from their profile page.");
+        }
+
+        String roleName = request.role().trim().toUpperCase();
+        if (!roleName.equals("STAFF") && !roleName.equals("SUPER_ADMIN")) {
+            throw new IllegalArgumentException("Only STAFF or SUPER_ADMIN roles can be assigned");
+        }
+
+        User user = new User();
+        user.setName(request.name().trim());
+        user.setPhone(request.phone().trim());
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+
+        Role role = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new IllegalArgumentException("Role " + roleName + " not found"));
+        user.getRoles().add(role);
 
         return toResponse(userRepository.save(user));
     }
@@ -93,6 +119,14 @@ public class UserService {
     }
 
     @Transactional
+    public void updatePassword(String userId, String newPassword) {
+        User user = getEntity(userId);
+        user.setPasswordHash(passwordEncoder.encode(newPassword));
+        userRepository.saveAndFlush(user);
+    }
+
+
+    @Transactional
     public UserResponse incrementCompletedOrdersCount(String id) {
         User user = getEntity(id);
         user.setCompletedOrdersCount(user.getCompletedOrdersCount() + 1);
@@ -127,6 +161,23 @@ public class UserService {
     @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(normalizeEmail(email));
+    }
+
+    @Transactional
+    public UserResponse assignRoleByEmail(String email, String roleName) {
+        String normalizedEmail = normalizeEmail(email);
+        User user = userRepository.findByEmail(normalizedEmail)
+                .orElseThrow(() -> new IllegalArgumentException("No account found with that email"));
+
+        String normalizedRole = roleName.trim().toUpperCase();
+        if (!normalizedRole.equals("STAFF") && !normalizedRole.equals("SUPER_ADMIN")) {
+            throw new IllegalArgumentException("Only STAFF or SUPER_ADMIN roles can be assigned");
+        }
+
+        Role role = roleRepository.findByName(normalizedRole)
+                .orElseThrow(() -> new IllegalArgumentException("Role " + normalizedRole + " not found"));
+        user.getRoles().add(role);
+        return toResponse(userRepository.save(user));
     }
 
     @Transactional(readOnly = true)

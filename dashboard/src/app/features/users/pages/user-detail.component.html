@@ -13,7 +13,7 @@
 			<a routerLink="/users" class="back-link">← Users</a>
 			<h2>{{ u.name }}</h2>
 		</div>
-		<div class="detail-actions">
+		<div class="detail-actions" *ngIf="u.id !== authState.userId()">
 			<button
 				type="button"
 				class="admin-btn admin-btn-danger"

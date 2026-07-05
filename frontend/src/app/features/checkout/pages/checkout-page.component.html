@@ -1,42 +1,54 @@
 <section class="purchase-page">
   <div class="purchase-bg-glow"></div>
-  
+
   <header class="purchase-hero">
     <p class="purchase-eyebrow">Secure Checkout</p>
     <h1>Review and place your order</h1>
-    <p class="purchase-subtitle" *ngIf="isAuthenticated">Use a saved address, validate a coupon, and finish with Instapay.</p>
-    <p class="purchase-subtitle" *ngIf="!isAuthenticated">Guests can still order delivery by entering an address once. Sign in or sign up to save it for next time.</p>
+    <p class="purchase-subtitle" *ngIf="isAuthenticated">Use a saved address, validate a coupon, and finish with
+      Instapay.</p>
+    <p class="purchase-subtitle" *ngIf="!isAuthenticated">Guests can still order delivery by entering an address once.
+      Sign in or sign up to save it for next time.</p>
   </header>
 
-  <div class="guest-auth-modal" *ngIf="showGuestPrompt" role="dialog" aria-modal="true" aria-labelledby="guest-auth-title">
+  <div class="guest-auth-modal" *ngIf="showGuestPrompt" role="dialog" aria-modal="true"
+    aria-labelledby="guest-auth-title">
     <div class="guest-auth-backdrop" aria-hidden="true"></div>
     <section class="guest-auth-card">
-      <button type="button" class="guest-auth-close" (click)="dismissGuestPrompt()" aria-label="Dismiss prompt">×</button>
+      <button type="button" class="guest-auth-close" (click)="dismissGuestPrompt()"
+        aria-label="Dismiss prompt">×</button>
       <p class="guest-auth-eyebrow">Delivery tip</p>
       <h2 id="guest-auth-title">Sign in to save addresses and reorder faster</h2>
-      <p class="guest-auth-copy">You can continue as a guest, but logging in or creating an account keeps your delivery details for future orders.</p>
+      <p class="guest-auth-copy">You can continue as a guest, but logging in or creating an account keeps your delivery
+        details for future orders.</p>
       <div class="guest-auth-actions">
         <a routerLink="/login" class="purchase-btn purchase-btn--secondary">Log in</a>
         <a routerLink="/signup" class="purchase-btn purchase-btn--primary">Create account</a>
-        <button type="button" class="purchase-btn purchase-btn--secondary" (click)="dismissGuestPrompt()">Continue as guest</button>
+        <button type="button" class="purchase-btn purchase-btn--secondary" (click)="dismissGuestPrompt()">Continue as
+          guest</button>
       </div>
     </section>
   </div>
 
-  <div class="guest-auth-modal checkout-error-modal" *ngIf="showErrorPopup && errorMessage" role="dialog" aria-modal="true" aria-labelledby="checkout-error-title">
+  <div class="guest-auth-modal checkout-error-modal" *ngIf="showErrorPopup && errorMessage" role="dialog"
+    aria-modal="true" aria-labelledby="checkout-error-title">
     <div class="guest-auth-backdrop" aria-hidden="true" (click)="dismissErrorPopup()"></div>
     <section class="guest-auth-card checkout-error-card">
-      <button type="button" class="guest-auth-close checkout-error-close" (click)="dismissErrorPopup()" aria-label="Close error">×</button>
+      <button type="button" class="guest-auth-close checkout-error-close" (click)="dismissErrorPopup()"
+        aria-label="Close error">×</button>
       <div class="checkout-error-icon" aria-hidden="true">
         <svg viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+          <path fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+            clip-rule="evenodd" />
         </svg>
       </div>
       <p class="guest-auth-eyebrow checkout-error-eyebrow">Checkout issue</p>
-      <h2 id="checkout-error-title">{{ errorPopupMode === 'basket' ? 'Please review your basket' : 'Please complete checkout details' }}</h2>
+      <h2 id="checkout-error-title">{{ errorPopupMode === 'basket' ? 'Please review your basket' : 'Please complete
+        checkout details' }}</h2>
       <p class="guest-auth-copy">{{ errorMessage }}</p>
       <div class="guest-auth-actions checkout-error-actions">
-        <a *ngIf="errorPopupMode === 'basket'" routerLink="/cart" class="purchase-btn purchase-btn--secondary" (click)="dismissErrorPopup()">Modify basket</a>
+        <a *ngIf="errorPopupMode === 'basket'" routerLink="/cart" class="purchase-btn purchase-btn--secondary"
+          (click)="dismissErrorPopup()">Modify basket</a>
         <button type="button" class="purchase-btn purchase-btn--primary" (click)="dismissErrorPopup()">
           {{ errorPopupMode === 'basket' ? 'Review checkout' : 'Got it' }}
         </button>
@@ -44,16 +56,47 @@
     </section>
   </div>
 
+  <div class="guest-auth-modal instapay-popup-modal" *ngIf="showInstapayPopup" role="dialog"
+    aria-modal="true" aria-labelledby="instapay-popup-title">
+    <div class="guest-auth-backdrop" aria-hidden="true" (click)="dismissInstapayPopup()"></div>
+    <section class="guest-auth-card instapay-popup-card">
+      <button type="button" class="guest-auth-close instapay-popup-close" (click)="dismissInstapayPopup()"
+        aria-label="Close popup">×</button>
+      <div class="instapay-popup-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 24px; height: 24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <p class="guest-auth-eyebrow instapay-popup-eyebrow">Order Placed Successfully</p>
+      <h2 id="instapay-popup-title">Confirm Your Order</h2>
+      <p class="guest-auth-copy instapay-popup-msg">
+        To confirm your order, please complete the payment of <strong>{{ totalAmountToTransfer }}</strong> through the <a [href]="instapayPaymentLink" target="_blank" rel="noopener noreferrer" class="instapay-popup-link">link</a> 🤎
+      </p>
+      <p class="guest-auth-copy instapay-urgency-note">
+        Send your payment screenshot within 1 hour to secure your order — otherwise, it will be cancelled automatically ✨
+      </p>
+      <div class="guest-auth-actions instapay-popup-actions">
+        <button type="button" class="purchase-btn purchase-btn--primary instapay-popup-btn" (click)="dismissInstapayPopup()">
+          Got it
+        </button>
+      </div>
+    </section>
+  </div>
+
   <div class="purchase-banner purchase-banner--error" *ngIf="errorMessage" role="alert">
     <svg class="banner-icon" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+      <path fill-rule="evenodd"
+        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+        clip-rule="evenodd" />
     </svg>
     <span>{{ errorMessage }}</span>
   </div>
-  
+
   <div class="purchase-banner purchase-banner--success" *ngIf="statusMessage" role="status">
     <svg class="banner-icon" viewBox="0 0 20 20" fill="currentColor">
-      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+      <path fill-rule="evenodd"
+        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+        clip-rule="evenodd" />
     </svg>
     <span>{{ statusMessage }}</span>
   </div>
@@ -68,111 +111,91 @@
       <div class="split-order-notice-box" *ngIf="isMixedOrder">
         <div class="split-notice-icon-wrap">
           <svg class="split-notice-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+            <path stroke-linecap="round" stroke-linejoin="round"
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         </div>
         <div class="split-notice-content">
-          <h3>✨ Premium Split Shipment Notice</h3>
-          <p>
-            Your basket contains a mix of <strong>Instant Delivery</strong> (delivered fresh today) and <strong>Scheduled Delivery</strong> items. 
-            To ensure peak quality, your order will be prepared and delivered in <strong>two separate shipments</strong>.
-            <span *ngIf="orderType === 'DELIVERY'">
-              Because two separate physical delivery runs will be made, a delivery fee of <strong>{{ deliveryFeeRate | currency }}</strong> applies to each shipment (totaling <strong>{{ deliveryFeeRate * 2 | currency }}</strong>).
-            </span>
-            <span *ngIf="orderType === 'PICKUP'">
-              Since you selected pickup from the bakery, both split orders will be ready for collection at their respective times for <strong>Free</strong>!
-            </span>
+          <h3>✨ Split Shipment Notice</h3>
+          <p *ngIf="orderType === 'DELIVERY'">
+            Your basket includes Instant Delivery and Scheduled Delivery items. These will be delivered separately to
+            ensure freshness, and a delivery fee applies to each delivery.
+          </p>
+          <p *ngIf="orderType === 'PICKUP'">
+            Your basket includes Instant Delivery and Scheduled Delivery items. Both will be prepared and ready for
+            pickup at their respective times at no extra charge.
           </p>
         </div>
       </div>
 
-        <form class="checkout-form" [formGroup]="checkoutForm" (ngSubmit)="submitCheckout()" novalidate>
-          <div class="checkout-layout">
-            <div class="checkout-main-col">
-              <app-address-form
-                [checkoutForm]="checkoutForm"
-                [isAuthenticated]="isAuthenticated"
-                [addresses]="addresses"
-                [addressesLoading]="addressesLoading"
-                [showRewardTeaser]="showRewardTeaser"
-                [rewardProductName]="rewardProductName"
-                [rewardProductImage]="rewardProductImage"
-                [hasScheduledItems]="hasScheduledItems"
-                [minScheduledDate]="minScheduledDate"
-                [blockedDays]="blockedDays"
-                [showGuestDeliveryFields]="showGuestDeliveryFields"
-                (orderTypeChange)="onOrderTypeChange()">
-              </app-address-form>
+      <form class="checkout-form" [formGroup]="checkoutForm" (ngSubmit)="submitCheckout()" novalidate>
+        <div class="checkout-layout">
+          <div class="checkout-main-col">
+            <app-address-form [checkoutForm]="checkoutForm" [isAuthenticated]="isAuthenticated" [addresses]="addresses"
+              [addressesLoading]="addressesLoading" [showRewardTeaser]="showRewardTeaser"
+              [rewardProductName]="rewardProductName" [rewardProductImage]="rewardProductImage"
+              [hasScheduledItems]="hasScheduledItems" [minScheduledDate]="minScheduledDate" [blockedDays]="blockedDays"
+              [showGuestDeliveryFields]="showGuestDeliveryFields" (orderTypeChange)="onOrderTypeChange()">
+            </app-address-form>
 
-              <app-coupon-form
-                [checkoutForm]="checkoutForm"
-                [validatingCoupon]="validatingCoupon"
-                [couponPreview]="couponPreview"
-                [subtotal]="subtotal"
-                (validate)="validateCoupon()">
-              </app-coupon-form>
+            <app-coupon-form [checkoutForm]="checkoutForm" [validatingCoupon]="validatingCoupon"
+              [couponPreview]="couponPreview" [subtotal]="subtotal" (validate)="validateCoupon()">
+            </app-coupon-form>
 
-              <button type="submit" class="purchase-btn purchase-btn--primary submit-checkout-btn submit-checkout-btn--desktop" [disabled]="placingOrder">
-                <span>{{ placingOrder ? 'Placing your order…' : 'Place Order via Instapay' }}</span>
-                <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" *ngIf="!placingOrder">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
-            </div>
-
-            <div class="checkout-side-col">
-              <app-checkout-summary
-                [cart]="cart"
-                [couponPreview]="couponPreview"
-                [orderType]="orderType"
-                [subtotal]="subtotal"
-                [deliveryFee]="deliveryFee"
-                [finalAmount]="finalAmount"
-                [isMixedOrder]="isMixedOrder"
-                [instantItems]="instantItems"
-                [scheduledItems]="scheduledItems"
-                [instantSubtotal]="instantSubtotal"
-                [scheduledSubtotal]="scheduledSubtotal"
-                [instantDeliveryFee]="instantDeliveryFee"
-                [scheduledDeliveryFee]="scheduledDeliveryFee"
-                [instantDiscount]="instantDiscount"
-                [scheduledDiscount]="scheduledDiscount"
-                [instantTotal]="instantTotal"
-                [scheduledTotal]="scheduledTotal">
-              </app-checkout-summary>
-
-              <button type="submit" class="purchase-btn purchase-btn--primary submit-checkout-btn submit-checkout-btn--mobile" [disabled]="placingOrder">
-                <span>{{ placingOrder ? 'Placing your order…' : 'Place Order via Instapay' }}</span>
-                <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" *ngIf="!placingOrder">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
-            </div>
+            <button type="submit"
+              class="purchase-btn purchase-btn--primary submit-checkout-btn submit-checkout-btn--desktop"
+              [disabled]="placingOrder">
+              <span>{{ placingOrder ? 'Placing your order…' : 'Place Order via Instapay' }}</span>
+              <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" *ngIf="!placingOrder">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
           </div>
-        </form>
+
+          <div class="checkout-side-col">
+            <app-checkout-summary [cart]="cart" [couponPreview]="couponPreview" [orderType]="orderType"
+              [subtotal]="subtotal" [deliveryFee]="deliveryFee" [finalAmount]="finalAmount"
+              [isMixedOrder]="isMixedOrder" [instantItems]="instantItems" [scheduledItems]="scheduledItems"
+              [instantSubtotal]="instantSubtotal" [scheduledSubtotal]="scheduledSubtotal"
+              [instantDeliveryFee]="instantDeliveryFee" [scheduledDeliveryFee]="scheduledDeliveryFee"
+              [instantDiscount]="instantDiscount" [scheduledDiscount]="scheduledDiscount" [instantTotal]="instantTotal"
+              [scheduledTotal]="scheduledTotal">
+            </app-checkout-summary>
+
+            <button type="submit"
+              class="purchase-btn purchase-btn--primary submit-checkout-btn submit-checkout-btn--mobile"
+              [disabled]="placingOrder">
+              <span>{{ placingOrder ? 'Placing your order…' : 'Place Order via Instapay' }}</span>
+              <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" *ngIf="!placingOrder">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
 
     <!-- Gorgeous Premium Checkout Success Experience -->
     <div class="success-screen-wrapper" *ngIf="orders.length">
       <div class="celebrate-badge">
         <svg viewBox="0 0 20 20" fill="currentColor">
-          <path fill-rule="evenodd" d="M6.267 3.455a.75.75 0 00-.708-.523H4.5a.75.75 0 00-.75.75v3c0 .21.084.412.234.56l5 5a.75.75 0 001.06 0l5-5a.75.75 0 00.234-.56v-3a.75.75 0 00-.75-.75h-1.06a.75.75 0 00-.707.523L12 6.5l-1.5-3.045a.75.75 0 00-.707-.523H8.5a.75.75 0 00-.707.523L6.267 3.455zM5 5.5h1.5l1 2h-2.5v-2zm7 0h1.5v2h-2.5l1-2zm-3.5 4l1.5-3.045.728 1.477L9.5 9.5zm.75 3.5l-3-3h4.5l-1.5 3z" clip-rule="evenodd" />
+          <path fill-rule="evenodd"
+            d="M6.267 3.455a.75.75 0 00-.708-.523H4.5a.75.75 0 00-.75.75v3c0 .21.084.412.234.56l5 5a.75.75 0 001.06 0l5-5a.75.75 0 00.234-.56v-3a.75.75 0 00-.75-.75h-1.06a.75.75 0 00-.707.523L12 6.5l-1.5-3.045a.75.75 0 00-.707-.523H8.5a.75.75 0 00-.707.523L6.267 3.455zM5 5.5h1.5l1 2h-2.5v-2zm7 0h1.5v2h-2.5l1-2zm-3.5 4l1.5-3.045.728 1.477L9.5 9.5zm.75 3.5l-3-3h4.5l-1.5 3z"
+            clip-rule="evenodd" />
         </svg>
         <span>Congratulations!</span>
       </div>
       <h2 class="success-main-title">Your order was placed successfully!</h2>
-      <p class="order-placed-note">Thank you for ordering our artisanal pastries. We are preparing everything with care.</p>
+      <p class="order-placed-note">Thank you for your order 🤍 <br>
+        Everything is crafted with love and care ✨
+      </p>
 
       <div class="success-grid-layout">
-        <app-success-orders
-          [orders]="orders"
-          [rewardProductName]="rewardProductName"
+        <app-success-orders [orders]="orders" [rewardProductName]="rewardProductName"
           [rewardProductId]="rewardProductId">
         </app-success-orders>
 
-        <app-payment-form
-          [orders]="orders"
-          [instapayPaymentLink]="instapayPaymentLink"
+        <app-payment-form [orders]="orders" [instapayPaymentLink]="instapayPaymentLink"
           [instapayHandle]="instapayHandle">
         </app-payment-form>
       </div>
@@ -182,7 +205,8 @@
   <div class="purchase-empty" *ngIf="!loading && !cart?.items?.length && !orders.length">
     <div class="empty-icon-wrap">
       <svg class="empty-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+          d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
       </svg>
     </div>
     <h2>Your basket is empty</h2>

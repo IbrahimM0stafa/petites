@@ -1,0 +1,94 @@
+<!-- Confirmation popup overlay -->
+<div class="popup-overlay" *ngIf="showConfirmPopup" (click)="cancelConfirm()">
+  <div class="popup-card" (click)="$event.stopPropagation()">
+    <div class="popup-icon">⚠️</div>
+    <h3 class="popup-title">Email Already Registered</h3>
+    <p class="popup-body">
+      <strong>{{ enteredEmail }}</strong> already has an account.<br>
+      Do you want to assign the <strong class="popup-role-badge">{{ selectedRole === 'SUPER_ADMIN' ? 'Super Admin' : 'Staff' }}</strong> role to this existing account?
+    </p>
+    <p *ngIf="confirmError" class="popup-error" role="alert">{{ confirmError }}</p>
+    <div class="popup-actions">
+      <button type="button" class="admin-btn admin-btn-ghost" (click)="cancelConfirm()" [disabled]="confirmLoading">
+        Cancel
+      </button>
+      <button type="button" class="admin-btn" (click)="confirmAssignRole()" [disabled]="confirmLoading">
+        {{ confirmLoading ? 'Assigning…' : 'Yes, Assign Role' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<section class="page-card">
+  <div class="page-header">
+    <div class="header-title">
+      <h2>Add New Staff / Admin</h2>
+      <p class="subtitle">Create a new user account with administrative privileges</p>
+    </div>
+    <a routerLink="/users" class="admin-btn admin-btn-ghost">Back to list</a>
+  </div>
+
+  <div class="form-container">
+    <p *ngIf="errorMessage" class="page-error" role="alert">{{ errorMessage }}</p>
+
+    <form [formGroup]="userForm" (ngSubmit)="onSubmit()" class="admin-form">
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="name">Full Name <span class="required">*</span></label>
+          <input id="name" type="text" formControlName="name" class="form-control" placeholder="Jane Doe" />
+          <div class="error-feedback" *ngIf="userForm.get('name')?.touched && userForm.get('name')?.invalid">
+            <span *ngIf="userForm.get('name')?.errors?.['required']">Name is required.</span>
+            <span *ngIf="userForm.get('name')?.errors?.['maxlength']">Name cannot exceed 100 characters.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email Address <span class="required">*</span></label>
+          <input id="email" type="email" formControlName="email" class="form-control" placeholder="jane@example.com" />
+          <div class="error-feedback" *ngIf="userForm.get('email')?.touched && userForm.get('email')?.invalid">
+            <span *ngIf="userForm.get('email')?.errors?.['required']">Email is required.</span>
+            <span *ngIf="userForm.get('email')?.errors?.['email']">Must be a valid email address.</span>
+            <span *ngIf="userForm.get('email')?.errors?.['maxlength']">Email cannot exceed 120 characters.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="phone">Phone Number <span class="required">*</span></label>
+          <input id="phone" type="text" formControlName="phone" class="form-control" placeholder="+1234567890" />
+          <div class="error-feedback" *ngIf="userForm.get('phone')?.touched && userForm.get('phone')?.invalid">
+            <span *ngIf="userForm.get('phone')?.errors?.['required']">Phone number is required.</span>
+            <span *ngIf="userForm.get('phone')?.errors?.['maxlength']">Phone number cannot exceed 20 characters.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password <span class="required">*</span></label>
+          <input id="password" type="password" formControlName="password" class="form-control" placeholder="••••••••" />
+          <div class="error-feedback" *ngIf="userForm.get('password')?.touched && userForm.get('password')?.invalid">
+            <span *ngIf="userForm.get('password')?.errors?.['required']">Password is required.</span>
+            <span *ngIf="userForm.get('password')?.errors?.['minlength']">Password must be at least 8 characters.</span>
+            <span *ngIf="userForm.get('password')?.errors?.['maxlength']">Password cannot exceed 255 characters.</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="role">Assign Role <span class="required">*</span></label>
+          <select id="role" formControlName="role" class="form-control">
+            <option value="STAFF">Staff</option>
+            <option value="SUPER_ADMIN">Super Admin</option>
+          </select>
+          <div class="error-feedback" *ngIf="userForm.get('role')?.touched && userForm.get('role')?.invalid">
+            <span *ngIf="userForm.get('role')?.errors?.['required']">Role is required.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a routerLink="/users" class="admin-btn admin-btn-ghost">Cancel</a>
+        <button type="submit" class="admin-btn" [disabled]="loading || userForm.invalid">
+          {{ loading ? 'Saving…' : 'Create User' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</section>

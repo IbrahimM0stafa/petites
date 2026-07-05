@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, inject } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { hasAdminRole } from '../../../../core/auth/admin-roles';
 import { readApiErrorMessage, readApiFieldErrors } from '../../../../core/models/api-error.model';
@@ -10,7 +10,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 @Component({
 	selector: 'app-login-form',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule],
+	imports: [CommonModule, ReactiveFormsModule, RouterLink],
 	templateUrl: './login-form.component.html',
 	styleUrl: './login-form.component.css'
 })
@@ -25,6 +25,7 @@ export class LoginFormComponent {
 
 	loading = false;
 	serverError = '';
+	successMessage = '';
 	serverFieldErrors: Record<string, string[]> = {};
 
 	constructor(
@@ -33,6 +34,9 @@ export class LoginFormComponent {
 	) {
 		if (this.route.snapshot.queryParamMap.get('unauthorized') === '1') {
 			this.serverError = 'Your account does not have staff access.';
+		}
+		if (this.route.snapshot.queryParamMap.get('resetSuccess') === 'true') {
+			this.successMessage = 'Your password has been reset successfully. Please sign in with your new password.';
 		}
 	}
 
@@ -44,6 +48,7 @@ export class LoginFormComponent {
 
 		this.loading = true;
 		this.serverError = '';
+		this.successMessage = '';
 		this.serverFieldErrors = {};
 
 		const email = this.loginForm.controls.email.value ?? '';

@@ -22,6 +22,15 @@ export const routes: Routes = [
 		}
 	},
 	{
+		path: 'forgot-password',
+		loadComponent: () => import('./features/auth/pages/forgot-password-page.component').then((m) => m.ForgotPasswordPageComponent),
+		data: {
+			title: 'Forgot Password | Petites Sweet Treats',
+			description: 'Reset your Petites account password using an OTP verification code sent to your email.',
+			keywords: 'forgot password, reset password, account recovery, otp'
+		}
+	},
+	{
 		path: 'signup',
 		loadComponent: () => import('./features/auth/pages/signup-page.component').then((m) => m.SignupPageComponent),
 		data: {
@@ -88,6 +97,15 @@ export const routes: Routes = [
 			title: 'My Account | Petites',
 			description: 'Manage your profile, view loyalty tier points, active session settings, and saved addresses.',
 			keywords: 'profile, account settings, loyalty points, user settings'
+		}
+	},
+	{
+		path: 'loyalty',
+		loadComponent: () => import('./features/loyalty/pages/loyalty-page.component').then((m) => m.LoyaltyPageComponent),
+		data: {
+			title: 'Loyalty Rewards | Petites',
+			description: 'Track your completed orders, collect sweet stamps, and unlock delicious free rewards with Petites Loyalty Club.',
+			keywords: 'loyalty rewards, sweet rewards, stamp card, free pastry, free cookie, petites membership'
 		}
 	},
 	{

@@ -1,0 +1,609 @@
+.loyalty-page {
+  padding: 3rem 0 6rem;
+  min-height: calc(100vh - var(--petites-header-offset));
+}
+
+.loyalty-container {
+  width: min(1040px, calc(100% - 2rem));
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 3.5rem;
+}
+
+/* Hero Banner */
+.loyalty-hero {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.loyalty-eyebrow {
+  display: inline-block;
+  margin-bottom: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--petites-accent-deep);
+  border-bottom: 2px solid rgba(124, 47, 34, 0.15);
+  padding-bottom: 0.25rem;
+}
+
+.loyalty-hero h1 {
+  margin: 0 0 1.25rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  line-height: 1.1;
+  color: var(--petites-ink);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.loyalty-lead {
+  margin: 0;
+  color: var(--petites-brown-soft);
+  font-size: 1.15rem;
+  line-height: 1.65;
+}
+
+/* Spinner & Loader */
+.loyalty-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 2rem;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 2rem;
+  border: 1px solid var(--petites-border);
+  box-shadow: 0 10px 30px rgba(90, 53, 41, 0.04);
+}
+
+.loyalty-loading p {
+  margin: 0;
+  color: var(--petites-brown-soft);
+}
+
+.loyalty-spinner {
+  width: 3rem;
+  height: 3rem;
+  border: 3.5px solid rgba(203, 106, 91, 0.15);
+  border-top-color: var(--petites-accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loyalty-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.loyalty-retry-btn {
+  max-width: 200px;
+}
+
+/* Reward Ticket */
+.reward-ticket-banner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+  padding: 2.75rem clamp(2rem, 5vw, 3.5rem);
+  border-radius: 2rem;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 228, 210, 0.94));
+  border: 1px solid rgba(203, 106, 91, 0.2);
+  color: var(--petites-ink);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 20px 45px rgba(102, 60, 37, 0.08);
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.reward-ticket-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 180px;
+  width: 2px;
+  border-left: 2px dashed rgba(203, 106, 91, 0.15);
+}
+
+.ticket-glow {
+  position: absolute;
+  top: -3rem;
+  right: -2rem;
+  width: 12rem;
+  height: 12rem;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(203, 106, 91, 0.12), transparent 60%);
+  pointer-events: none;
+}
+
+.ticket-left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  z-index: 1;
+  max-width: 65%;
+}
+
+.ticket-badge {
+  background: linear-gradient(135deg, var(--petites-accent), var(--petites-accent-deep));
+  color: #fff;
+  padding: 0.4rem 1rem;
+  border-radius: 2rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+  box-shadow: 0 4px 12px rgba(124, 47, 34, 0.2);
+}
+
+.reward-ticket-banner h3 {
+  margin: 0 0 0.75rem;
+  font-family: Georgia, serif;
+  font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+  font-weight: 600;
+  color: var(--petites-ink);
+}
+
+.reward-ticket-banner p {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--petites-brown-soft);
+}
+
+.ticket-instruction {
+  font-size: 0.88rem;
+  color: var(--petites-brown-soft);
+  opacity: 0.75;
+  margin-bottom: 1.5rem;
+  display: block;
+}
+
+.redeem-btn {
+  background: linear-gradient(180deg, #8f3f30 0%, var(--petites-accent-deep) 100%) !important;
+  color: var(--petites-surface-strong) !important;
+  box-shadow: 0 10px 24px rgba(124, 47, 34, 0.22);
+  font-weight: 700;
+  width: auto;
+  min-width: 180px;
+  padding: 1rem 2rem;
+}
+
+.redeem-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 28px rgba(124, 47, 34, 0.28);
+}
+
+.ticket-right {
+  flex: 0 0 130px;
+  height: 130px;
+  border-radius: 1.25rem;
+  background: rgba(255, 248, 241, 0.6);
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed rgba(203, 106, 91, 0.2);
+  z-index: 1;
+}
+
+.reward-product-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 0.8rem;
+}
+
+/* ─── Stamp Card ─── */
+.stamp-card-wrapper {
+  display: flex;
+  justify-content: center;
+}
+
+.stamp-card {
+  width: 100%;
+  max-width: 680px;
+  background:
+    linear-gradient(145deg, rgba(255, 251, 246, 0.97), rgba(248, 228, 210, 0.93));
+  border: 1px solid var(--petites-border);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85) inset,
+    0 24px 48px rgba(102, 60, 37, 0.08);
+  border-radius: 2.25rem;
+  padding: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stamp-card::before {
+  content: '';
+  position: absolute;
+  top: -50px;
+  right: -50px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(203, 106, 91, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.stamp-card::after {
+  content: '♥';
+  position: absolute;
+  bottom: 1.5rem;
+  right: 2rem;
+  font-size: 5rem;
+  line-height: 1;
+  color: rgba(203, 106, 91, 0.06);
+  pointer-events: none;
+}
+
+.stamp-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.brand-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-logo {
+  height: 2.6rem;
+  width: auto;
+}
+
+.brand-info span {
+  font-family: Georgia, serif;
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: 0.06em;
+  color: var(--petites-brown-dark);
+  text-transform: uppercase;
+}
+
+.card-chip {
+  width: 46px;
+  height: 34px;
+  background: linear-gradient(135deg, #e5be9b, #cb9a75, #a87c55);
+  border-radius: 8px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 2px 4px rgba(90, 53, 41, 0.12);
+}
+
+/* Stamp Grid */
+.stamp-grid {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.stamp-slot {
+  flex: 0 0 95px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+  border: 2px dashed rgba(90, 53, 41, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+}
+
+.stamp-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-weight: 700;
+  color: rgba(90, 53, 41, 0.25);
+  font-size: 1.25rem;
+}
+
+/* Filled stamp */
+.stamp-slot.stamped {
+  background: linear-gradient(135deg, #fff 0%, #fdf0e5 100%);
+  border: 2px solid var(--petites-accent);
+  box-shadow:
+    0 6px 16px rgba(203, 106, 91, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  transform: scale(1.06);
+}
+
+.cookie-stamp-icon {
+  width: 62%;
+  height: 62%;
+  fill: var(--petites-accent);
+  animation: stampPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.stamp-number {
+  position: absolute;
+  bottom: -0.3rem;
+  right: -0.3rem;
+  width: 1.6rem;
+  height: 1.6rem;
+  border-radius: 50%;
+  background: var(--petites-brown);
+  color: #fffdfb;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.stamped .stamp-number {
+  background: var(--petites-accent);
+}
+
+/* Next stamp slot */
+.stamp-slot.next-stamp {
+  border-color: var(--petites-accent);
+  border-style: solid;
+  background: rgba(203, 106, 91, 0.04);
+  animation: pulseAccent 2.5s infinite;
+}
+
+.stamp-slot.next-stamp .stamp-inner {
+  color: var(--petites-accent);
+}
+
+@keyframes stampPop {
+  0% { transform: scale(0) rotate(-45deg); opacity: 0; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@keyframes pulseAccent {
+  0%, 100% { border-color: rgba(203, 106, 91, 0.35); box-shadow: 0 0 0 0 rgba(203, 106, 91, 0.1); }
+  50% { border-color: var(--petites-accent); box-shadow: 0 0 0 8px rgba(203, 106, 91, 0.06); }
+}
+
+/* Card Footer & Progress */
+.stamp-card-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-top: 1px solid rgba(90, 53, 41, 0.08);
+  padding-top: 1.75rem;
+}
+
+.progress-details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.progress-ratio {
+  font-weight: 700;
+  font-size: 1.2rem;
+  color: var(--petites-ink);
+}
+
+.progress-status {
+  font-size: 0.95rem;
+  color: var(--petites-brown-soft);
+  font-weight: 500;
+}
+
+.reward-status {
+  color: var(--petites-accent);
+  font-weight: 700;
+}
+
+.progress-bar-container {
+  height: 0.6rem;
+  background: rgba(90, 53, 41, 0.06);
+  border-radius: 1rem;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--petites-accent), var(--petites-accent-deep));
+  border-radius: 1rem;
+  transition: width 1s cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* Guest Layout */
+.loyalty-guest-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 1fr);
+  gap: 3.5rem;
+  align-items: center;
+}
+
+.guest-preview {
+  opacity: 0.88;
+}
+
+.guest-cta-card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--petites-border);
+  padding: 3rem;
+  border-radius: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 20px 40px rgba(90, 53, 41, 0.05);
+}
+
+.guest-cta-card h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--petites-ink);
+}
+
+.guest-cta-card p {
+  margin: 0;
+  color: var(--petites-brown-soft);
+  line-height: 1.7;
+  font-size: 1.05rem;
+}
+
+.guest-cta-buttons {
+  display: flex;
+  gap: 1.25rem;
+  margin-top: 0.5rem;
+}
+
+.guest-cta-buttons .auth-btn {
+  padding: 1rem 1.5rem;
+}
+
+/* How It Works */
+.loyalty-info-section {
+  border-top: 1px solid var(--petites-border);
+  padding-top: 4.5rem;
+  margin-top: 2rem;
+}
+
+.section-title {
+  text-align: center;
+  font-family: Georgia, serif;
+  font-size: 2.2rem;
+  color: var(--petites-ink);
+  margin-bottom: 3.5rem;
+  font-weight: 600;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(103, 67, 50, 0.06);
+  border-radius: 1.75rem;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.info-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(90, 53, 41, 0.05);
+}
+
+.info-icon-wrapper {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background:
+    linear-gradient(145deg, rgba(255, 251, 246, 0.96), rgba(248, 228, 210, 0.92));
+  border: 1.5px solid var(--petites-accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 6px 14px rgba(203, 106, 91, 0.1);
+}
+
+.info-number {
+  font-weight: 800;
+  font-size: 1.4rem;
+  color: var(--petites-accent-deep);
+}
+
+.info-card h4 {
+  margin: 0 0 0.75rem;
+  font-size: 1.25rem;
+  color: var(--petites-ink);
+  font-weight: 700;
+}
+
+.info-card p {
+  margin: 0;
+  color: var(--petites-brown-soft);
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .loyalty-guest-layout {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .guest-cta-card {
+    padding: 2rem;
+  }
+
+  .reward-ticket-banner::before {
+    display: none;
+  }
+
+  .reward-ticket-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2rem;
+  }
+
+  .ticket-left {
+    max-width: 100%;
+  }
+
+  .ticket-right {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 600px) {
+  .loyalty-page {
+    padding-top: 1.5rem;
+  }
+
+  .stamp-card {
+    padding: 2rem 1.5rem;
+  }
+
+  .stamp-grid {
+    gap: 1rem;
+  }
+
+  .stamp-slot {
+    flex: 0 0 75px;
+  }
+}

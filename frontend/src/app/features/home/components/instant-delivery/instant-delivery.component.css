@@ -24,7 +24,8 @@
 
 .title-flash,
 .button-flash {
-  color: #f59e0b; /* Amber/orange for the lightning bolt to signify instant delivery */
+  color: #f59e0b;
+  /* Amber/orange for the lightning bolt to signify instant delivery */
 }
 
 .title-flash {
@@ -33,10 +34,13 @@
 }
 
 @keyframes pulse-flash {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.8;
   }
+
   50% {
     transform: scale(1.2);
     opacity: 1;
@@ -46,7 +50,7 @@
 
 .section-subtitle {
   margin: 0.25rem 0 0.75rem;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
   color: var(--petites-brown-soft, #8d5a43);
   font-family: 'Inter', sans-serif;
   max-width: 50ch;
@@ -113,7 +117,7 @@
     -webkit-overflow-scrolling: touch;
   }
 
-  .treat-grid > * {
+  .treat-grid>* {
     flex: 0 0 calc(66.666% - 0.5rem);
     min-width: calc(66.666% - 0.5rem);
     scroll-snap-align: start;

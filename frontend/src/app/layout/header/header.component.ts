@@ -4,6 +4,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { CartService } from '../../core/services/cart.service';
 import { AuthStateService } from '../../core/services/auth-state.service';
+import { SOCIAL_LINKS } from '../../core/constants/social-links';
 
 @Component({
   selector: 'app-header',
@@ -13,6 +14,8 @@ import { AuthStateService } from '../../core/services/auth-state.service';
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent {
+  readonly socialLinks = SOCIAL_LINKS;
+
   constructor(
     readonly authState: AuthStateService,
     readonly cartService: CartService

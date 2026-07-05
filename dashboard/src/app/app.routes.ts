@@ -2,11 +2,16 @@ import { Routes } from '@angular/router';
 
 import { adminRoleGuard } from './core/guards/admin-role.guard';
 import { authGuard } from './core/guards/auth.guard';
+import { superAdminGuard } from './core/guards/super-admin.guard';
 
 export const routes: Routes = [
 	{
 		path: 'login',
 		loadComponent: () => import('./features/auth/pages/login-page.component').then((m) => m.LoginPageComponent)
+	},
+	{
+		path: 'forgot-password',
+		loadComponent: () => import('./features/auth/pages/forgot-password-page.component').then((m) => m.ForgotPasswordPageComponent)
 	},
 	{
 		path: '',
@@ -30,11 +35,19 @@ export const routes: Routes = [
 			},
 			{
 				path: 'users',
+				canActivate: [superAdminGuard],
 				loadComponent: () =>
 					import('./features/users/pages/users-list.component').then((m) => m.UsersListComponent)
 			},
 			{
+				path: 'users/new',
+				canActivate: [superAdminGuard],
+				loadComponent: () =>
+					import('./features/users/pages/user-create.component').then((m) => m.UserCreateComponent)
+			},
+			{
 				path: 'users/:id',
+				canActivate: [superAdminGuard],
 				loadComponent: () =>
 					import('./features/users/pages/user-detail.component').then((m) => m.UserDetailComponent)
 			},

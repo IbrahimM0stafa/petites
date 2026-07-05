@@ -34,7 +34,7 @@ public class SecurityConfig {
                           @Value("${app.cors.allowed-methods:GET,POST,PUT,PATCH,DELETE,OPTIONS}") List<String> allowedMethods,
                           @Value("${app.cors.allowed-headers:*}") List<String> allowedHeaders,
                           @Value("${app.cors.allow-credentials:true}") boolean allowCredentials,
-                          @Value("${app.security.permit-post:/api/auth/login,/api/auth/refresh,/api/users,/api/guest-sessions}") List<String> permitPostPaths,
+                          @Value("${app.security.permit-post:/api/auth/login,/api/auth/refresh,/api/users,/api/guest-sessions,/api/auth/forgot-password,/api/auth/verify-otp,/api/auth/reset-password}") List<String> permitPostPaths,
                           @Value("${app.security.permit-get:/api/guest-sessions/current,/api/categories,/api/categories/**,/api/products,/api/products/**,/api/coupons/validate}") List<String> permitGetPaths) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.allowedOrigins = allowedOrigins;
@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                    .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers("/api/cart/**", "/api/checkout", "/api/orders/**", "/api/settings/**").permitAll()
                     .requestMatchers(HttpMethod.POST, permitPostPaths.toArray(String[]::new)).permitAll()
                     .requestMatchers(HttpMethod.GET, permitGetPaths.toArray(String[]::new)).permitAll()

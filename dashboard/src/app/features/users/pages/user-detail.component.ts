@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { UserResponse } from '../../../core/models/user.models';
 import { AuthService } from '../../../core/services/auth.service';
+import { AuthStateService } from '../../../core/services/auth-state.service';
 
 @Component({
 	selector: 'app-user-detail',
@@ -16,6 +17,7 @@ import { AuthService } from '../../../core/services/auth.service';
 export class UserDetailComponent implements OnInit {
 	private readonly authService = inject(AuthService);
 	private readonly route = inject(ActivatedRoute);
+	readonly authState = inject(AuthStateService);
 
 	user: UserResponse | null = null;
 	loading = true;

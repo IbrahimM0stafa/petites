@@ -15,6 +15,7 @@ export interface AdminOrderListFilters {
   deliveryMode?: DeliveryMode | '';
   scheduledDate?: string;
   placedDate?: string;
+  orderNumber?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -32,6 +33,7 @@ export class OrderService {
     if (filters.deliveryMode) params = params.set('deliveryMode', filters.deliveryMode);
     if (filters.scheduledDate) params = params.set('scheduledDate', filters.scheduledDate);
     if (filters.placedDate) params = params.set('placedDate', filters.placedDate);
+    if (filters.orderNumber) params = params.set('orderNumber', filters.orderNumber);
 
     return this.apiClient.get<PaginatedResponse<OrderResponse>>('/api/admin/orders', { params });
   }

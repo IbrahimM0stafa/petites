@@ -63,6 +63,14 @@ export class AuthService {
 		return this.apiClient.get<UserResponse[]>('/api/users');
 	}
 
+	createAdminUser(request: any): Observable<UserResponse> {
+		return this.apiClient.post<UserResponse>('/api/users/admin', request);
+	}
+
+	assignRoleByEmail(email: string, role: string): Observable<UserResponse> {
+		return this.apiClient.post<UserResponse>('/api/users/admin/assign-role', { email, role });
+	}
+
 	getUser(id: string): Observable<UserResponse> {
 		return this.apiClient.get<UserResponse>(`/api/users/${id}`);
 	}
@@ -81,6 +89,18 @@ export class AuthService {
 
 	logout(): void {
 		this.authState.clearAuthSession();
+	}
+
+	forgotPassword(email: string): Observable<{ message: string }> {
+		return this.apiClient.post<{ message: string }>('/api/auth/forgot-password', { email }, { context: this.publicContext() });
+	}
+
+	verifyOtp(email: string, otp: string): Observable<{ success: boolean; message: string }> {
+		return this.apiClient.post<{ success: boolean; message: string }>('/api/auth/verify-otp', { email, otp }, { context: this.publicContext() });
+	}
+
+	resetPassword(email: string, otp: string, newPassword: string): Observable<{ success: boolean; message: string }> {
+		return this.apiClient.post<{ success: boolean; message: string }>('/api/auth/reset-password', { email, otp, newPassword }, { context: this.publicContext() });
 	}
 
 	private isRefreshTokenRejected(error: unknown): boolean {

@@ -55,25 +55,21 @@
     </section>
 
     <section class="account-card" *ngIf="!loading && authState.isAuthenticated()" aria-labelledby="loyalty-heading">
-      <h2 id="loyalty-heading">Loyalty</h2>
-      <dl class="profile-grid" *ngIf="loyalty; else loyaltyEmpty">
-        <div class="profile-item">
-          <dt>Completed orders</dt>
-          <dd>{{ loyalty.completedOrdersCount }}</dd>
+      <div class="account-card-header">
+        <h2 id="loyalty-heading">Loyalty Program</h2>
+        <a routerLink="/loyalty" class="auth-btn auth-btn--secondary auth-btn--compact">View Loyalty Card</a>
+      </div>
+      <div class="loyalty-summary-info" *ngIf="loyalty; else loyaltyEmpty" style="margin-top: 1rem;">
+        <p style="margin: 0; color: var(--petites-brown-soft); line-height: 1.5;" *ngIf="!loyalty.rewardAvailable">
+          You're <strong>{{ loyalty.rewardOrderTarget - loyalty.ordersUntilNextReward }}</strong> of <strong>{{ loyalty.rewardOrderTarget }}</strong> stamps in. Only <strong>{{ loyalty.ordersUntilNextReward }}</strong> more order{{ loyalty.ordersUntilNextReward === 1 ? '' : 's' }} until your next free reward!
+        </p>
+        <p style="margin: 0; color: var(--petites-accent-deep); font-weight: 600; line-height: 1.5;" *ngIf="loyalty.rewardAvailable">
+          ♥ Your free treat is ready to claim! Head to checkout to redeem it.
+        </p>
+        <div class="progress-bar-container" style="margin-top: 1rem; height: 0.6rem; background: rgba(90, 53, 41, 0.08); border-radius: 1rem; overflow: hidden;">
+          <div class="progress-bar" [style.width.%]="loyalty.rewardAvailable ? 100 : ((loyalty.rewardOrderTarget - loyalty.ordersUntilNextReward) / loyalty.rewardOrderTarget) * 100" style="height: 100%; background: linear-gradient(90deg, var(--petites-accent), var(--petites-accent-deep)); border-radius: 1rem; transition: width 0.5s ease;"></div>
         </div>
-        <div class="profile-item">
-          <dt>Reward target</dt>
-          <dd>{{ loyalty.rewardOrderTarget }}</dd>
-        </div>
-        <div class="profile-item">
-          <dt>Until next reward</dt>
-          <dd>{{ loyalty.ordersUntilNextReward }}</dd>
-        </div>
-        <div class="profile-item">
-          <dt>Reward available</dt>
-          <dd>{{ loyalty.rewardAvailable ? 'Yes' : 'No' }}</dd>
-        </div>
-      </dl>
+      </div>
       <ng-template #loyaltyEmpty>
         <p class="account-muted">Loyalty details are not available yet.</p>
       </ng-template>
