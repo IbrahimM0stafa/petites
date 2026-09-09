@@ -64,7 +64,7 @@
         <h4>PRICE</h4>
         <div class="price-range">
           <input type="range" min="0" [max]="priceRangeMax" step="1" [value]="tempPrice" (input)="onPriceChange($event)" />
-          <div class="price-labels"><span>$0</span><span>Up to ${{ tempPrice.toFixed(2) }}</span></div>
+          <div class="price-labels"><span>EGP 0</span><span>Up to EGP {{ tempPrice.toFixed(2) }}</span></div>
         </div>
         <button class="apply-btn" (click)="applyFilters()">APPLY <span class="button-heart">♥</span></button>
       </section>

@@ -105,7 +105,7 @@ export class ProductCardComponent implements OnChanges {
 
   get formattedPrice(): string {
     if (typeof this.price === 'number') {
-      return `$${this.price.toFixed(2)}`;
+      return `EGP ${this.price.toFixed(2)}`;
     }
     return this.price;
   }

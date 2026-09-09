@@ -1,13 +1,48 @@
 <section class="page-card">
 	<div class="page-header">
-		<h2>Users</h2>
-		<div style="display: flex; gap: 0.5rem; align-items: center;">
-			<a routerLink="/users/new" class="admin-btn">Add Admin/Staff</a>
+		<div class="header-title">
+			<h2>Users</h2>
+			<p class="subtitle">Manage customers, staff and admin accounts</p>
+		</div>
+		<div class="header-actions">
 			<button type="button" class="admin-btn admin-btn-ghost" (click)="loadUsers()" [disabled]="loading">Refresh</button>
+			<a routerLink="/users/new" class="admin-btn">Add Admin/Staff</a>
 		</div>
 	</div>
 
-	<p *ngIf="loading" class="page-status">Loading users…</p>
+	<!-- Filters Row -->
+	<div class="filters-bar">
+		<div class="filter-group search-group">
+			<label for="searchName">Search by Name</label>
+			<div class="search-input-wrap">
+				<svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 111 11a6 6 0 0116 0z" />
+				</svg>
+				<input
+					id="searchName"
+					type="text"
+					class="filter-control"
+					placeholder="Type a name…"
+					[(ngModel)]="searchName"
+					(input)="onNameInput()"
+				/>
+			</div>
+		</div>
+
+		<div class="filter-group">
+			<label for="filterRole">Role</label>
+			<select id="filterRole" [(ngModel)]="selectedRole" (change)="onFilterChange()" class="filter-control">
+				<option value="">All Roles</option>
+				<option *ngFor="let role of availableRoles" [value]="role">{{ role }}</option>
+			</select>
+		</div>
+	</div>
+
+	<div *ngIf="loading && users.length === 0" class="page-status">
+		<div class="spinner"></div>
+		<p>Loading users…</p>
+	</div>
+
 	<p *ngIf="error" class="page-error" role="alert">{{ error }}</p>
 
 	<div class="table-wrap" *ngIf="!loading && !error">
@@ -27,7 +62,10 @@
 						<a [routerLink]="['/users', user.id]" class="table-link">{{ user.name }}</a>
 					</td>
 					<td>{{ user.email }}</td>
-					<td>{{ user.roles.join(', ') || '—' }}</td>
+					<td>
+						<span *ngFor="let role of user.roles" class="role-badge">{{ role }}</span>
+						<span *ngIf="user.roles.length === 0">—</span>
+					</td>
 					<td>
 						<span class="status-badge" [class.status-badge--inactive]="!user.active">
 							{{ user.active ? 'Active' : 'Inactive' }}
@@ -40,5 +78,24 @@
 				</tr>
 			</tbody>
 		</table>
+	</div>
+
+	<!-- Pagination -->
+	<div class="pagination-container" *ngIf="totalPages > 1 && !loading">
+		<div class="pagination-info">
+			Showing {{ page * size + 1 }}–{{ mathMin((page + 1) * size, totalElements) }} of {{ totalElements }} users
+		</div>
+		<div class="pagination-controls">
+			<button [disabled]="page === 0" (click)="setPage(page - 1)" class="page-btn">Previous</button>
+			<button
+				*ngFor="let p of [].constructor(totalPages); let i = index"
+				[class.active]="i === page"
+				(click)="setPage(i)"
+				class="page-btn num-btn"
+			>
+				{{ i + 1 }}
+			</button>
+			<button [disabled]="page === totalPages - 1" (click)="setPage(page + 1)" class="page-btn">Next</button>
+		</div>
 	</div>
 </section>

@@ -1,9 +1,11 @@
 package com.petites.backend.users.service;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -81,8 +83,11 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<UserResponse> list() {
-        return userRepository.findAll().stream().map(this::toResponse).toList();
+    public Page<UserResponse> list(String name, String role, Pageable pageable) {
+        String nameTrimmed = (name != null && !name.isBlank()) ? name.trim() : null;
+        String roleTrimmed = (role != null && !role.isBlank()) ? role.trim().toUpperCase() : null;
+        return userRepository.findAllFiltered(nameTrimmed, roleTrimmed, pageable)
+                .map(this::toResponse);
     }
 
     @Transactional

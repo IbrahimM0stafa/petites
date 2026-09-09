@@ -5,6 +5,7 @@ import { Observable, catchError, finalize, shareReplay, tap, throwError } from '
 import { isRefreshTokenRejected } from '../models/api-error.model';
 import { SKIP_AUTH_HEADER, SKIP_AUTH_REFRESH } from '../http/http-context.tokens';
 import { AuthRefreshRequest, AuthRequest, AuthResponse } from '../models/auth.models';
+import { PaginatedResponse } from '../models/paginated-response.model';
 import { UserResponse, UserUpdateRequest } from '../models/user.models';
 import { ApiClientService } from './api-client.service';
 import { AuthStateService } from './auth-state.service';
@@ -59,8 +60,21 @@ export class AuthService {
 		return this.refreshSessionRequest;
 	}
 
-	listUsers(): Observable<UserResponse[]> {
-		return this.apiClient.get<UserResponse[]>('/api/users');
+	listUsers(params: {
+		name?: string;
+		role?: string;
+		page?: number;
+		size?: number;
+		sort?: string;
+	} = {}): Observable<PaginatedResponse<UserResponse>> {
+		const query: Record<string, string | number> = {
+			page: params.page ?? 0,
+			size: params.size ?? 10,
+			sort: params.sort ?? 'name,asc'
+		};
+		if (params.name) query['name'] = params.name;
+		if (params.role) query['role'] = params.role;
+		return this.apiClient.get<PaginatedResponse<UserResponse>>('/api/users', { params: query });
 	}
 
 	createAdminUser(request: any): Observable<UserResponse> {
