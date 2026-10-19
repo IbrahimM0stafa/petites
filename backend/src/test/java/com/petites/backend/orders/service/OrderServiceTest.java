@@ -44,6 +44,9 @@ class OrderServiceTest {
     @Mock
     private AddressRepository addressRepository;
 
+    @Mock
+    private com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService;
+
     @InjectMocks
     private OrderService orderService;
 

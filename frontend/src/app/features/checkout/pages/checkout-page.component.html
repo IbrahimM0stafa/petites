@@ -141,15 +141,6 @@
             <app-coupon-form [checkoutForm]="checkoutForm" [validatingCoupon]="validatingCoupon"
               [couponPreview]="couponPreview" [subtotal]="subtotal" (validate)="validateCoupon()">
             </app-coupon-form>
-
-            <button type="submit"
-              class="purchase-btn purchase-btn--primary submit-checkout-btn submit-checkout-btn--desktop"
-              [disabled]="placingOrder">
-              <span>{{ placingOrder ? 'Placing your order…' : 'Place Order via Instapay' }}</span>
-              <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" *ngIf="!placingOrder">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
-            </button>
           </div>
 
           <div class="checkout-side-col">
@@ -163,7 +154,7 @@
             </app-checkout-summary>
 
             <button type="submit"
-              class="purchase-btn purchase-btn--primary submit-checkout-btn submit-checkout-btn--mobile"
+              class="purchase-btn purchase-btn--primary submit-checkout-btn"
               [disabled]="placingOrder">
               <span>{{ placingOrder ? 'Placing your order…' : 'Place Order via Instapay' }}</span>
               <svg class="btn-arrow" fill="none" viewBox="0 0 24 24" stroke="currentColor" *ngIf="!placingOrder">

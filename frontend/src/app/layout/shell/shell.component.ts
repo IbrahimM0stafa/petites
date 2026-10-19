@@ -5,11 +5,12 @@ import { CartService } from '../../core/services/cart.service';
 import { AuthService } from '../../core/services/auth.service';
 import { FooterComponent } from '../footer/footer.component';
 import { HeaderComponent } from '../header/header.component';
+import { ChatbotWidgetComponent } from '../../shared/components/chatbot-widget/chatbot-widget.component';
 
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [HeaderComponent, FooterComponent, RouterOutlet],
+  imports: [HeaderComponent, FooterComponent, RouterOutlet, ChatbotWidgetComponent],
   templateUrl: './shell.component.html',
   styleUrl: './shell.component.css'
 })

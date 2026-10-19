@@ -15,8 +15,8 @@ RUN ./mvnw -DskipTests clean package -B
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 
-# Install curl for Docker health checks
-RUN apk add --no-cache curl
+# Install curl for Docker health checks (or fallback to built-in wget)
+RUN apk add --no-cache curl || true
 
 # Security: run as non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

@@ -53,7 +53,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/actuator/**").permitAll()
-                    .requestMatchers("/api/cart/**", "/api/checkout", "/api/orders/**", "/api/settings/**").permitAll()
+                    .requestMatchers("/ws/**", "/ws").permitAll()
+                    .requestMatchers("/api/cart/**", "/api/checkout", "/api/orders/**", "/api/settings/**", "/api/chat/**").permitAll()
                     .requestMatchers(HttpMethod.POST, permitPostPaths.toArray(String[]::new)).permitAll()
                     .requestMatchers(HttpMethod.GET, permitGetPaths.toArray(String[]::new)).permitAll()
                     .anyRequest().authenticated()

@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════
-# Petites — Production Docker Compose
+# Petites — Production Docker Compose (Optimized for 4GB RAM VPS)
 # ═══════════════════════════════════════════════════════════════
 # Usage:
 #   cp .env.example .env    # then edit .env with real secrets
@@ -25,6 +25,10 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   # ── Spring Boot Backend ───────────────────────────────────────
   backend:
@@ -34,6 +38,13 @@ services:
       db:
         condition: service_healthy
     environment:
+      # JVM container ergonomics & periodic idle memory uncommit
+      JAVA_TOOL_OPTIONS: >-
+        -XX:MaxRAMPercentage=75.0
+        -XX:InitialRAMPercentage=35.0
+        -XX:+UseG1GC
+        -XX:G1PeriodicGCInterval=15000
+        -XX:+ExitOnOutOfMemoryError
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
       PORT: ${PORT:-8080}
       DB_URL: jdbc:postgresql://db:5432/${POSTGRES_DB}
@@ -55,14 +66,20 @@ services:
       SPRING_MAIL_SMTP_AUTH: ${SPRING_MAIL_SMTP_AUTH:-false}
       SPRING_MAIL_STARTTLS_ENABLE: ${SPRING_MAIL_STARTTLS_ENABLE:-false}
       APP_MAIL_FROM: ${APP_MAIL_FROM:-noreply@petites.com}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
     networks:
       - petites-net
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:8080/actuator/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8080/actuator/health || curl -sf http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
 
   # ── Angular Frontend (Storefront) ────────────────────────────
   frontend:
@@ -75,10 +92,13 @@ services:
         condition: service_healthy
     networks:
       - petites-net
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
   # ── Angular Dashboard (Admin Panel) ──────────────────────────
   # Served on a separate subdomain (e.g. admin.petites.com)
-  # Configure your external reverse proxy / DNS to route to this port
   dashboard:
     build: ./dashboard
     restart: unless-stopped
@@ -89,6 +109,10 @@ services:
         condition: service_healthy
     networks:
       - petites-net
+    deploy:
+      resources:
+        limits:
+          memory: 128M
 
 # ── Volumes ───────────────────────────────────────────────────
 volumes:

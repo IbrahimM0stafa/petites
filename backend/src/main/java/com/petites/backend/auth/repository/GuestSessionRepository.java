@@ -16,5 +16,5 @@ public interface GuestSessionRepository extends JpaRepository<GuestSession, Stri
 
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM GuestSession session WHERE session.expiresAt < :now")
-    int deleteExpired(@Param("now") Instant now);
+    void deleteExpired(@Param("now") Instant now);
 }

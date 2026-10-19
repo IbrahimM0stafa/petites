@@ -1,0 +1,1474 @@
+/* ═══════════════════════════════════════════════════════
+   Petites Chatbot Widget — Premium Warm Bakery Theme
+   Artisanal elegance, responsive layout, glassmorphic touches
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Floating Launcher Button ───────────────────────── */
+.chat-launcher-btn {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  width: 62px;
+  height: 62px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #9a5445 0%, #7c2f22 100%);
+  color: #fff8f2;
+  border: 2px solid rgba(255, 248, 242, 0.4);
+  box-shadow:
+    0 12px 32px rgba(83, 47, 32, 0.28),
+    0 0 16px rgba(154, 84, 69, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chat-launcher-btn:hover {
+  transform: scale(1.08) translateY(-3px);
+  box-shadow:
+    0 16px 38px rgba(83, 47, 32, 0.38),
+    0 0 25px rgba(203, 106, 91, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+  border-color: rgba(255, 248, 242, 0.65);
+}
+
+.chat-launcher-btn:active {
+  transform: scale(0.96);
+}
+
+.chat-launcher-btn.active {
+  background: #6e3e2d;
+  border-color: rgba(255, 248, 242, 0.3);
+  box-shadow: 0 8px 24px rgba(83, 47, 32, 0.25);
+}
+
+.launcher-icon {
+  font-size: 1.55rem;
+  line-height: 1;
+  user-select: none;
+}
+
+.cart-floating-counter {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  background: #cb6a5b;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+  border: 2px solid #fff8f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(83, 47, 32, 0.3);
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  0% { transform: scale(0); }
+  100% { transform: scale(1); }
+}
+
+.pulse-ring {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 15px;
+  height: 15px;
+  background-color: #6dab73;
+  border: 2px solid #fff8f2;
+  border-radius: 50%;
+  animation: pulse-ring-anim 2.4s infinite;
+}
+
+@keyframes pulse-ring-anim {
+  0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(109, 171, 115, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(109, 171, 115, 0); }
+  100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(109, 171, 115, 0); }
+}
+
+/* ── Chat Backdrop (Mobile Only) ────────────────────── */
+.chat-backdrop {
+  display: none;
+}
+
+/* ── Chat Window Modal ───────────────────────────────── */
+.chat-window {
+  position: fixed;
+  bottom: 104px;
+  right: 28px;
+  width: 440px;
+  max-width: calc(100vw - 32px);
+  height: 650px;
+  max-height: calc(100vh - 120px);
+  background: rgba(255, 250, 245, 0.98);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: 24px;
+  border: 1px solid rgba(183, 149, 132, 0.25);
+  box-shadow:
+    0 25px 60px -12px rgba(83, 47, 32, 0.22),
+    0 0 0 1px rgba(103, 67, 50, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 9999;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(20px) scale(0.95);
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.3s;
+}
+
+.chat-window.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+/* ── Header ────────────────────────────────────────── */
+.chat-header {
+  background: linear-gradient(135deg, #7c2f22 0%, #9a5445 100%);
+  color: #fff8f2;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 12px rgba(83, 47, 32, 0.12);
+  flex-shrink: 0;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #ffffff, #ffe9d8 55%, #f5d6bd);
+  border: 2px solid rgba(255, 248, 242, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  box-shadow: 0 3px 8px rgba(83, 47, 32, 0.2);
+  flex-shrink: 0;
+}
+
+.header-title {
+  margin: 0;
+  font-weight: 700;
+  font-size: 0.98rem;
+  color: #fff8f2;
+  letter-spacing: 0.02em;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.status-indicator {
+  font-size: 0.74rem;
+  color: rgba(255, 248, 242, 0.8);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.status-indicator .dot {
+  width: 7px;
+  height: 7px;
+  background-color: #6dab73;
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(109, 171, 115, 0.7);
+}
+
+.header-cart-badge {
+  background: rgba(255, 248, 242, 0.2);
+  color: #fff8f2;
+  border: 1px solid rgba(255, 248, 242, 0.35);
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.7rem;
+}
+
+.header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff8f2;
+  font-size: 0.95rem;
+  cursor: pointer;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-1px);
+}
+
+.icon-btn.close-btn {
+  font-size: 1.1rem;
+}
+
+/* ── Messages Container ────────────────────────────── */
+.chat-messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background:
+    radial-gradient(circle at 10% 15%, rgba(229, 190, 155, 0.09), transparent 22%),
+    radial-gradient(circle at 90% 85%, rgba(212, 153, 128, 0.08), transparent 20%),
+    linear-gradient(180deg, #fffaf6 0%, #fcf4eb 100%);
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 5px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(141, 90, 67, 0.25);
+  border-radius: 10px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background: rgba(141, 90, 67, 0.4);
+}
+
+.message-row {
+  display: flex;
+  width: 100%;
+}
+
+.user-row {
+  justify-content: flex-end;
+}
+
+.message-bubble {
+  max-width: 88%;
+  padding: 13px 15px;
+  border-radius: 18px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+  transition: all 0.2s ease;
+  color: #4a2b21;
+}
+
+.message-bubble.has-card {
+  max-width: 100%;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.message-bubble.has-card > .message-text {
+  background: linear-gradient(180deg, #ffffff 0%, #fff6ef 100%);
+  color: #4a2b21;
+  border: 1px solid rgba(183, 149, 132, 0.25);
+  border-radius: 18px;
+  border-top-left-radius: 4px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 14px rgba(83, 47, 32, 0.05), inset 0 1px 0 #ffffff;
+  margin-bottom: 6px;
+}
+
+.message-bubble.rtl-mode {
+  text-align: right;
+  direction: rtl;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.assistant-bubble:not(.has-card) {
+  background: linear-gradient(180deg, #ffffff 0%, #fff6ef 100%);
+  color: #4a2b21;
+  border: 1px solid rgba(183, 149, 132, 0.25);
+  border-top-left-radius: 4px;
+  box-shadow: 0 4px 14px rgba(83, 47, 32, 0.05), inset 0 1px 0 #ffffff;
+}
+
+.user-bubble {
+  background: linear-gradient(135deg, #9a5445 0%, #7c2f22 100%);
+  color: #fff8f2;
+  border-top-right-radius: 4px;
+  box-shadow: 0 4px 14px rgba(83, 47, 32, 0.16);
+}
+
+::ng-deep .highlight-text {
+  color: #cb6a5b;
+  font-weight: 700;
+}
+
+/* ── Product Cards in Chat ─────────────────────────── */
+.chat-products-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chat-product-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(180deg, #ffffff 0%, #fff7f2 100%);
+  border: 1px solid rgba(183, 149, 132, 0.22);
+  padding: 8px 10px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(83, 47, 32, 0.04);
+}
+
+.chat-product-card:hover {
+  background: #fff8f2;
+  border-color: rgba(203, 106, 91, 0.45);
+  box-shadow: 0 4px 14px rgba(83, 47, 32, 0.08);
+  transform: translateY(-1px);
+}
+
+.product-thumb img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(183, 149, 132, 0.25);
+  background: #f8dfd6;
+  flex-shrink: 0;
+}
+
+.product-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-name {
+  font-weight: 600;
+  font-size: 0.86rem;
+  color: #4a2b21;
+  font-family: Georgia, 'Times New Roman', serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 3px;
+}
+
+.product-price {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #7c2f22;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.stock-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 5px;
+}
+
+.stock-badge.instant {
+  background: rgba(254, 243, 199, 0.9);
+  color: #92400e;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.stock-badge.available {
+  background: rgba(236, 253, 245, 0.9);
+  color: #166534;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+
+.stock-badge.soldout {
+  background: rgba(254, 226, 226, 0.9);
+  color: #b91c1c;
+  border: 1px solid rgba(220, 38, 38, 0.25);
+}
+
+.add-cart-btn {
+  background: #f8dfd6;
+  color: #6e3c32;
+  border: 1px solid rgba(211, 167, 151, 0.6);
+  font-weight: 700;
+  font-size: 0.76rem;
+  padding: 6px 11px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  flex-shrink: 0;
+}
+
+.add-cart-btn:hover:not(:disabled) {
+  background: #cb6a5b;
+  color: #fff8f2;
+  border-color: #cb6a5b;
+  transform: scale(1.04);
+  box-shadow: 0 3px 8px rgba(203, 106, 91, 0.25);
+}
+
+.add-cart-btn.added {
+  background: #6dab73;
+  color: #fff;
+  border-color: #6dab73;
+}
+
+.add-cart-btn:disabled {
+  background: rgba(183, 149, 132, 0.25);
+  color: rgba(74, 43, 33, 0.4);
+  cursor: not-allowed;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+/* ── Generic In-Chat Card Container ────────────────── */
+.inchat-card {
+  margin-top: 12px;
+  background: linear-gradient(180deg, #ffffff 0%, #fff9f5 100%);
+  border: 1px solid rgba(183, 149, 132, 0.25);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: 0 4px 16px rgba(83, 47, 32, 0.06), inset 0 1px 0 #ffffff;
+}
+
+.inchat-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid rgba(183, 149, 132, 0.18);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+
+.inchat-card-header.highlight {
+  border-bottom-color: rgba(203, 106, 91, 0.25);
+  background: linear-gradient(135deg, rgba(248, 223, 214, 0.6) 0%, rgba(255, 248, 242, 0.7) 100%);
+  margin: -14px -14px 12px -14px;
+  padding: 12px 14px;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+}
+
+.card-icon {
+  font-size: 1.15rem;
+}
+
+.card-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #4a2b21;
+  font-family: Georgia, 'Times New Roman', serif;
+  flex: 1;
+}
+
+.card-subtotal {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #7c2f22;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.order-badge {
+  background: #cb6a5b;
+  color: #fff8f2;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+}
+
+/* ── Cart Mini List ────────────────────────────────── */
+.cart-items-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cart-mini-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  padding: 6px 9px;
+  background: rgba(255, 248, 241, 0.75);
+  border-radius: 8px;
+  border: 1px solid rgba(183, 149, 132, 0.15);
+}
+
+.item-qty {
+  font-weight: 700;
+  color: #7c2f22;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.item-title {
+  flex: 1;
+  font-weight: 500;
+  color: #5a3529;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.item-mode-badge {
+  font-size: 0.66rem;
+  background: rgba(255, 248, 241, 0.9);
+  color: #8d5a43;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(183, 149, 132, 0.2);
+}
+
+.item-mode-badge.instant {
+  background: rgba(254, 243, 199, 0.8);
+  color: #92400e;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.item-price {
+  font-weight: 700;
+  color: #4a2b21;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.card-actions-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.action-btn {
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #9a5445 0%, #7c2f22 100%);
+  color: #fff8f2;
+  flex: 1;
+  min-width: 130px;
+  border: 1px solid rgba(255, 244, 239, 0.25);
+  box-shadow: 0 3px 8px rgba(83, 47, 32, 0.12);
+}
+
+.action-btn.primary:hover {
+  background: linear-gradient(135deg, #cb6a5b 0%, #9a5445 100%);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(203, 106, 91, 0.25);
+}
+
+.action-btn.secondary {
+  background: rgba(255, 248, 241, 0.85);
+  color: #5a3529;
+  border: 1px solid rgba(183, 149, 132, 0.3);
+}
+
+.action-btn.secondary:hover {
+  background: #f8dfd6;
+  border-color: rgba(203, 106, 91, 0.35);
+}
+
+.action-btn.text-btn {
+  background: transparent;
+  color: #8d5a43;
+  font-size: 0.95rem;
+  padding: 6px 8px;
+}
+
+.action-btn.text-btn:hover {
+  color: #cb6a5b;
+  background: rgba(203, 106, 91, 0.1);
+}
+
+/* ── In-Chat Checkout Form ─────────────────────────── */
+.checkout-form-card {
+  border-color: rgba(203, 106, 91, 0.3);
+  background: linear-gradient(180deg, #ffffff 0%, #fff9f5 100%);
+}
+
+.checkout-intro {
+  font-size: 0.78rem;
+  color: #8d5a43;
+  margin: 0 0 10px 0;
+}
+
+.order-type-toggle {
+  display: flex;
+  gap: 6px;
+  background: rgba(248, 223, 214, 0.4);
+  padding: 3px;
+  border-radius: 10px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(183, 149, 132, 0.18);
+}
+
+.toggle-btn {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background: transparent;
+  color: #8d5a43;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-btn.active {
+  background: #ffffff;
+  color: #5a3529;
+  box-shadow: 0 2px 6px rgba(83, 47, 32, 0.1);
+  border: 1px solid rgba(183, 149, 132, 0.2);
+}
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #5a3529;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* Saved Address Selector Card */
+.saved-address-container {
+  margin-bottom: 10px;
+}
+
+.address-select-wrapper {
+  margin-bottom: 6px;
+}
+
+.styled-select {
+  width: 100%;
+  border: 1px solid rgba(183, 149, 132, 0.35);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  color: #4a2b21;
+  background: rgba(255, 248, 241, 0.85);
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.styled-select:focus {
+  border-color: #cb6a5b;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(203, 106, 91, 0.15);
+}
+
+.selected-address-preview {
+  background: rgba(236, 253, 245, 0.5);
+  border: 1px solid rgba(109, 171, 115, 0.35);
+  border-radius: 10px;
+  padding: 9px 12px;
+  margin-top: 4px;
+}
+
+.address-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #15803d;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 3px;
+}
+
+.address-details {
+  font-size: 0.8rem;
+  color: #3b221a;
+  line-height: 1.4;
+}
+
+.address-line.main {
+  font-weight: 600;
+  color: #4a2b21;
+}
+
+.address-line.sub {
+  color: #6e3c32;
+}
+
+.address-line.notes {
+  font-size: 0.74rem;
+  color: #8d5a43;
+  margin-top: 2px;
+}
+
+.manual-address-block {
+  margin-top: 6px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 8px;
+  min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.form-field.full-width {
+  grid-column: 1 / -1;
+}
+
+.form-field label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #5a3529;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.form-field input,
+.form-field select {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid rgba(183, 149, 132, 0.35);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  color: #4a2b21;
+  background: rgba(255, 248, 241, 0.8);
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  border-color: #cb6a5b;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(203, 106, 91, 0.15);
+}
+
+.form-field input::placeholder {
+  color: rgba(141, 90, 67, 0.45);
+}
+
+.field-hint {
+  font-size: 0.68rem;
+  color: #8d5a43;
+}
+
+.checkout-totals {
+  background: rgba(255, 248, 241, 0.8);
+  border: 1px solid rgba(183, 149, 132, 0.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin: 10px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: #8d5a43;
+}
+
+.total-row.grand-total {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: #4a2b21;
+  border-top: 1px dashed rgba(183, 149, 132, 0.3);
+  padding-top: 5px;
+  margin-top: 2px;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.total-highlight {
+  color: #7c2f22;
+}
+
+/* ── In-Chat Coupon Section ────────────────────────── */
+.coupon-inchat-section {
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
+.coupon-input-group {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.coupon-chat-input {
+  flex: 1;
+  border: 1.5px solid rgba(183, 149, 132, 0.35);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.82rem;
+  color: #4a2b21;
+  background: rgba(255, 248, 241, 0.85);
+  outline: none;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.coupon-chat-input::placeholder {
+  text-transform: none;
+  font-weight: 400;
+  letter-spacing: normal;
+  color: rgba(141, 90, 67, 0.5);
+}
+
+.coupon-chat-input:focus {
+  border-color: #cb6a5b;
+  background: #ffffff;
+  box-shadow: 0 0 0 2px rgba(203, 106, 91, 0.15);
+}
+
+.coupon-apply-btn {
+  background: linear-gradient(135deg, #9a5445 0%, #7c2f22 100%);
+  color: #fff8f2;
+  border: 1px solid rgba(255, 244, 239, 0.3);
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.coupon-apply-btn:hover:not(:disabled) {
+  background: #cb6a5b;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.coupon-apply-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.coupon-success-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(236, 253, 245, 0.85);
+  border: 1.5px solid rgba(34, 197, 94, 0.35);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+
+.coupon-pill-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.coupon-code-badge {
+  color: #166534;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.coupon-saving-text {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.coupon-remove-btn {
+  background: rgba(220, 38, 38, 0.1);
+  color: #b91c1c;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.coupon-remove-btn:hover {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.coupon-error-hint {
+  font-size: 0.72rem;
+  color: #b91c1c;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.total-row.discount-row {
+  color: #166534;
+  font-weight: 600;
+}
+
+.discount-amount {
+  color: #166534;
+  font-weight: 700;
+}
+
+.card-error-box {
+  background: rgba(254, 226, 226, 0.75);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  color: #b91c1c;
+  font-size: 0.75rem;
+  padding: 7px 10px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.submit-order-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #9a5445 0%, #7c2f22 100%);
+  color: #fff8f2;
+  border: 1.5px solid rgba(255, 244, 239, 0.3);
+  font-weight: 700;
+  font-size: 0.88rem;
+  padding: 11px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(83, 47, 32, 0.15);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.submit-order-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #cb6a5b 0%, #9a5445 100%);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(203, 106, 91, 0.25);
+}
+
+.submit-order-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── Order Confirmed Card & InstaPay ───────────────── */
+.order-confirmed-card {
+  background: linear-gradient(180deg, rgba(236, 253, 245, 0.7) 0%, rgba(255, 250, 246, 0.98) 100%);
+  border-color: rgba(109, 171, 115, 0.35);
+}
+
+.confirmed-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.celebration-icon {
+  font-size: 1.6rem;
+}
+
+.confirmed-title {
+  font-weight: 700;
+  font-size: 0.94rem;
+  color: #166534;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.confirmed-subtitle {
+  font-size: 0.74rem;
+  color: #15803d;
+}
+
+.status-pill {
+  margin-left: auto;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+.status-pill.confirmed {
+  background: rgba(220, 252, 231, 0.8);
+  color: #15803d;
+  border: 1px solid rgba(134, 239, 172, 0.6);
+}
+
+.instapay-transfer-box {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid rgba(109, 171, 115, 0.4);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+}
+
+.instapay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.instapay-logo {
+  font-weight: 700;
+  font-size: 0.86rem;
+  color: #166534;
+}
+
+.transfer-amount {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: #7c2f22;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.instapay-instructions {
+  font-size: 0.74rem;
+  color: #5a3529;
+  margin: 0 0 8px 0;
+}
+
+.instapay-details {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 248, 241, 0.7);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(183, 149, 132, 0.25);
+}
+
+.handle-box {
+  flex: 1;
+}
+
+.handle-label {
+  font-size: 0.65rem;
+  color: #8d5a43;
+  display: block;
+}
+
+.handle-text {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #4a2b21;
+}
+
+.instapay-link-btn {
+  background: #6dab73;
+  color: #fff;
+  text-decoration: none;
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 7px 11px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+.instapay-link-btn:hover {
+  background: #166534;
+  box-shadow: 0 3px 8px rgba(22, 101, 52, 0.2);
+}
+
+.instapay-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.67rem;
+  color: #8d5a43;
+  font-style: italic;
+}
+
+/* ── Tracked Orders Card ───────────────────────────── */
+.tracked-orders-card {
+  background: linear-gradient(180deg, #ffffff 0%, #fff9f5 100%);
+}
+
+.orders-track-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.order-track-item {
+  background: rgba(255, 248, 241, 0.75);
+  border: 1px solid rgba(183, 149, 132, 0.2);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.track-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.order-num {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #4a2b21;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+
+.order-status-badge {
+  font-size: 0.66rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  background: rgba(248, 223, 214, 0.5);
+  color: #5a3529;
+}
+
+.order-status-badge.confirmed,
+.order-status-badge.delivered,
+.order-status-badge.completed {
+  background: rgba(220, 252, 231, 0.8);
+  color: #15803d;
+}
+
+.order-status-badge.pending,
+.order-status-badge.in_preparation {
+  background: rgba(254, 243, 199, 0.8);
+  color: #92400e;
+}
+
+.track-item-meta {
+  font-size: 0.72rem;
+  color: #8d5a43;
+}
+
+.ord-price {
+  font-weight: 700;
+  color: #7c2f22;
+}
+
+/* ── Quick Reply Action Chips ──────────────────────── */
+.message-quick-replies {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.quick-reply-pill {
+  background: #f8dfd6;
+  border: 1px solid rgba(211, 167, 151, 0.6);
+  color: #6e3c32;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 6px 12px;
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
+  letter-spacing: 0.02em;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.quick-reply-pill:hover {
+  background: #cb6a5b;
+  border-color: #cb6a5b;
+  color: #fff8f2;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(203, 106, 91, 0.22);
+}
+
+.quick-reply-pill:active {
+  transform: scale(0.96);
+}
+
+/* ── Suggestions Chips (Initial) ───────────────────── */
+.suggestions-container {
+  margin-top: 8px;
+}
+
+.suggestions-title {
+  font-size: 0.74rem;
+  color: #8d5a43;
+  margin-bottom: 6px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.chips-wrapper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-btn {
+  background: rgba(255, 248, 241, 0.85);
+  border: 1px solid rgba(183, 149, 132, 0.3);
+  color: #5a3529;
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 18px;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  transition: all 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chip-btn:hover {
+  background: #f8dfd6;
+  border-color: rgba(203, 106, 91, 0.4);
+  color: #6e3c32;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(83, 47, 32, 0.08);
+}
+
+.chip-btn:active {
+  transform: scale(0.96);
+}
+
+/* ── Typing Dots ───────────────────────────────────── */
+.typing-bubble {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 12px 18px;
+}
+
+.typing-dot {
+  width: 7px;
+  height: 7px;
+  background-color: rgba(141, 90, 67, 0.45);
+  border-radius: 50%;
+  animation: typing-bounce 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing-bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+/* ── Input Bar ─────────────────────────────────────── */
+.chat-input-bar {
+  padding: 12px 16px;
+  background: rgba(255, 250, 246, 0.98);
+  border-top: 1px solid rgba(183, 149, 132, 0.2);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.chat-input-bar input {
+  flex: 1;
+  border: 1px solid rgba(183, 149, 132, 0.3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-size: 0.88rem;
+  outline: none;
+  background: rgba(255, 248, 241, 0.8);
+  color: #4a2b21;
+  transition: all 0.2s ease;
+}
+
+.chat-input-bar input::placeholder {
+  color: rgba(141, 90, 67, 0.5);
+}
+
+.chat-input-bar input:focus {
+  background: #ffffff;
+  border-color: #cb6a5b;
+  box-shadow: 0 0 0 3px rgba(203, 106, 91, 0.12);
+}
+
+.send-btn {
+  background: linear-gradient(135deg, #9a5445 0%, #7c2f22 100%);
+  color: #fff8f2;
+  border: 1px solid rgba(255, 244, 239, 0.25);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(83, 47, 32, 0.15);
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.send-btn:hover:not(:disabled) {
+  background: #cb6a5b;
+  color: #ffffff;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(203, 106, 91, 0.25);
+}
+
+.send-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.send-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ═══════════════════════════════════════════════════════
+   RESPONSIVENESS & MOBILE ADAPTATIONS
+   ═══════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+  .chat-backdrop {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(74, 43, 33, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9998;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s;
+  }
+
+  .chat-backdrop.open {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .chat-window {
+    right: 0;
+    bottom: 0;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    max-width: 100vw;
+    height: 100dvh;
+    max-height: 100dvh;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    z-index: 9999;
+  }
+
+  .chat-header {
+    padding-top: calc(14px + env(safe-area-inset-top, 0px));
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .chat-input-bar {
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  .chat-launcher-btn {
+    bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    right: 20px;
+    width: 56px;
+    height: 56px;
+  }
+
+  .chat-messages {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+
+  .message-bubble {
+    max-width: 92%;
+  }
+
+  .message-bubble.has-card {
+    max-width: 100%;
+    width: 100%;
+  }
+
+  .inchat-card {
+    padding: 12px 10px;
+    border-radius: 12px;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 6px;
+  }
+
+  .form-field.full-width {
+    grid-column: 1;
+  }
+}

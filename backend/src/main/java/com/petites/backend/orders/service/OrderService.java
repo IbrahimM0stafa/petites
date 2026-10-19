@@ -32,13 +32,20 @@ public class OrderService {
     private final LoyaltyService loyaltyService;
     private final com.petites.backend.coupons.service.CouponService couponService;
     private final AddressRepository addressRepository;
+    private final com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService;
 
-    public OrderService(OrderRepository orderRepository, OrderItemRepository orderItemRepository, LoyaltyService loyaltyService, com.petites.backend.coupons.service.CouponService couponService, AddressRepository addressRepository) {
+    public OrderService(OrderRepository orderRepository,
+                        OrderItemRepository orderItemRepository,
+                        LoyaltyService loyaltyService,
+                        com.petites.backend.coupons.service.CouponService couponService,
+                        AddressRepository addressRepository,
+                        com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.loyaltyService = loyaltyService;
         this.couponService = couponService;
         this.addressRepository = addressRepository;
+        this.orderWebSocketService = orderWebSocketService;
     }
 
     @Transactional(readOnly = true)
@@ -168,8 +175,9 @@ public class OrderService {
         }
 
         Order saved = orderRepository.save(order);
-
-        return toResponse(saved);
+        OrderResponse response = toResponse(saved);
+        orderWebSocketService.notifyOrderStatusUpdated(response);
+        return response;
     }
 
     private AddressResponse buildAddressResponse(Order order) {

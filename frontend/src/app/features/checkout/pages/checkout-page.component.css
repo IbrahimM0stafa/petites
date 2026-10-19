@@ -95,7 +95,7 @@
 .guest-auth-modal {
 	position: fixed;
 	inset: 0;
-	z-index: 30;
+	z-index: 2000;
 	display: grid;
 	place-items: center;
 	padding: 1.25rem;
@@ -106,11 +106,12 @@
 	inset: 0;
 	background: rgba(43, 27, 18, 0.48);
 	backdrop-filter: blur(6px);
+	z-index: 2000;
 }
 
 .guest-auth-card {
 	position: relative;
-	z-index: 1;
+	z-index: 2001;
 	max-width: 520px;
 	width: min(520px, 100%);
 	padding: 1.75rem;
@@ -307,6 +308,16 @@
 	gap: 1.5rem;
 }
 
+.checkout-main-col app-address-form {
+	position: relative;
+	z-index: 10;
+}
+
+.checkout-main-col app-coupon-form {
+	position: relative;
+	z-index: 1;
+}
+
 .checkout-side-col {
 	display: flex;
 	flex-direction: column;
@@ -315,6 +326,8 @@
 
 /* Submit order button custom spacing */
 .submit-checkout-btn {
+	position: relative;
+	z-index: 2;
 	width: 100%;
 	padding: 1.15rem 2rem !important;
 	box-shadow: 0 8px 24px rgba(203, 106, 91, 0.25) !important;
@@ -322,10 +335,6 @@
 
 .submit-checkout-btn:hover:not(:disabled) {
 	box-shadow: 0 12px 32px rgba(203, 106, 91, 0.4) !important;
-}
-
-.submit-checkout-btn--mobile {
-	display: none !important;
 }
 
 /* Empty State elements */
@@ -435,14 +444,6 @@
 	.checkout-layout {
 		grid-template-columns: 1fr;
 		gap: 2rem;
-	}
-
-	.submit-checkout-btn--desktop {
-		display: none !important;
-	}
-
-	.submit-checkout-btn--mobile {
-		display: inline-flex !important;
 	}
 }
 

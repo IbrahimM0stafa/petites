@@ -57,6 +57,7 @@ public class CartService {
     private final OrderService orderService;
     private final CouponService couponService;
     private final AddressRepository addressRepository;
+    private final com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService;
 
     public CartService(CartRepository cartRepository,
                        CartItemRepository cartItemRepository,
@@ -68,7 +69,8 @@ public class CartService {
                        OrderRepository orderRepository,
                        OrderService orderService,
                        CouponService couponService,
-                       AddressRepository addressRepository) {
+                       AddressRepository addressRepository,
+                       com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
@@ -80,6 +82,7 @@ public class CartService {
         this.orderService = orderService;
         this.couponService = couponService;
         this.addressRepository = addressRepository;
+        this.orderWebSocketService = orderWebSocketService;
     }
 
     @Transactional(readOnly = true)
@@ -297,6 +300,9 @@ public class CartService {
         cartRepository.save(cart);
 
         List<OrderResponse> responses = savedOrders.stream().map(orderService::toResponse).toList();
+        for (OrderResponse response : responses) {
+            orderWebSocketService.notifyOrderCreated(response);
+        }
         BigDecimal totalAmount = responses.stream()
                 .map(OrderResponse::totalAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -497,6 +503,20 @@ public class CartService {
         String area = blankToNull(request.deliveryArea());
         String street = blankToNull(request.deliveryStreet());
         if (city == null || area == null || street == null) {
+            if (owner.isUser()) {
+                List<Address> userAddresses = addressRepository.findByUserId(owner.userId());
+                if (!userAddresses.isEmpty()) {
+                    Address defaultAddress = userAddresses.get(0);
+                    return new DeliveryAddressSnapshot(
+                            defaultAddress.getId(),
+                            defaultAddress.getCity(),
+                            defaultAddress.getArea(),
+                            defaultAddress.getStreet(),
+                            defaultAddress.getBuilding(),
+                            defaultAddress.getNotes()
+                    );
+                }
+            }
             throw new IllegalArgumentException("Delivery address is required");
         }
 

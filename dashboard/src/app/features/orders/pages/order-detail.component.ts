@@ -1,12 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { OrderResponse, OrderStatus } from '../../../core/models/order.model';
 import { OrderService } from '../../../core/services/order.service';
 import { formatAddressShort, formatAddressLine2 } from '../../../core/models/address.model';
+import { WebSocketService } from '../../../core/services/websocket.service';
 
 @Component({
   selector: 'app-order-detail',
@@ -15,9 +17,12 @@ import { formatAddressShort, formatAddressLine2 } from '../../../core/models/add
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.css'
 })
-export class OrderDetailComponent implements OnInit {
+export class OrderDetailComponent implements OnInit, OnDestroy {
   private readonly orderService = inject(OrderService);
   private readonly route = inject(ActivatedRoute);
+  readonly webSocketService = inject(WebSocketService);
+
+  private readonly destroy$ = new Subject<void>();
 
   order: OrderResponse | null = null;
   loading = true;
@@ -49,6 +54,23 @@ export class OrderDetailComponent implements OnInit {
     }
 
     this.loadOrder(id);
+    this.setupRealtimeSync();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private setupRealtimeSync(): void {
+    this.webSocketService.orderStatusUpdates$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((updated) => {
+        if (this.order && this.order.orderId === updated.orderId) {
+          this.order = { ...this.order, ...updated, status: updated.status };
+          this.selectedStatus = updated.status;
+        }
+      });
   }
 
   loadOrder(id: string): void {

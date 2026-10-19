@@ -5,7 +5,31 @@
       <p class="subtitle">Monitor incoming orders, delivery progress, and loyalty impact</p>
     </div>
     <div class="header-actions">
+      <div class="live-pill" [class.live-connected]="webSocketService.isConnected()" [class.live-disconnected]="!webSocketService.isConnected()" title="Real-time order synchronization">
+        <span class="pulse-dot"></span>
+        <span>{{ webSocketService.isConnected() ? 'Live Sync' : 'Reconnecting...' }}</span>
+      </div>
+      <button type="button" class="admin-btn admin-btn-ghost sound-btn" (click)="audioService.toggleSound()" [title]="audioService.soundEnabled() ? 'Mute order notification chimes' : 'Enable order notification chimes'">
+        {{ audioService.soundEnabled() ? '🔔 Sound On' : '🔕 Muted' }}
+      </button>
       <button type="button" class="admin-btn admin-btn-ghost" (click)="loadOrders()" [disabled]="loading">Refresh</button>
+    </div>
+  </div>
+
+  <div *ngIf="newOrderAlert" class="live-order-banner" role="alert">
+    <div class="banner-left">
+      <span class="banner-bell">🛎️</span>
+      <div class="banner-info">
+        <strong class="banner-title">
+          New Order #{{ newOrderAlert.orderNumber }} received!
+          <span *ngIf="newOrderAlert.count > 1" class="banner-count">+{{ newOrderAlert.count - 1 }} more</span>
+        </strong>
+        <span class="banner-desc">Customer: {{ newOrderAlert.customerName }} • Total: {{ newOrderAlert.totalAmount | currency }} ({{ newOrderAlert.deliveryMode }})</span>
+      </div>
+    </div>
+    <div class="banner-actions">
+      <button type="button" class="admin-btn admin-btn-primary btn-sm" (click)="viewNewOrders()">View Orders</button>
+      <button type="button" class="admin-btn admin-btn-ghost btn-sm close-btn" (click)="dismissAlert()" aria-label="Dismiss">✕</button>
     </div>
   </div>
 

@@ -8,7 +8,12 @@
 		</div>
 		<nav class="admin-nav">
 			<a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeSidebar()">Dashboard</a>
-			<a routerLink="/orders" routerLinkActive="active" (click)="closeSidebar()">Orders</a>
+			<a routerLink="/orders" routerLinkActive="active" (click)="closeSidebar()" class="admin-nav-item-link">
+				<span>Orders</span>
+				<span *ngIf="orderNotification.unreadCount() > 0" class="admin-nav-badge">
+					{{ orderNotification.unreadCount() > 99 ? '99+' : orderNotification.unreadCount() }}
+				</span>
+			</a>
 			<a routerLink="/coupons" routerLinkActive="active" (click)="closeSidebar()">Coupons</a>
 			<a *ngIf="authState.roles().includes('SUPER_ADMIN')" routerLink="/users" routerLinkActive="active" (click)="closeSidebar()">Users</a>
 			<a routerLink="/categories" routerLinkActive="active" (click)="closeSidebar()">Categories</a>
@@ -27,13 +32,133 @@
 				</button>
 				<h1 class="admin-topbar-title">Petites Admin</h1>
 			</div>
+
 			<div class="admin-topbar-actions">
+				<!-- Live sync indicator -->
+				<div class="live-status-pill" [class.is-connected]="webSocketService.isConnected()" [title]="webSocketService.isConnected() ? 'Real-time WebSocket connected' : 'Connecting to real-time service...'">
+					<span class="live-dot"></span>
+					<span class="live-label">{{ webSocketService.isConnected() ? 'Live' : 'Syncing' }}</span>
+				</div>
+
+				<!-- Sound toggle button -->
+				<button type="button" class="admin-icon-btn sound-toggle-btn" (click)="audioService.toggleSound()" [title]="audioService.soundEnabled() ? 'Order sound chime: ON (Click to mute)' : 'Order sound chime: MUTED (Click to unmute)'" aria-label="Toggle notification sound">
+					<span>{{ audioService.soundEnabled() ? '🔔' : '🔕' }}</span>
+				</button>
+
+				<!-- Notifications Bell & Dropdown -->
+				<div class="notification-dropdown-wrapper">
+					<button type="button" class="admin-icon-btn notif-bell-btn" [class.is-active]="notificationMenuOpen()" (click)="toggleNotificationMenu($event)" title="Order Notifications" aria-label="Order notifications">
+						<svg class="bell-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+							<path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+						</svg>
+						<span *ngIf="orderNotification.unreadCount() > 0" class="notif-badge">
+							{{ orderNotification.unreadCount() > 99 ? '99+' : orderNotification.unreadCount() }}
+						</span>
+					</button>
+
+					<!-- Dropdown menu -->
+					<div *ngIf="notificationMenuOpen()" class="notif-dropdown-panel" role="region" aria-label="Order notifications popup">
+						<div class="notif-panel-header">
+							<div class="notif-header-title">
+								<strong>Order Alerts</strong>
+								<span *ngIf="orderNotification.unreadCount() > 0" class="notif-header-pill">{{ orderNotification.unreadCount() }} new</span>
+							</div>
+							<div class="notif-header-actions">
+								<button *ngIf="orderNotification.unreadCount() > 0" type="button" class="notif-text-btn" (click)="markAllRead()">
+									Mark read
+								</button>
+								<button type="button" class="notif-close-panel-btn" (click)="closeNotificationMenu()" aria-label="Close menu">✕</button>
+							</div>
+						</div>
+
+						<!-- Browser desktop notifications permission prompt banner -->
+						<div *ngIf="orderNotification.notificationPermission() === 'default'" class="notif-desktop-banner">
+							<div class="notif-desktop-text">
+								<span>Enable desktop notifications for new orders</span>
+							</div>
+							<button type="button" class="notif-enable-btn" (click)="requestDesktopPermission()">
+								Enable
+							</button>
+						</div>
+
+						<!-- Notifications list -->
+						<div class="notif-panel-body">
+							<div *ngIf="orderNotification.recentNotifications().length === 0" class="notif-empty-state">
+								<span class="notif-empty-icon">📭</span>
+								<p>No new orders received yet</p>
+								<small>Incoming customer orders will appear here in real-time</small>
+							</div>
+
+							<div *ngFor="let item of orderNotification.recentNotifications()" class="notif-item" [class.is-unread]="!item.isRead" (click)="viewOrder(item.order)">
+								<div class="notif-item-icon">🛎️</div>
+								<div class="notif-item-details">
+									<div class="notif-item-row">
+										<strong class="notif-item-num">Order #{{ item.order.orderNumber }}</strong>
+										<span class="notif-item-time">{{ item.receivedAt | date:'shortTime' }}</span>
+									</div>
+									<div class="notif-item-meta">
+										<span>{{ item.order.customerName || 'Customer' }}</span>
+										<span class="meta-dot">•</span>
+										<span class="notif-item-price">{{ item.order.totalAmount | currency }}</span>
+										<span class="notif-item-mode" *ngIf="item.order.deliveryMode">({{ item.order.deliveryMode }})</span>
+									</div>
+								</div>
+								<span class="notif-item-arrow">→</span>
+							</div>
+						</div>
+
+						<div class="notif-panel-footer">
+							<a routerLink="/orders" class="notif-footer-link" (click)="closeNotificationMenu()">
+								Go to Orders Page →
+							</a>
+						</div>
+					</div>
+				</div>
+
 				<span class="admin-user-email" *ngIf="authState.email() as email">{{ email }}</span>
 				<button type="button" class="admin-btn admin-btn-ghost" (click)="logout()">Log out</button>
 			</div>
 		</header>
+
 		<main class="admin-content">
 			<router-outlet />
 		</main>
 	</div>
+
+	<!-- Floating Real-time Order Toast Notifications -->
+	<aside class="order-toast-container" aria-live="assertive" aria-label="Incoming order alerts">
+		<div *ngFor="let toast of orderNotification.activeToasts()" class="order-toast-card" role="alert">
+			<div class="toast-card-glow"></div>
+			<div class="toast-card-inner">
+				<div class="toast-card-header">
+					<div class="toast-badge-box">
+						<span class="toast-badge-pulse"></span>
+						<span class="toast-badge-title">NEW ORDER</span>
+					</div>
+					<span class="toast-time">{{ toast.receivedAt | date:'shortTime' }}</span>
+					<button type="button" class="toast-close" (click)="orderNotification.dismissToast(toast.id)" aria-label="Dismiss notification">✕</button>
+				</div>
+
+				<div class="toast-card-body">
+					<div class="toast-order-id">Order #{{ toast.order.orderNumber }}</div>
+					<div class="toast-order-summary">
+						<span class="toast-customer-name">{{ toast.order.customerName || 'Customer' }}</span>
+						<span class="toast-bullet">•</span>
+						<strong class="toast-order-total">{{ toast.order.totalAmount | currency }}</strong>
+						<span class="toast-mode-pill" *ngIf="toast.order.deliveryMode">{{ toast.order.deliveryMode }}</span>
+					</div>
+				</div>
+
+				<div class="toast-card-actions">
+					<button type="button" class="toast-btn toast-btn-view" (click)="orderNotification.viewOrder(toast.order, toast.id)">
+						View Order →
+					</button>
+					<button type="button" class="toast-btn toast-btn-dismiss" (click)="orderNotification.dismissToast(toast.id)">
+						Dismiss
+					</button>
+				</div>
+			</div>
+		</div>
+	</aside>
 </div>

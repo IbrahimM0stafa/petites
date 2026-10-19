@@ -129,16 +129,15 @@
     <textarea formControlName="notes" rows="3" placeholder="Any delivery instructions or customization details…"></textarea>
   </label>
 
-  <label class="form-label-wrap" *ngIf="hasScheduledItems">
-    <span class="form-label-text">Scheduled Baking Date <span class="required-star">*</span></span>
-    <div class="input-with-icon">
-      <input type="date" formControlName="scheduledDate" [min]="minScheduledDate" />
-      <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-      </svg>
-    </div>
-    <div *ngIf="checkoutForm.get('scheduledDate')?.touched && checkoutForm.get('scheduledDate')?.errors?.['blockedDay']" style="color: #f43f5e; font-size: 0.825rem; margin-top: 0.375rem; font-weight: 500;">
-      We are closed on {{ getFormattedBlockedDays() }}. Please select another date.
-    </div>
-  </label>
+  <div class="form-label-wrap" *ngIf="hasScheduledItems">
+    <app-date-picker 
+      formControlName="scheduledDate" 
+      [minDate]="minScheduledDate" 
+      [blockedDays]="blockedDays"
+      label="Scheduled Baking Date"
+      [required]="true"
+      [error]="(checkoutForm.get('scheduledDate')?.touched && checkoutForm.get('scheduledDate')?.errors?.['blockedDay']) ? ('We are closed on ' + getFormattedBlockedDays() + '. Please select another date.') : null"
+      hint="Choose when you would like your freshly baked goods prepared and dispatched.">
+    </app-date-picker>
+  </div>
 </section>

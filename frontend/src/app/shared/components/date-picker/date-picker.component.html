@@ -1,0 +1,149 @@
+<div class="custom-datepicker-wrapper" [class.is-inline]="inline" [class.has-error]="!!error">
+  <!-- Label if provided -->
+  <label *ngIf="label" class="datepicker-label">
+    <span>{{ label }}</span>
+    <span *ngIf="required" class="required-star">*</span>
+  </label>
+
+  <!-- Input Trigger Box (When not in inline mode) -->
+  <div 
+    *ngIf="!inline" 
+    class="datepicker-trigger" 
+    [class.is-open]="isOpen" 
+    [class.is-disabled]="disabled"
+    [class.has-value]="!!value"
+    (click)="toggleOpen()"
+    tabindex="0"
+    role="button"
+    [attr.aria-expanded]="isOpen"
+    aria-haspopup="dialog"
+    (keydown.enter)="toggleOpen()"
+    (keydown.space)="toggleOpen(); $event.preventDefault()">
+    
+    <div class="trigger-left">
+      <span class="calendar-icon">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+      </span>
+      <span class="selected-text" [class.placeholder]="!value">
+        {{ formattedSelectedDate || placeholder }}
+      </span>
+    </div>
+
+    <div class="trigger-actions">
+      <button 
+        *ngIf="value && !disabled" 
+        type="button" 
+        class="clear-btn" 
+        (click)="clearDate($event)" 
+        title="Clear selected date"
+        aria-label="Clear selected date">
+        ✕
+      </button>
+      <span class="chevron-icon" [class.rotated]="isOpen">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7" />
+        </svg>
+      </span>
+    </div>
+  </div>
+
+  <!-- Calendar Dropdown / Inline Card -->
+  <div 
+    class="calendar-card" 
+    [class.inline-card]="inline" 
+    [class.popup-card]="!inline"
+    *ngIf="inline || isOpen"
+    role="dialog"
+    aria-label="Bakery Calendar Picker">
+
+    <!-- Quick Select Chips Row (if options available) -->
+    <div *ngIf="quickOptions.length > 0" class="quick-chips-row">
+      <span class="quick-title">Quick Select:</span>
+      <div class="chips-list">
+        <button 
+          *ngFor="let opt of quickOptions" 
+          type="button" 
+          class="quick-chip-btn"
+          [class.active]="value === opt.dateStr"
+          (click)="selectDateStr(opt.dateStr)">
+          {{ opt.label }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Month Navigation Header -->
+    <div class="calendar-header">
+      <button 
+        type="button" 
+        class="nav-month-btn" 
+        [disabled]="!canGoPrev" 
+        (click)="prevMonth()" 
+        title="Previous Month"
+        aria-label="Previous Month">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      <div class="month-label">
+        {{ currentMonthYearLabel }}
+      </div>
+
+      <button 
+        type="button" 
+        class="nav-month-btn" 
+        (click)="nextMonth()" 
+        title="Next Month"
+        aria-label="Next Month">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Days of Week Header -->
+    <div class="weekdays-grid">
+      <div *ngFor="let day of weekDays" class="weekday-cell" [class.weekend]="day === 'Fri' || day === 'Thu'">
+        {{ day }}
+      </div>
+    </div>
+
+    <!-- Calendar Month Days Grid -->
+    <div class="days-table">
+      <div *ngFor="let row of calendarGrid" class="days-row">
+        <div 
+          *ngFor="let d of row" 
+          class="day-cell"
+          [class.other-month]="!d.isCurrentMonth"
+          [class.is-today]="d.isToday"
+          [class.is-selected]="d.isSelected"
+          [class.is-past]="d.isPast"
+          [class.is-blocked]="d.isBlocked"
+          [class.is-disabled]="d.isDisabled"
+          [title]="d.isBlocked ? 'Bakery Closed (' + d.dayName + ')' : (d.isPast ? 'Date unavailable' : d.dateStr)"
+          (click)="selectDate(d)">
+          
+          <span class="day-number">{{ d.dayNumber }}</span>
+          <span *ngIf="d.isToday && !d.isSelected && !d.isBlocked" class="today-dot"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Blocked Days Info Footer -->
+    <div *ngIf="formattedBlockedDays" class="calendar-footer-info">
+      <span class="info-icon">🧁</span>
+      <span class="info-text">Bakery is closed on {{ formattedBlockedDays }} for artisanal preparation.</span>
+    </div>
+
+  </div>
+
+  <!-- Hint or Error Message -->
+  <div *ngIf="error" class="datepicker-error-msg">
+    {{ error }}
+  </div>
+  <div *ngIf="!error && hint" class="datepicker-hint-msg">
+    {{ hint }}
+  </div>
+</div>

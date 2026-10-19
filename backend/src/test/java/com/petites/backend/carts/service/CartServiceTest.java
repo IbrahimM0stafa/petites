@@ -78,6 +78,9 @@ class CartServiceTest {
     @Mock
     private AddressRepository addressRepository;
 
+    @Mock
+    private com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService;
+
     @InjectMocks
     private CartService cartService;
 
