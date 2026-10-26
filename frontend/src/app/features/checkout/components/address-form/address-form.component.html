@@ -64,12 +64,19 @@
       <div class="select-styled-container">
         <select class="form-select-el" formControlName="addressId">
           <option value="">Select a saved address</option>
-          <option *ngFor="let address of addresses" [value]="address.id">{{ address.city }}, {{ address.area }} - {{ address.street }}</option>
+          <option *ngFor="let address of addresses" [value]="address.id">
+            {{ address.city }}, {{ address.area }} - {{ address.street }}{{ (!address.areaId || !address.governorateId) ? ' ⚠️ (Update required)' : '' }}
+          </option>
           <option value="new">+ Add New Address</option>
         </select>
         <svg class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
           <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
         </svg>
+      </div>
+      <div class="address-outdated-warning" *ngIf="selectedSavedAddressNeedsUpdate" style="margin-top: 0.5rem; padding: 0.65rem 0.85rem; background: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; font-size: 0.825rem; color: #92400e; line-height: 1.4;">
+        <strong>⚠️ Address update required</strong>
+        <p style="margin: 0.2rem 0 0.4rem 0;">This address was saved before our delivery zones update. Please select <strong>"+ Add New Address"</strong> below to choose your area, or update it in your profile.</p>
+        <a routerLink="/account" style="color: #b45309; font-weight: 600; text-decoration: underline;">Update in My Account →</a>
       </div>
     </label>
   </div>
@@ -81,42 +88,88 @@
     </div>
     <div class="checkout-grid checkout-grid--guest-address">
       <label class="form-label-wrap">
+        <span class="form-label-text">Governorate <span class="required-star">*</span></span>
+        <div class="select-styled-container">
+          <select 
+            class="form-select-el" 
+            formControlName="guestDeliveryGovernorateId"
+            (change)="onGovernorateChange($event)"
+          >
+            <option value="">{{ zonesLoading ? 'Loading governorates…' : 'Select Governorate' }}</option>
+            <option *ngFor="let gov of governorates" [value]="gov.id">{{ gov.name }}</option>
+          </select>
+          <svg class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+        </div>
+      </label>
+
+      <label class="form-label-wrap">
         <span class="form-label-text">City <span class="required-star">*</span></span>
-        <div class="input-with-icon">
-          <input type="text" formControlName="guestDeliveryCity" placeholder="Cairo" />
-          <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        <div class="select-styled-container">
+          <select 
+            class="form-select-el" 
+            formControlName="guestDeliveryCityId"
+            [disabled]="availableCities.length === 0"
+            (change)="onCityChange($event)"
+          >
+            <option value="">{{ availableCities.length === 0 ? 'Select Governorate first' : 'Select City' }}</option>
+            <option *ngFor="let city of availableCities" [value]="city.id">{{ city.name }}</option>
+          </select>
+          <svg class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
         </div>
       </label>
+
       <label class="form-label-wrap">
-        <span class="form-label-text">Area <span class="required-star">*</span></span>
-        <div class="input-with-icon">
-          <input type="text" formControlName="guestDeliveryArea" placeholder="Downtown" />
-          <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18M12 3v18" />
+        <span class="form-label-text">Area / District <span class="required-star">*</span></span>
+        <div class="select-styled-container">
+          <select 
+            class="form-select-el" 
+            formControlName="guestDeliveryAreaId"
+            [disabled]="availableAreas.length === 0"
+            (change)="onAreaChange($event)"
+          >
+            <option value="">{{ availableAreas.length === 0 ? 'Select City first' : 'Select Area' }}</option>
+            <option *ngFor="let area of availableAreas" [value]="area.id">
+              {{ area.name }}{{ area.courierDelivery ? ' (Paid to courier)' : ' (EGP ' + (area.deliveryFee | number:'1.0-0') + ')' }}
+            </option>
+          </select>
+          <svg class="select-chevron" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
           </svg>
         </div>
       </label>
+
       <label class="form-label-wrap">
-        <span class="form-label-text">Street <span class="required-star">*</span></span>
+        <span class="form-label-text">Street Address <span class="required-star">*</span></span>
         <div class="input-with-icon">
-          <input type="text" formControlName="guestDeliveryStreet" placeholder="Main Street" />
+          <input type="text" formControlName="guestDeliveryStreet" placeholder="e.g. 15 Main Road, Sector 2" />
           <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20V10m0 0L8 14m4-4l4 4M5 6h14" />
           </svg>
         </div>
       </label>
+
       <label class="form-label-wrap">
         <span class="form-label-text">Building / Floor</span>
         <div class="input-with-icon">
-          <input type="text" formControlName="guestDeliveryBuilding" placeholder="Building 7, floor 3" />
+          <input type="text" formControlName="guestDeliveryBuilding" placeholder="e.g. Building 7, Apt 302" />
           <svg class="input-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 21V3h9v18M13 8h7v13h-7" />
           </svg>
         </div>
       </label>
+    </div>
+
+    <!-- Courier Notice Banner -->
+    <div class="courier-notice-box" *ngIf="selectedArea?.courierDelivery">
+      <div class="courier-notice-icon">🚚</div>
+      <div class="courier-notice-content">
+        <strong>3rd-Party Courier Delivery Zone</strong>
+        <p>Orders to <strong>{{ selectedArea?.name }}</strong> are shipped via our courier delivery partner. You will transfer the order amount via Instapay now; the delivery fee is set by the courier and will be paid in cash directly to them upon delivery.</p>
+      </div>
     </div>
     <label class="form-label-wrap">
       <span class="form-label-text">Delivery Notes</span>

@@ -47,4 +47,5 @@ export interface OrderResponse {
   rewardApplied?: boolean;
   createdAt: string;
   items: OrderItem[];
+  isCourierDelivery?: boolean;
 }

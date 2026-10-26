@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +59,36 @@ public class CartService {
     private final CouponService couponService;
     private final AddressRepository addressRepository;
     private final com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService;
+    private final com.petites.backend.addresses.service.DeliveryZoneService deliveryZoneService;
+
+    @Autowired
+    public CartService(CartRepository cartRepository,
+                       CartItemRepository cartItemRepository,
+                       ProductRepository productRepository,
+                       FulfillmentService fulfillmentService,
+                       SettingService settingService,
+                       UserService userService,
+                       LoyaltyService loyaltyService,
+                       OrderRepository orderRepository,
+                       OrderService orderService,
+                       CouponService couponService,
+                       AddressRepository addressRepository,
+                       com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService,
+                       com.petites.backend.addresses.service.DeliveryZoneService deliveryZoneService) {
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.productRepository = productRepository;
+        this.fulfillmentService = fulfillmentService;
+        this.settingService = settingService;
+        this.userService = userService;
+        this.loyaltyService = loyaltyService;
+        this.orderRepository = orderRepository;
+        this.orderService = orderService;
+        this.couponService = couponService;
+        this.addressRepository = addressRepository;
+        this.orderWebSocketService = orderWebSocketService;
+        this.deliveryZoneService = deliveryZoneService;
+    }
 
     public CartService(CartRepository cartRepository,
                        CartItemRepository cartItemRepository,
@@ -71,18 +102,7 @@ public class CartService {
                        CouponService couponService,
                        AddressRepository addressRepository,
                        com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService) {
-        this.cartRepository = cartRepository;
-        this.cartItemRepository = cartItemRepository;
-        this.productRepository = productRepository;
-        this.fulfillmentService = fulfillmentService;
-        this.settingService = settingService;
-        this.userService = userService;
-        this.loyaltyService = loyaltyService;
-        this.orderRepository = orderRepository;
-        this.orderService = orderService;
-        this.couponService = couponService;
-        this.addressRepository = addressRepository;
-        this.orderWebSocketService = orderWebSocketService;
+        this(cartRepository, cartItemRepository, productRepository, fulfillmentService, settingService, userService, loyaltyService, orderRepository, orderService, couponService, addressRepository, orderWebSocketService, null);
     }
 
     @Transactional(readOnly = true)
@@ -156,7 +176,6 @@ public class CartService {
         String customerPhone = resolveCustomerPhone(owner, request.customerPhone());
         OrderType orderType = request.orderType() == null ? OrderType.DELIVERY : request.orderType();
         DeliveryAddressSnapshot deliveryAddress = resolveDeliveryAddress(owner, request, orderType);
-        BigDecimal deliveryFee = resolveDeliveryFee(orderType);
         String notes = blankToNull(request.notes());
         Coupon coupon = couponService.resolveForCheckout(blankToNull(request.couponId()), blankToNull(request.couponCode()), cartSubtotal);
         BigDecimal discountAmount = coupon == null ? BigDecimal.ZERO : couponService.calculateDiscountAmount(coupon, cartSubtotal);
@@ -239,7 +258,11 @@ public class CartService {
             order.setGuestSessionId(owner.guestSessionId());
             if (deliveryAddress != null) {
                 order.setAddressId(deliveryAddress.addressId());
+                order.setGovernorateId(deliveryAddress.governorateId());
+                order.setDeliveryGovernorate(deliveryAddress.governorate());
+                order.setCityId(deliveryAddress.cityId());
                 order.setDeliveryCity(deliveryAddress.city());
+                order.setAreaId(deliveryAddress.areaId());
                 order.setDeliveryArea(deliveryAddress.area());
                 order.setDeliveryStreet(deliveryAddress.street());
                 order.setDeliveryBuilding(deliveryAddress.building());
@@ -250,14 +273,22 @@ public class CartService {
             order.setStatus(OrderStatus.PENDING);
             order.setPaymentMethod(PaymentMethod.INSTAPAY);
             order.setSubtotal(subtotal);
-            order.setDeliveryFee(deliveryFee);
+
+            boolean isCourier = orderType == OrderType.DELIVERY && deliveryAddress != null && deliveryAddress.isCourierDelivery();
+            BigDecimal orderDeliveryFee = isCourier || orderType != OrderType.DELIVERY || deliveryAddress == null
+                    ? BigDecimal.ZERO
+                    : deliveryAddress.deliveryFee();
+
+            order.setCourierDelivery(isCourier);
+            order.setDeliveryFee(orderDeliveryFee);
+
             BigDecimal orderDiscount = BigDecimal.ZERO;
             if (!discountApplied && discountAmount.signum() > 0) {
-                orderDiscount = discountAmount.min(subtotal.add(deliveryFee));
+                orderDiscount = discountAmount.min(subtotal.add(orderDeliveryFee));
                 discountApplied = true;
             }
             order.setDiscountAmount(orderDiscount);
-            order.setTotalAmount(subtotal.add(deliveryFee).subtract(orderDiscount).max(BigDecimal.ZERO));
+            order.setTotalAmount(subtotal.add(orderDeliveryFee).subtract(orderDiscount).max(BigDecimal.ZERO));
             order.setCustomerName(customerName);
             order.setCustomerPhone(customerPhone);
             order.setScheduledDate(deliveryMode == DeliveryMode.SCHEDULED ? scheduledDate : null);
@@ -463,12 +494,6 @@ public class CartService {
         throw new IllegalArgumentException("Customer phone is required");
     }
 
-    private BigDecimal resolveDeliveryFee(OrderType orderType) {
-        if (orderType == OrderType.PICKUP) {
-            return BigDecimal.ZERO;
-        }
-        return new BigDecimal(settingService.getSetting("delivery_fee", "50"));
-    }
 
     private String blankToNull(String value) {
         if (value == null || value.isBlank()) {
@@ -489,54 +514,104 @@ public class CartService {
             }
             Address saved = addressRepository.findByIdAndUserId(addressId, owner.userId())
                     .orElseThrow(() -> new IllegalArgumentException("Address not found"));
+
+            if (saved.getAreaId() == null || saved.getAreaId().isBlank()) {
+                throw new IllegalArgumentException("Please update this address with your Governorate, City, and Area before placing your order.");
+            }
+
+            AreaInfo areaInfo = resolveAreaInfo(saved.getAreaId());
             return new DeliveryAddressSnapshot(
                     saved.getId(),
-                    saved.getCity(),
-                    saved.getArea(),
+                    areaInfo.governorateId(),
+                    areaInfo.governorateName(),
+                    areaInfo.cityId(),
+                    areaInfo.cityName(),
+                    areaInfo.areaId(),
+                    areaInfo.areaName(),
                     saved.getStreet(),
                     saved.getBuilding(),
-                    saved.getNotes()
+                    saved.getNotes(),
+                    areaInfo.deliveryFee(),
+                    areaInfo.isCourierDelivery()
             );
         }
 
-        String city = blankToNull(request.deliveryCity());
-        String area = blankToNull(request.deliveryArea());
+        String areaId = blankToNull(request.areaId());
         String street = blankToNull(request.deliveryStreet());
-        if (city == null || area == null || street == null) {
-            if (owner.isUser()) {
-                List<Address> userAddresses = addressRepository.findByUserId(owner.userId());
-                if (!userAddresses.isEmpty()) {
-                    Address defaultAddress = userAddresses.get(0);
-                    return new DeliveryAddressSnapshot(
-                            defaultAddress.getId(),
-                            defaultAddress.getCity(),
-                            defaultAddress.getArea(),
-                            defaultAddress.getStreet(),
-                            defaultAddress.getBuilding(),
-                            defaultAddress.getNotes()
-                    );
-                }
-            }
-            throw new IllegalArgumentException("Delivery address is required");
+        if (areaId == null || street == null) {
+            throw new IllegalArgumentException("Delivery area and street address are required");
         }
 
+        AreaInfo areaInfo = resolveAreaInfo(areaId);
         return new DeliveryAddressSnapshot(
                 null,
-                city,
-                area,
+                areaInfo.governorateId(),
+                areaInfo.governorateName(),
+                areaInfo.cityId(),
+                areaInfo.cityName(),
+                areaInfo.areaId(),
+                areaInfo.areaName(),
                 street,
                 blankToNull(request.deliveryBuilding()),
-                blankToNull(request.deliveryNotes())
+                blankToNull(request.deliveryNotes()),
+                areaInfo.deliveryFee(),
+                areaInfo.isCourierDelivery()
+        );
+    }
+
+    private record AreaInfo(
+            String governorateId,
+            String governorateName,
+            String cityId,
+            String cityName,
+            String areaId,
+            String areaName,
+            BigDecimal deliveryFee,
+            boolean isCourierDelivery
+    ) {}
+
+    private AreaInfo resolveAreaInfo(String areaId) {
+        if (deliveryZoneService == null) {
+            return new AreaInfo(null, null, null, null, areaId, null, BigDecimal.ZERO, false);
+        }
+        com.petites.backend.addresses.entity.Area area = deliveryZoneService.getArea(areaId);
+        if (!area.isActive()) {
+            throw new IllegalArgumentException("We do not currently deliver to " + area.getName());
+        }
+        com.petites.backend.addresses.entity.City city = deliveryZoneService.getCity(area.getCityId());
+        if (!city.isActive()) {
+            throw new IllegalArgumentException("We do not currently operate in " + city.getName());
+        }
+        com.petites.backend.addresses.entity.Governorate gov = deliveryZoneService.getGovernorate(city.getGovernorateId());
+        if (!gov.isActive()) {
+            throw new IllegalArgumentException("We do not currently operate in " + gov.getName());
+        }
+
+        return new AreaInfo(
+                gov.getId(),
+                gov.getName(),
+                city.getId(),
+                city.getName(),
+                area.getId(),
+                area.getName(),
+                area.isCourierDelivery() ? BigDecimal.ZERO : area.getDeliveryFee(),
+                area.isCourierDelivery()
         );
     }
 
     private record DeliveryAddressSnapshot(
             String addressId,
+            String governorateId,
+            String governorate,
+            String cityId,
             String city,
+            String areaId,
             String area,
             String street,
             String building,
-            String notes
+            String notes,
+            BigDecimal deliveryFee,
+            boolean isCourierDelivery
     ) {
     }
 }

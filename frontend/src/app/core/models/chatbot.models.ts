@@ -1,17 +1,26 @@
 import { Product } from './product.model';
-import { CartResponse } from './cart.models';
-import { CheckoutResponse, OrderResponse } from './order.models';
-
+import { CartResponse, DeliveryMode } from './cart.models';
 import { CouponValidationResponse } from './coupon.models';
+import { OrderResponse } from './order.models';
+
+export type ChatActionType =
+  | 'NAVIGATE'
+  | 'VIEW_PRODUCT'
+  | 'VIEW_CATEGORY'
+  | 'CHECKOUT'
+  | 'VIEW_CART'
+  | 'ADD_TO_CART'
+  | 'CLEAR_CART'
+  | 'INITIATE_CHECKOUT'
+  | 'TRACK_ORDER';
 
 export interface ChatAction {
-  type: 'ADD_TO_CART' | 'VIEW_CART' | 'CLEAR_CART' | 'INITIATE_CHECKOUT' | 'TRACK_ORDER' | 'NAVIGATE';
+  type: ChatActionType | string;
   productId?: string;
-  productName?: string;
   quantity?: number;
-  deliveryMode?: 'INSTANT' | 'SCHEDULED';
-  price?: number;
+  deliveryMode?: DeliveryMode;
   targetUrl?: string;
+  payload?: any;
 }
 
 export interface InChatCheckoutState {
@@ -19,7 +28,11 @@ export interface InChatCheckoutState {
   customerPhone: string;
   orderType: 'DELIVERY' | 'PICKUP';
   addressId?: string;
+  deliveryGovernorateId?: string;
+  deliveryGovernorate?: string;
+  deliveryCityId?: string;
   deliveryCity: string;
+  deliveryAreaId?: string;
   deliveryArea: string;
   deliveryStreet: string;
   deliveryBuilding: string;
@@ -33,6 +46,14 @@ export interface InChatCheckoutState {
   notes: string;
   isSubmitting: boolean;
   error?: string;
+  isCourierDelivery?: boolean;
+  deliveryFee?: number;
+}
+
+export interface ChatOrderConfirmation {
+  orderReference: any;
+  orders: OrderResponse[];
+  totalAmountToTransfer: string;
 }
 
 export interface ChatMessage {
@@ -44,21 +65,28 @@ export interface ChatMessage {
   timestamp?: Date;
   cartPreview?: CartResponse | null;
   checkoutCard?: InChatCheckoutState;
-  orderConfirmation?: {
-    orderReference: CheckoutResponse;
-    orders: OrderResponse[];
-    totalAmountToTransfer: string;
-  };
   trackedOrders?: OrderResponse[];
+  orderConfirmation?: ChatOrderConfirmation;
+}
+
+export interface ChatContext {
+  currentPage?: string;
+  cartItemCount?: number;
+  cartTotal?: number;
+  userEmail?: string;
 }
 
 export interface ChatRequest {
-  messages: { role: string; content: string }[];
+  message?: string;
+  messages?: { role: string; content: string }[];
+  conversationHistory?: { role: string; content: string }[];
+  context?: ChatContext;
 }
 
 export interface ChatResponse {
   reply: string;
   products?: Product[];
-  action?: ChatAction | null;
+  suggestedProducts?: Product[];
+  action?: ChatAction;
   quickReplies?: string[];
 }

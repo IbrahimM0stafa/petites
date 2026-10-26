@@ -30,4 +30,6 @@ export class CheckoutSummaryComponent {
 	@Input({ required: true }) scheduledDiscount!: number;
 	@Input({ required: true }) instantTotal!: number;
 	@Input({ required: true }) scheduledTotal!: number;
+	@Input() isCourierDelivery = false;
+	@Input() hasAreaSelected = false;
 }

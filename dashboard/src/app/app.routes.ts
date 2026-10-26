@@ -65,6 +65,11 @@ export const routes: Routes = [
 				path: 'settings',
 				loadComponent: () =>
 					import('./features/settings/pages/settings.component').then((m) => m.SettingsComponent)
+			},
+			{
+				path: 'delivery-zones',
+				loadComponent: () =>
+					import('./features/delivery-zones/pages/delivery-zones.component').then((m) => m.DeliveryZonesComponent)
 			}
 		]
 	},

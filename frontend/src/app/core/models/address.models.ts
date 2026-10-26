@@ -1,7 +1,11 @@
 export interface AddressResponse {
 	id?: string | null;
 	userId?: string | null;
+	governorateId?: string | null;
+	governorate?: string | null;
+	cityId?: string | null;
 	city: string;
+	areaId?: string | null;
 	area: string;
 	street: string;
 	building: string | null;
@@ -12,7 +16,11 @@ export interface AddressResponse {
 export type SavedAddressResponse = AddressResponse & { id: string };
 
 export interface AddressCreateRequest {
+	governorateId?: string;
+	governorate?: string;
+	cityId?: string;
 	city: string;
+	areaId?: string;
 	area: string;
 	street: string;
 	building?: string;
@@ -20,7 +28,11 @@ export interface AddressCreateRequest {
 }
 
 export interface AddressUpdateRequest {
+	governorateId?: string;
+	governorate?: string;
+	cityId?: string;
 	city?: string;
+	areaId?: string;
 	area?: string;
 	street?: string;
 	building?: string;
@@ -33,6 +45,9 @@ export function formatAddressShort(address?: AddressResponse | null): string {
 	}
 
 	const parts: string[] = [];
+	if (address.governorate) {
+		parts.push(address.governorate);
+	}
 	if (address.city) {
 		parts.push(address.city);
 	}

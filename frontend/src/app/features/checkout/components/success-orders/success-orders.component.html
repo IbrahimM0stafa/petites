@@ -58,6 +58,10 @@
           <dt>Delivery Fee</dt>
           <dd>{{ order.deliveryFee | currency }}</dd>
         </div>
+        <div class="cost-row delivery-fee-row" *ngIf="order.isCourierDelivery">
+          <dt>Delivery Fee</dt>
+          <dd style="color: #7c3aed; font-weight: 600;">Paid to courier on delivery</dd>
+        </div>
         <div class="cost-row total-row">
           <dt>Shipment Total</dt>
           <dd>{{ order.totalAmount | currency }}</dd>

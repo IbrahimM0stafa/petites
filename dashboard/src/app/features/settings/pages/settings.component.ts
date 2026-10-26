@@ -48,7 +48,6 @@ export class SettingsComponent implements OnInit {
       reward_order_target: [5, [Validators.required, Validators.min(1)]],
       reward_product_id: [''],
       delivery_cutoff_time: ['19:00', [Validators.required, Validators.pattern(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)]],
-      delivery_fee: [0, [Validators.required, Validators.min(0)]],
       blocked_days: this.fb.group({
         MONDAY: [false],
         TUESDAY: [false],
@@ -70,18 +69,15 @@ export class SettingsComponent implements OnInit {
         const rewardTarget = res.find(s => s.key === 'reward_order_target');
         const rewardProduct = res.find(s => s.key === 'reward_product_id');
         const cutoffSetting = res.find(s => s.key === 'delivery_cutoff_time');
-        const feeSetting = res.find(s => s.key === 'delivery_fee');
         const blockedDaysSetting = res.find(s => s.key === 'blocked_days');
-
         this.settingsForm.patchValue({
           reward_order_target: rewardTarget ? Number(rewardTarget.value) : 5,
           reward_product_id: rewardProduct ? rewardProduct.value : '',
-          delivery_cutoff_time: cutoffSetting ? cutoffSetting.value : '19:00',
-          delivery_fee: feeSetting ? Number(feeSetting.value) : 50
+          delivery_cutoff_time: cutoffSetting ? cutoffSetting.value : '19:00'
         });
 
         const blockedDaysStr = blockedDaysSetting ? blockedDaysSetting.value : '';
-        const blockedDaysList = blockedDaysStr.split(',').map(s => s.trim().toUpperCase());
+        const blockedDaysList = blockedDaysStr.split(',').map((s: string) => s.trim().toUpperCase());
         const blockedDaysGroup = this.settingsForm.get('blocked_days') as FormGroup;
         if (blockedDaysGroup) {
           blockedDaysGroup.patchValue({
@@ -164,7 +160,6 @@ export class SettingsComponent implements OnInit {
       rewardTarget: this.settingsService.update('reward_order_target', formVal.reward_order_target.toString()),
       rewardProduct: this.settingsService.update('reward_product_id', (formVal.reward_product_id || '').toString()),
       cutoff: this.settingsService.update('delivery_cutoff_time', formVal.delivery_cutoff_time),
-      fee: this.settingsService.update('delivery_fee', formVal.delivery_fee.toString()),
       blockedDays: this.settingsService.update('blocked_days', selectedBlockedDays)
     }).subscribe({
       next: () => {

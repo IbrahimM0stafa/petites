@@ -39,7 +39,11 @@ public class AddressService {
         String userId = currentUserId();
         Address address = new Address();
         address.setUserId(userId);
+        address.setGovernorateId(trimToNull(request.governorateId()));
+        address.setGovernorate(trimToNull(request.governorate()));
+        address.setCityId(trimToNull(request.cityId()));
         address.setCity(request.city().trim());
+        address.setAreaId(trimToNull(request.areaId()));
         address.setArea(request.area().trim());
         address.setStreet(request.street().trim());
         address.setBuilding(trimToNull(request.building()));
@@ -50,8 +54,20 @@ public class AddressService {
     @Transactional
     public AddressResponse update(String id, AddressUpdateRequest request) {
         Address address = getMineEntity(id);
+        if (request.governorateId() != null) {
+            address.setGovernorateId(trimToNull(request.governorateId()));
+        }
+        if (request.governorate() != null) {
+            address.setGovernorate(trimToNull(request.governorate()));
+        }
+        if (request.cityId() != null) {
+            address.setCityId(trimToNull(request.cityId()));
+        }
         if (request.city() != null) {
             address.setCity(request.city().trim());
+        }
+        if (request.areaId() != null) {
+            address.setAreaId(trimToNull(request.areaId()));
         }
         if (request.area() != null) {
             address.setArea(request.area().trim());
@@ -83,7 +99,11 @@ public class AddressService {
         return new AddressResponse(
                 address.getId(),
                 address.getUserId(),
+                address.getGovernorateId(),
+                address.getGovernorate(),
+                address.getCityId(),
                 address.getCity(),
+                address.getAreaId(),
                 address.getArea(),
                 address.getStreet(),
                 address.getBuilding(),

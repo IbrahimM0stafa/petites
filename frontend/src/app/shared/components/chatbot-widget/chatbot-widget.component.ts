@@ -20,6 +20,8 @@ import { CartResponse } from '../../../core/models/cart.models';
 import { CheckoutRequest, CheckoutResponse } from '../../../core/models/order.models';
 import { SavedAddressResponse } from '../../../core/models/address.models';
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
+import { AreaNode, CityNode, GovernorateNode } from '../../../core/models/delivery-zone.model';
+import { DeliveryZoneService } from '../../../core/services/delivery-zone.service';
 
 @Component({
   selector: 'app-chatbot-widget',
@@ -42,6 +44,7 @@ export class ChatbotWidgetComponent implements OnInit {
   private readonly couponService = inject(CouponService);
   private readonly shopService = inject(ShopService);
   private readonly router = inject(Router);
+  private readonly deliveryZoneService = inject(DeliveryZoneService);
 
   @ViewChild('scrollContainer') private scrollContainer?: ElementRef;
 
@@ -50,7 +53,8 @@ export class ChatbotWidgetComponent implements OnInit {
   userInput = '';
   addedProductIds = new Set<string>();
 
-  deliveryFeeRate = 50;
+  deliveryFeeRate = 0;
+  zoneTree: GovernorateNode[] = [];
   blockedDays: string[] = [];
   savedAddresses: SavedAddressResponse[] = [];
   loadingAddresses = false;
@@ -94,15 +98,6 @@ export class ChatbotWidgetComponent implements OnInit {
   }
 
   loadDeliverySettings(): void {
-    this.settingService.getDeliveryFee().subscribe({
-      next: (res) => {
-        if (res && typeof res.deliveryFee === 'number') {
-          this.deliveryFeeRate = res.deliveryFee;
-        }
-      },
-      error: () => {}
-    });
-
     this.settingService.getBlockedDays().subscribe({
       next: (res) => {
         if (res && res.blockedDays) {
@@ -110,6 +105,15 @@ export class ChatbotWidgetComponent implements OnInit {
         }
       },
       error: () => {}
+    });
+
+    this.deliveryZoneService.getTree().subscribe({
+      next: (tree) => {
+        this.zoneTree = tree || [];
+      },
+      error: () => {
+        this.zoneTree = [];
+      }
     });
   }
 
@@ -355,8 +359,12 @@ export class ChatbotWidgetComponent implements OnInit {
       customerPhone: '',
       orderType: 'DELIVERY',
       addressId: defaultAddress ? defaultAddress.id : undefined,
-      deliveryCity: defaultAddress ? defaultAddress.city : 'Cairo',
-      deliveryArea: defaultAddress ? defaultAddress.area : 'Maadi',
+      deliveryGovernorateId: defaultAddress?.governorateId || undefined,
+      deliveryGovernorate: defaultAddress?.governorate || undefined,
+      deliveryCityId: defaultAddress?.cityId || undefined,
+      deliveryCity: defaultAddress ? defaultAddress.city : '',
+      deliveryAreaId: defaultAddress?.areaId || undefined,
+      deliveryArea: defaultAddress ? defaultAddress.area : '',
       deliveryStreet: defaultAddress ? defaultAddress.street : '',
       deliveryBuilding: defaultAddress?.building || '',
       deliveryNotes: defaultAddress?.notes || '',
@@ -367,8 +375,18 @@ export class ChatbotWidgetComponent implements OnInit {
       validatingCoupon: false,
       couponError: undefined,
       notes: '',
-      isSubmitting: false
+      isSubmitting: false,
+      deliveryFee: this.deliveryFeeRate,
+      isCourierDelivery: false
     };
+
+    if (defaultAddress && defaultAddress.areaId) {
+      const matched = this.findAreaInTree(defaultAddress.areaId);
+      if (matched) {
+        card.deliveryFee = matched.courierDelivery ? 0 : matched.deliveryFee;
+        card.isCourierDelivery = matched.courierDelivery;
+      }
+    }
 
     assistantMsg.checkoutCard = card;
     assistantMsg.cartPreview = cart;
@@ -477,24 +495,105 @@ export class ChatbotWidgetComponent implements OnInit {
     card.couponError = undefined;
   }
 
+  findAreaInTree(areaId?: string | null): AreaNode | null {
+    if (!areaId) return null;
+    for (const gov of this.zoneTree) {
+      for (const city of gov.cities) {
+        const area = city.areas.find(a => a.id === areaId);
+        if (area) return area;
+      }
+    }
+    return null;
+  }
+
+  getAvailableCities(govId?: string): CityNode[] {
+    if (!govId) return [];
+    return this.zoneTree.find(g => g.id === govId)?.cities ?? [];
+  }
+
+  getAvailableAreas(cityId?: string): AreaNode[] {
+    if (!cityId) return [];
+    for (const gov of this.zoneTree) {
+      const city = gov.cities.find(c => c.id === cityId);
+      if (city) return city.areas;
+    }
+    return [];
+  }
+
+  onCardGovernorateChange(card: InChatCheckoutState, govId: string): void {
+    card.deliveryGovernorateId = govId;
+    const gov = this.zoneTree.find(g => g.id === govId);
+    card.deliveryGovernorate = gov?.name || '';
+    card.deliveryCityId = undefined;
+    card.deliveryCity = '';
+    card.deliveryAreaId = undefined;
+    card.deliveryArea = '';
+    card.deliveryFee = 0;
+    card.isCourierDelivery = false;
+  }
+
+  onCardCityChange(card: InChatCheckoutState, cityId: string): void {
+    card.deliveryCityId = cityId;
+    const cities = this.getAvailableCities(card.deliveryGovernorateId);
+    const city = cities.find(c => c.id === cityId);
+    card.deliveryCity = city?.name || '';
+    card.deliveryAreaId = undefined;
+    card.deliveryArea = '';
+    card.deliveryFee = 0;
+    card.isCourierDelivery = false;
+  }
+
+  onCardAreaChange(card: InChatCheckoutState, areaId: string): void {
+    card.deliveryAreaId = areaId;
+    const areas = this.getAvailableAreas(card.deliveryCityId);
+    const area = areas.find(a => a.id === areaId);
+    card.deliveryArea = area?.name || '';
+    if (area) {
+      card.deliveryFee = area.courierDelivery ? 0 : area.deliveryFee;
+      card.isCourierDelivery = area.courierDelivery;
+    } else {
+      card.deliveryFee = 0;
+      card.isCourierDelivery = false;
+    }
+  }
+
   onAddressSelectChange(card: InChatCheckoutState, addressId: string | undefined): void {
     card.addressId = addressId;
     if (addressId && addressId !== 'NEW') {
       const selected = this.savedAddresses.find(a => a.id === addressId);
       if (selected) {
+        card.deliveryGovernorateId = selected.governorateId || undefined;
+        card.deliveryGovernorate = selected.governorate || undefined;
+        card.deliveryCityId = selected.cityId || undefined;
         card.deliveryCity = selected.city;
+        card.deliveryAreaId = selected.areaId || undefined;
         card.deliveryArea = selected.area;
         card.deliveryStreet = selected.street;
         card.deliveryBuilding = selected.building || '';
         card.deliveryNotes = selected.notes || '';
+
+        const matched = this.findAreaInTree(selected.areaId);
+        if (matched) {
+          card.deliveryFee = matched.courierDelivery ? 0 : matched.deliveryFee;
+          card.isCourierDelivery = matched.courierDelivery;
+        } else {
+          card.deliveryFee = 0;
+          card.isCourierDelivery = false;
+        }
       }
     } else {
       card.addressId = 'NEW';
-      card.deliveryCity = 'Cairo';
+      card.deliveryGovernorateId = undefined;
+      card.deliveryGovernorate = '';
+      card.deliveryCityId = undefined;
+      card.deliveryCity = '';
+      card.deliveryAreaId = undefined;
       card.deliveryArea = '';
       card.deliveryStreet = '';
       card.deliveryBuilding = '';
       card.deliveryNotes = '';
+      card.deliveryFee = 0;
+      card.isCourierDelivery = false;
     }
   }
 
@@ -556,8 +655,8 @@ export class ChatbotWidgetComponent implements OnInit {
     // Delivery Address Validation
     const isUsingSavedAddress = this.isAuthenticated && Boolean(card.addressId && card.addressId !== 'NEW');
     if (card.orderType === 'DELIVERY' && !isUsingSavedAddress) {
-      if (!card.deliveryStreet.trim() || !card.deliveryArea.trim() || !card.deliveryCity.trim()) {
-        card.error = 'Please enter street, area, and city for delivery.';
+      if (!card.deliveryStreet.trim() || !card.deliveryAreaId || !card.deliveryCityId || !card.deliveryGovernorateId) {
+        card.error = 'Please select governorate, city, area and enter street for delivery.';
         return;
       }
     }
@@ -586,7 +685,11 @@ export class ChatbotWidgetComponent implements OnInit {
       customerPhone: card.customerPhone.trim() || undefined,
       orderType: card.orderType,
       addressId: isUsingSavedAddress ? card.addressId : null,
+      governorateId: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryGovernorateId : undefined,
+      deliveryGovernorate: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryGovernorate : undefined,
+      cityId: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryCityId : undefined,
       deliveryCity: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryCity.trim() : undefined,
+      areaId: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryAreaId : undefined,
       deliveryArea: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryArea.trim() : undefined,
       deliveryStreet: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryStreet.trim() : undefined,
       deliveryBuilding: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryBuilding.trim() : undefined,
@@ -655,7 +758,7 @@ export class ChatbotWidgetComponent implements OnInit {
     if (!cart) return 0;
     const itemsTotal = cart.subtotal || 0;
     const discount = (card.couponPreview && card.couponPreview.valid) ? card.couponPreview.discountAmount : 0;
-    const delivery = card.orderType === 'DELIVERY' ? this.deliveryFeeRate : 0;
+    const delivery = (card.orderType === 'DELIVERY' && !card.isCourierDelivery) ? (card.deliveryFee ?? this.deliveryFeeRate) : 0;
     return Math.max(0, itemsTotal - discount + delivery);
   }
 
@@ -710,6 +813,7 @@ export class ChatbotWidgetComponent implements OnInit {
     this.userInput = text;
     this.sendMessage();
   }
+
 
   private scrollToBottom(): void {
     setTimeout(() => {

@@ -193,7 +193,8 @@
           </div>
           <div class="receipt-row">
             <dt>Delivery Fee</dt>
-            <dd>{{ selectedOrder.deliveryFee | currency }}</dd>
+            <dd *ngIf="!selectedOrder.isCourierDelivery">{{ selectedOrder.deliveryFee | currency }}</dd>
+            <dd *ngIf="selectedOrder.isCourierDelivery" style="color: #7c3aed; font-weight: 600;">Paid to courier on delivery</dd>
           </div>
           <div class="receipt-row discount" *ngIf="selectedOrder.discountAmount > 0">
             <dt>Loyalty Discount</dt>

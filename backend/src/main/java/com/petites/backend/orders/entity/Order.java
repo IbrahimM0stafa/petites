@@ -35,8 +35,20 @@ public class Order extends AuditedEntity {
     @Column(name = "address_id", length = 36)
     private String addressId;
 
+    @Column(name = "governorate_id", length = 36)
+    private String governorateId;
+
+    @Column(name = "delivery_governorate", length = 100)
+    private String deliveryGovernorate;
+
+    @Column(name = "city_id", length = 36)
+    private String cityId;
+
     @Column(name = "delivery_city", length = 100)
     private String deliveryCity;
+
+    @Column(name = "area_id", length = 36)
+    private String areaId;
 
     @Column(name = "delivery_area", length = 100)
     private String deliveryArea;
@@ -49,6 +61,9 @@ public class Order extends AuditedEntity {
 
     @Column(name = "delivery_notes", columnDefinition = "TEXT")
     private String deliveryNotes;
+
+    @Column(name = "is_courier_delivery", columnDefinition = "boolean default false")
+    private Boolean courierDelivery = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "delivery_mode", nullable = false, length = 20)
@@ -141,6 +156,30 @@ public class Order extends AuditedEntity {
         this.addressId = addressId;
     }
 
+    public String getGovernorateId() {
+        return governorateId;
+    }
+
+    public void setGovernorateId(String governorateId) {
+        this.governorateId = governorateId;
+    }
+
+    public String getDeliveryGovernorate() {
+        return deliveryGovernorate;
+    }
+
+    public void setDeliveryGovernorate(String deliveryGovernorate) {
+        this.deliveryGovernorate = deliveryGovernorate;
+    }
+
+    public String getCityId() {
+        return cityId;
+    }
+
+    public void setCityId(String cityId) {
+        this.cityId = cityId;
+    }
+
     public String getDeliveryCity() {
         return deliveryCity;
     }
@@ -149,12 +188,28 @@ public class Order extends AuditedEntity {
         this.deliveryCity = deliveryCity;
     }
 
+    public String getAreaId() {
+        return areaId;
+    }
+
+    public void setAreaId(String areaId) {
+        this.areaId = areaId;
+    }
+
     public String getDeliveryArea() {
         return deliveryArea;
     }
 
     public void setDeliveryArea(String deliveryArea) {
         this.deliveryArea = deliveryArea;
+    }
+
+    public boolean isCourierDelivery() {
+        return Boolean.TRUE.equals(courierDelivery);
+    }
+
+    public void setCourierDelivery(Boolean courierDelivery) {
+        this.courierDelivery = Boolean.TRUE.equals(courierDelivery);
     }
 
     public String getDeliveryStreet() {

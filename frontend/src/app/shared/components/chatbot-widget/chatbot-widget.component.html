@@ -194,7 +194,7 @@
                   [disabled]="msg.checkoutCard.isSubmitting"
                   class="styled-select">
                   <option *ngFor="let a of savedAddresses" [value]="a.id">
-                    📍 {{ a.area }} — {{ a.street }} {{ a.building ? '(' + a.building + ')' : '' }}
+                    📍 {{ a.area }} — {{ a.street }} {{ a.building ? '(' + a.building + ')' : '' }}{{ (!a.areaId || !a.governorateId) ? ' ⚠️ (Update required)' : '' }}
                   </option>
                   <option value="NEW">➕ Enter a different address...</option>
                 </select>
@@ -207,6 +207,9 @@
                   <div class="address-line main"><strong>{{ addr.area }}</strong>, {{ addr.city }}</div>
                   <div class="address-line sub">{{ addr.street }} {{ addr.building ? '• ' + addr.building : '' }}</div>
                   <div class="address-line notes" *ngIf="addr.notes">📝 {{ addr.notes }}</div>
+                  <div *ngIf="!addr.areaId || !addr.governorateId" style="margin-top: 0.4rem; font-size: 0.75rem; color: #b45309; background: #fffbeb; padding: 0.35rem 0.5rem; border-radius: 4px; border: 1px solid #fde68a; line-height: 1.3;">
+                    ⚠️ This address needs update. Please choose "Enter a different address" below.
+                  </div>
                 </div>
               </div>
             </div>
@@ -215,22 +218,39 @@
             <div *ngIf="!isAuthenticated || msg.checkoutCard.addressId === 'NEW' || savedAddresses.length === 0" class="manual-address-block">
               <div class="form-grid address-inputs">
                 <div class="form-field">
-                  <label>City *</label>
-                  <input 
-                    type="text" 
-                    [(ngModel)]="msg.checkoutCard.deliveryCity" 
-                    placeholder="Cairo" 
-                    [disabled]="msg.checkoutCard.isSubmitting" 
-                  />
+                  <label>Governorate *</label>
+                  <select 
+                    [ngModel]="msg.checkoutCard.deliveryGovernorateId"
+                    (ngModelChange)="onCardGovernorateChange(msg.checkoutCard, $event)"
+                    [disabled]="msg.checkoutCard.isSubmitting"
+                    class="styled-select">
+                    <option value="" disabled>Select governorate</option>
+                    <option *ngFor="let gov of zoneTree" [value]="gov.id">{{ gov.name }}</option>
+                  </select>
                 </div>
                 <div class="form-field">
+                  <label>City *</label>
+                  <select 
+                    [ngModel]="msg.checkoutCard.deliveryCityId"
+                    (ngModelChange)="onCardCityChange(msg.checkoutCard, $event)"
+                    [disabled]="msg.checkoutCard.isSubmitting || !msg.checkoutCard.deliveryGovernorateId"
+                    class="styled-select">
+                    <option value="" disabled>Select city</option>
+                    <option *ngFor="let city of getAvailableCities(msg.checkoutCard.deliveryGovernorateId)" [value]="city.id">{{ city.name }}</option>
+                  </select>
+                </div>
+                <div class="form-field full-width">
                   <label>Area *</label>
-                  <input 
-                    type="text" 
-                    [(ngModel)]="msg.checkoutCard.deliveryArea" 
-                    placeholder="e.g. Maadi, Zamalek" 
-                    [disabled]="msg.checkoutCard.isSubmitting" 
-                  />
+                  <select 
+                    [ngModel]="msg.checkoutCard.deliveryAreaId"
+                    (ngModelChange)="onCardAreaChange(msg.checkoutCard, $event)"
+                    [disabled]="msg.checkoutCard.isSubmitting || !msg.checkoutCard.deliveryCityId"
+                    class="styled-select">
+                    <option value="" disabled>Select area</option>
+                    <option *ngFor="let area of getAvailableAreas(msg.checkoutCard.deliveryCityId)" [value]="area.id">
+                      {{ area.name }}{{ area.courierDelivery ? ' (Paid to courier)' : ' (' + (area.deliveryFee | currency) + ')' }}
+                    </option>
+                  </select>
                 </div>
                 <div class="form-field full-width">
                   <label>Street Address *</label>
@@ -338,7 +358,10 @@
             </div>
             <div class="total-row" *ngIf="msg.checkoutCard.orderType === 'DELIVERY'">
               <span>Delivery Fee:</span>
-              <span>${{ deliveryFeeRate }}</span>
+              <span *ngIf="!msg.checkoutCard.isCourierDelivery">${{ (msg.checkoutCard.deliveryFee ?? deliveryFeeRate) }}</span>
+              <span *ngIf="msg.checkoutCard.isCourierDelivery" style="color: #6b21a8; font-weight: 600;">
+                Paid to courier on delivery
+              </span>
             </div>
             <div class="total-row grand-total">
               <span>Total Amount:</span>
@@ -346,6 +369,10 @@
                 ${{ calculateCheckoutTotal(msg.checkoutCard, msg.cartPreview || cart) }}
               </span>
             </div>
+          </div>
+
+          <div *ngIf="msg.checkoutCard.isCourierDelivery" class="courier-notice-box" style="margin: 0.65rem 0; padding: 0.6rem 0.8rem; background: #faf5ff; border: 1px solid #d8b4fe; border-radius: 0.6rem; font-size: 0.8rem; color: #581c87; line-height: 1.4;">
+            🚚 Shipped via 3rd-party courier. The delivery fee is set by the courier and will be paid in cash directly to them upon delivery.
           </div>
 
           <!-- Error Alert inside card -->

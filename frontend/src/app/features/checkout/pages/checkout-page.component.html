@@ -72,6 +72,9 @@
       <p class="guest-auth-copy instapay-popup-msg">
         To confirm your order, please complete the payment of <strong>{{ totalAmountToTransfer }}</strong> through the <a [href]="instapayPaymentLink" target="_blank" rel="noopener noreferrer" class="instapay-popup-link">link</a> 🤎
       </p>
+      <p class="guest-auth-copy instapay-courier-note" *ngIf="isCourierDelivery" style="color: #6b21a8; font-weight: 600; margin-top: 0.5rem;">
+        🚚 Delivery fee will be paid directly to the 3rd-party courier upon arrival.
+      </p>
       <p class="guest-auth-copy instapay-urgency-note">
         Send your payment screenshot within 1 hour to secure your order — otherwise, it will be cancelled automatically ✨
       </p>
@@ -135,7 +138,8 @@
               [addressesLoading]="addressesLoading" [showRewardTeaser]="showRewardTeaser"
               [rewardProductName]="rewardProductName" [rewardProductImage]="rewardProductImage"
               [hasScheduledItems]="hasScheduledItems" [minScheduledDate]="minScheduledDate" [blockedDays]="blockedDays"
-              [showGuestDeliveryFields]="showGuestDeliveryFields" (orderTypeChange)="onOrderTypeChange()">
+              [showGuestDeliveryFields]="showGuestDeliveryFields" (orderTypeChange)="onOrderTypeChange()"
+              (areaChange)="onAreaSelected($event)">
             </app-address-form>
 
             <app-coupon-form [checkoutForm]="checkoutForm" [validatingCoupon]="validatingCoupon"
@@ -150,7 +154,9 @@
               [instantSubtotal]="instantSubtotal" [scheduledSubtotal]="scheduledSubtotal"
               [instantDeliveryFee]="instantDeliveryFee" [scheduledDeliveryFee]="scheduledDeliveryFee"
               [instantDiscount]="instantDiscount" [scheduledDiscount]="scheduledDiscount" [instantTotal]="instantTotal"
-              [scheduledTotal]="scheduledTotal">
+              [scheduledTotal]="scheduledTotal"
+              [isCourierDelivery]="isCourierDelivery"
+              [hasAreaSelected]="hasAreaSelected">
             </app-checkout-summary>
 
             <button type="submit"

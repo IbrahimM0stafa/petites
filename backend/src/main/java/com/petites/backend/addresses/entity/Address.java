@@ -12,8 +12,20 @@ public class Address extends BaseEntity {
     @Column(name = "user_id", length = 36, nullable = false)
     private String userId;
 
+    @Column(name = "governorate_id", length = 36)
+    private String governorateId;
+
+    @Column(name = "governorate", length = 100)
+    private String governorate;
+
+    @Column(name = "city_id", length = 36)
+    private String cityId;
+
     @Column(name = "city", length = 100, nullable = false)
     private String city;
+
+    @Column(name = "area_id", length = 36)
+    private String areaId;
 
     @Column(name = "area", length = 100, nullable = false)
     private String area;
@@ -35,12 +47,44 @@ public class Address extends BaseEntity {
         this.userId = userId;
     }
 
+    public String getGovernorateId() {
+        return governorateId;
+    }
+
+    public void setGovernorateId(String governorateId) {
+        this.governorateId = governorateId;
+    }
+
+    public String getGovernorate() {
+        return governorate;
+    }
+
+    public void setGovernorate(String governorate) {
+        this.governorate = governorate;
+    }
+
+    public String getCityId() {
+        return cityId;
+    }
+
+    public void setCityId(String cityId) {
+        this.cityId = cityId;
+    }
+
     public String getCity() {
         return city;
     }
 
     public void setCity(String city) {
         this.city = city;
+    }
+
+    public String getAreaId() {
+        return areaId;
+    }
+
+    public void setAreaId(String areaId) {
+        this.areaId = areaId;
     }
 
     public String getArea() {

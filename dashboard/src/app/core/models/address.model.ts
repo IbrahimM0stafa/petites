@@ -1,7 +1,11 @@
 export interface AddressResponse {
   id: string;
   userId?: string | null;
+  governorateId?: string | null;
+  governorate?: string | null;
+  cityId?: string | null;
   city?: string | null;
+  areaId?: string | null;
   area?: string | null;
   street?: string | null;
   building?: string | null;
@@ -11,6 +15,7 @@ export interface AddressResponse {
 export function formatAddressShort(a?: AddressResponse | null): string {
   if (!a) return '';
   const parts: string[] = [];
+  if (a.governorate) parts.push(a.governorate);
   if (a.city) parts.push(a.city);
   if (a.area) parts.push(a.area);
   if (a.street) parts.push(a.street);

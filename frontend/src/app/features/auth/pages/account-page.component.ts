@@ -5,12 +5,14 @@ import { Router, RouterLink } from '@angular/router';
 
 import { AddressUpdateRequest, SavedAddressResponse } from '../../../core/models/address.models';
 import { isRefreshTokenRejected, readApiErrorMessage } from '../../../core/models/api-error.model';
+import { AreaNode, CityNode, GovernorateNode } from '../../../core/models/delivery-zone.model';
 import { LoyaltyResponse } from '../../../core/models/loyalty.models';
 import { UserResponse } from '../../../core/models/user.models';
 import { AddressService } from '../../../core/services/address.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthStateService } from '../../../core/services/auth-state.service';
 import { CartService } from '../../../core/services/cart.service';
+import { DeliveryZoneService } from '../../../core/services/delivery-zone.service';
 import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { environment } from '../../../../environments/environment';
 
@@ -23,15 +25,22 @@ import { environment } from '../../../../environments/environment';
 })
 export class AccountPageComponent implements OnInit {
 	private readonly formBuilder = inject(FormBuilder);
+	private readonly deliveryZoneService = inject(DeliveryZoneService);
 
 	readonly isDev = !environment.production;
 	readonly addressForm = this.formBuilder.group({
-		city: ['', [Validators.required, Validators.minLength(2)]],
-		area: ['', [Validators.required, Validators.minLength(2)]],
+		governorateId: ['', [Validators.required]],
+		governorate: [''],
+		cityId: ['', [Validators.required]],
+		city: ['', [Validators.required]],
+		areaId: ['', [Validators.required]],
+		area: ['', [Validators.required]],
 		street: ['', [Validators.required, Validators.minLength(2)]],
 		building: [''],
 		notes: ['']
 	});
+
+	zoneTree: GovernorateNode[] = [];
 
 	user: UserResponse | null = null;
 	addresses: SavedAddressResponse[] = [];
@@ -73,6 +82,64 @@ export class AccountPageComponent implements OnInit {
 		this.loadProfile();
 		this.loadAddresses();
 		this.loadLoyalty();
+		this.loadDeliveryZones();
+	}
+
+	loadDeliveryZones(): void {
+		this.deliveryZoneService.getTree().subscribe({
+			next: (tree) => {
+				this.zoneTree = tree;
+			},
+			error: () => {
+				this.zoneTree = [];
+			}
+		});
+	}
+
+	get availableCities(): CityNode[] {
+		const govId = this.addressForm.controls.governorateId.value;
+		if (!govId) return [];
+		return this.zoneTree.find((g) => g.id === govId)?.cities ?? [];
+	}
+
+	get availableAreas(): AreaNode[] {
+		const cityId = this.addressForm.controls.cityId.value;
+		if (!cityId) return [];
+		for (const gov of this.zoneTree) {
+			const city = gov.cities.find((c) => c.id === cityId);
+			if (city) return city.areas;
+		}
+		return [];
+	}
+
+	onGovernorateChange(): void {
+		const govId = this.addressForm.controls.governorateId.value;
+		const gov = this.zoneTree.find((g) => g.id === govId);
+		this.addressForm.patchValue({
+			governorate: gov?.name ?? '',
+			cityId: '',
+			city: '',
+			areaId: '',
+			area: ''
+		});
+	}
+
+	onCityChange(): void {
+		const cityId = this.addressForm.controls.cityId.value;
+		const city = this.availableCities.find((c) => c.id === cityId);
+		this.addressForm.patchValue({
+			city: city?.name ?? '',
+			areaId: '',
+			area: ''
+		});
+	}
+
+	onAreaChange(): void {
+		const areaId = this.addressForm.controls.areaId.value;
+		const area = this.availableAreas.find((a) => a.id === areaId);
+		this.addressForm.patchValue({
+			area: area?.name ?? ''
+		});
 	}
 
 	refreshNow(): void {
@@ -121,8 +188,32 @@ export class AccountPageComponent implements OnInit {
 		this.editingAddressId = address.id;
 		this.addressError = '';
 		this.addressMessage = '';
+
+		let govId = address.governorateId ?? '';
+		let cityId = address.cityId ?? '';
+		let areaId = address.areaId ?? '';
+
+		if (!areaId && address.area) {
+			for (const gov of this.zoneTree) {
+				for (const city of gov.cities) {
+					const matched = city.areas.find(a => a.name.toLowerCase() === address.area.toLowerCase());
+					if (matched) {
+						govId = gov.id;
+						cityId = city.id;
+						areaId = matched.id;
+						break;
+					}
+				}
+				if (areaId) break;
+			}
+		}
+
 		this.addressForm.reset({
+			governorateId: govId,
+			governorate: address.governorate ?? '',
+			cityId: cityId,
 			city: address.city,
+			areaId: areaId,
 			area: address.area,
 			street: address.street,
 			building: address.building ?? '',
@@ -132,7 +223,17 @@ export class AccountPageComponent implements OnInit {
 
 	clearAddressForm(): void {
 		this.editingAddressId = null;
-		this.addressForm.reset({ city: '', area: '', street: '', building: '', notes: '' });
+		this.addressForm.reset({
+			governorateId: '',
+			governorate: '',
+			cityId: '',
+			city: '',
+			areaId: '',
+			area: '',
+			street: '',
+			building: '',
+			notes: ''
+		});
 	}
 
 	saveAddress(): void {
@@ -143,7 +244,11 @@ export class AccountPageComponent implements OnInit {
 
 		const rawValue = this.addressForm.getRawValue();
 		const payload: AddressUpdateRequest = {
+			governorateId: rawValue.governorateId || undefined,
+			governorate: rawValue.governorate || undefined,
+			cityId: rawValue.cityId || undefined,
 			city: rawValue.city ?? undefined,
+			areaId: rawValue.areaId || undefined,
 			area: rawValue.area ?? undefined,
 			street: rawValue.street ?? undefined,
 			building: rawValue.building?.trim() || undefined,
@@ -157,7 +262,11 @@ export class AccountPageComponent implements OnInit {
 		const request$ = this.editingAddressId
 			? this.addressService.updateAddress(this.editingAddressId, payload)
 			: this.addressService.createAddress({
+				governorateId: payload.governorateId,
+				governorate: payload.governorate,
+				cityId: payload.cityId,
 				city: payload.city ?? '',
+				areaId: payload.areaId,
 				area: payload.area ?? '',
 				street: payload.street ?? '',
 				building: payload.building,

@@ -62,9 +62,14 @@
 
       <div class="summary-card">
         <h3>Delivery Address</h3>
+        <div *ngIf="order.isCourierDelivery" style="margin-bottom: 0.75rem;">
+          <span style="background:#f3e8ff; color:#7e22ce; border: 1px solid #d8b4fe; padding: 3px 10px; border-radius: 9999px; font-size: 0.8rem; font-weight: 700;">
+            🚚 3rd-Party Courier (Customer pays courier directly on delivery)
+          </span>
+        </div>
         <dl class="summary-grid">
           <div>
-            <dt>City / Area</dt>
+            <dt>Governorate / City / Area</dt>
             <dd>{{ formatAddressShort(order.address) || 'N/A' }}</dd>
           </div>
           <div>
@@ -105,7 +110,8 @@
           </div>
           <div>
             <dt>Delivery Fee</dt>
-            <dd>{{ order.deliveryFee | currency:'EGP':'symbol':'1.2-2' }}</dd>
+            <dd *ngIf="!order.isCourierDelivery">{{ order.deliveryFee | currency:'EGP':'symbol':'1.2-2' }}</dd>
+            <dd *ngIf="order.isCourierDelivery" style="color:#7e22ce; font-weight:600;">Paid to courier on delivery</dd>
           </div>
           <div>
             <dt>Discount</dt>

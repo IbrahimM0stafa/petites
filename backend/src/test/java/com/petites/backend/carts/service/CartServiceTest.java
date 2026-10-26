@@ -156,7 +156,6 @@ class CartServiceTest {
         when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of(scheduledItem));
         when(userService.findById(userId)).thenReturn(Optional.of(user));
         when(couponService.resolveForCheckout(null, null, new BigDecimal("60.00"))).thenReturn(null);
-        when(settingService.getSetting("delivery_fee", "50")).thenReturn("50");
         when(fulfillmentService.getScheduledAvailableQuantity("scheduled-1", scheduledDate)).thenReturn(1);
         when(fulfillmentService.getScheduledDailyCapacity("scheduled-1")).thenReturn(2);
 
@@ -164,7 +163,7 @@ class CartServiceTest {
                 CheckoutAvailabilityException.class,
                 () -> cartService.checkout(
                         CartOwnerRef.forUser(userId),
-                        new CheckoutRequest(null, null, OrderType.DELIVERY, null, null, null, null, scheduledDate, "Cairo", "Maadi", "Street 1", null, null)
+                        new CheckoutRequest(null, null, OrderType.PICKUP, null, null, null, null, scheduledDate, null, null, null, null, null)
                 )
         );
 

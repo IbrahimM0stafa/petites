@@ -13,6 +13,7 @@ import com.petites.backend.orders.repository.OrderRepository;
 import com.petites.backend.loyalty.service.LoyaltyService;
 import com.petites.backend.addresses.dto.AddressResponse;
 import com.petites.backend.addresses.repository.AddressRepository;
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -118,8 +119,8 @@ public class OrderService {
                 order.getOrderNumber(),
                 order.getUserId(),
                 order.getGuestSessionId(),
-            order.getAddressId(),
-            addr,
+                order.getAddressId(),
+                addr,
                 order.getDeliveryMode(),
                 order.getOrderType(),
                 order.getStatus(),
@@ -135,7 +136,8 @@ public class OrderService {
                 order.getCouponId(),
                 order.isRewardApplied(),
                 order.getCreatedAt(),
-                items
+                items,
+                order.isCourierDelivery()
         );
     }
 
@@ -185,7 +187,11 @@ public class OrderService {
             return new AddressResponse(
                     order.getAddressId(),
                     order.getUserId(),
+                    order.getGovernorateId(),
+                    order.getDeliveryGovernorate(),
+                    order.getCityId(),
                     order.getDeliveryCity(),
+                    order.getAreaId(),
                     order.getDeliveryArea(),
                     order.getDeliveryStreet(),
                     order.getDeliveryBuilding(),
@@ -198,7 +204,11 @@ public class OrderService {
                     .map(saved -> new AddressResponse(
                             saved.getId(),
                             saved.getUserId(),
+                            saved.getGovernorateId(),
+                            saved.getGovernorate(),
+                            saved.getCityId(),
                             saved.getCity(),
+                            saved.getAreaId(),
                             saved.getArea(),
                             saved.getStreet(),
                             saved.getBuilding(),

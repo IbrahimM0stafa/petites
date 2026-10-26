@@ -47,6 +47,7 @@ export interface OrderResponse {
 	rewardApplied: boolean;
 	createdAt: string;
 	items: OrderItemResponse[];
+	isCourierDelivery?: boolean;
 }
 
 export interface CheckoutRequest {
@@ -54,7 +55,11 @@ export interface CheckoutRequest {
 	customerPhone?: string;
 	orderType?: OrderType;
 	addressId?: string | null;
+	governorateId?: string | null;
+	deliveryGovernorate?: string;
+	cityId?: string | null;
 	deliveryCity?: string;
+	areaId?: string | null;
 	deliveryArea?: string;
 	deliveryStreet?: string;
 	deliveryBuilding?: string;

@@ -54,7 +54,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                     .requestMatchers("/actuator/**").permitAll()
                     .requestMatchers("/ws/**", "/ws").permitAll()
-                    .requestMatchers("/api/cart/**", "/api/checkout", "/api/orders/**", "/api/settings/**", "/api/chat/**").permitAll()
+                    .requestMatchers("/api/cart/**", "/api/checkout", "/api/orders/**", "/api/settings/**", "/api/chat/**", "/api/delivery-zones/**").permitAll()
                     .requestMatchers(HttpMethod.POST, permitPostPaths.toArray(String[]::new)).permitAll()
                     .requestMatchers(HttpMethod.GET, permitGetPaths.toArray(String[]::new)).permitAll()
                     .anyRequest().authenticated()

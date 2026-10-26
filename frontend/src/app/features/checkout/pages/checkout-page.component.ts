@@ -19,6 +19,8 @@ import { CheckoutService } from '../../../core/services/checkout.service';
 import { CouponService } from '../../../core/services/coupon.service';
 import { LoyaltyService } from '../../../core/services/loyalty.service';
 import { PurchaseSessionService } from '../../../core/services/purchase-session.service';
+import { DeliveryZoneService } from '../../../core/services/delivery-zone.service';
+import { GovernorateNode, AreaNode } from '../../../core/models/delivery-zone.model';
 
 import { AddressFormComponent } from '../components/address-form/address-form.component';
 import { CouponFormComponent } from '../components/coupon-form/coupon-form.component';
@@ -56,8 +58,11 @@ export class CheckoutPageComponent implements OnInit {
 	private readonly purchaseSession = inject(PurchaseSessionService);
 	private readonly shopService = inject(ShopService);
 	private readonly settingService = inject(SettingService);
+	private readonly deliveryZoneService = inject(DeliveryZoneService);
 
-	deliveryFeeRate = 50;
+	deliveryFeeRate = 0;
+	isCourierDelivery = false;
+	zoneTree: GovernorateNode[] = [];
 	minScheduledDate = '';
 	blockedDays: string[] = [];
 
@@ -66,7 +71,11 @@ export class CheckoutPageComponent implements OnInit {
 		customerPhone: ['', [Validators.minLength(7)]],
 		orderType: ['DELIVERY' as OrderType],
 		addressId: [''],
+		guestDeliveryGovernorateId: [''],
+		guestDeliveryGovernorate: [''],
+		guestDeliveryCityId: [''],
 		guestDeliveryCity: [''],
+		guestDeliveryAreaId: [''],
 		guestDeliveryArea: [''],
 		guestDeliveryStreet: [''],
 		guestDeliveryBuilding: [''],
@@ -108,13 +117,14 @@ export class CheckoutPageComponent implements OnInit {
 		this.loadCart();
 		this.loadAddresses();
 		this.loadLoyalty();
-		this.loadDeliveryFeeSetting();
+		this.loadDeliveryZones();
 		this.loadBlockedDaysSetting();
 		this.showGuestPrompt = !this.isAuthenticated;
 		this.syncCheckoutValidation();
 
 		this.checkoutForm.controls.addressId.valueChanges.subscribe(() => {
 			this.syncCheckoutValidation();
+			this.syncFeeForCurrentAddress();
 		});
 
 		this.checkoutForm.controls.scheduledDate.valueChanges.subscribe((dateStr) => {
@@ -122,13 +132,14 @@ export class CheckoutPageComponent implements OnInit {
 		});
 	}
 
-	loadDeliveryFeeSetting(): void {
-		this.settingService.getDeliveryFee().subscribe({
-			next: (res) => {
-				this.deliveryFeeRate = res.deliveryFee;
+	loadDeliveryZones(): void {
+		this.deliveryZoneService.getTree().subscribe({
+			next: (tree) => {
+				this.zoneTree = tree;
+				this.syncFeeForCurrentAddress();
 			},
 			error: () => {
-				// Keep fallback value of 50
+				this.deliveryFeeRate = 0;
 			}
 		});
 	}
@@ -208,9 +219,84 @@ export class CheckoutPageComponent implements OnInit {
 
 	get deliveryFee(): number {
 		if (this.orderType === 'DELIVERY') {
+			if (this.isCourierDelivery) {
+				return 0;
+			}
 			return this.isMixedOrder ? (this.deliveryFeeRate * 2) : this.deliveryFeeRate;
 		}
 		return 0;
+	}
+
+
+	get selectedSavedAddress(): SavedAddressResponse | null {
+		const addressId = this.checkoutForm.controls.addressId.value;
+		if (addressId && addressId !== 'new') {
+			return this.addresses.find(a => a.id === addressId) || null;
+		}
+		return null;
+	}
+
+	get selectedSavedAddressNeedsUpdate(): boolean {
+		const saved = this.selectedSavedAddress;
+		return !!saved && (!saved.areaId || !saved.governorateId || !saved.cityId);
+	}
+
+	get hasAreaSelected(): boolean {
+		if (this.selectedSavedAddress) {
+			return !this.selectedSavedAddressNeedsUpdate;
+		}
+		return !!this.checkoutForm.controls.guestDeliveryAreaId.value;
+	}
+
+	onAreaSelected(area: AreaNode | null): void {
+		if (area) {
+			this.deliveryFeeRate = area.courierDelivery ? 0 : area.deliveryFee;
+			this.isCourierDelivery = area.courierDelivery;
+		} else {
+			this.deliveryFeeRate = 0;
+			this.isCourierDelivery = false;
+		}
+	}
+
+	syncFeeForCurrentAddress(): void {
+		const saved = this.selectedSavedAddress;
+		if (saved) {
+			if (saved.areaId && this.zoneTree.length > 0) {
+				const matched = this.findAreaInTree(saved.areaId);
+				if (matched) {
+					this.deliveryFeeRate = matched.courierDelivery ? 0 : matched.deliveryFee;
+					this.isCourierDelivery = matched.courierDelivery;
+					return;
+				}
+			}
+			this.deliveryFeeRate = 0;
+			this.isCourierDelivery = false;
+			return;
+		}
+
+		const areaId = this.checkoutForm.controls.guestDeliveryAreaId.value;
+		if (areaId) {
+			const matched = this.findAreaInTree(areaId);
+			if (matched) {
+				this.deliveryFeeRate = matched.courierDelivery ? 0 : matched.deliveryFee;
+				this.isCourierDelivery = matched.courierDelivery;
+				return;
+			}
+		}
+
+		this.deliveryFeeRate = 0;
+		this.isCourierDelivery = false;
+	}
+
+	private findAreaInTree(areaId?: string | null): AreaNode | null {
+		if (!areaId) return null;
+		for (const gov of this.zoneTree) {
+			for (const city of gov.cities) {
+				const area = city.areas.find(a => a.id === areaId);
+				if (area) return area;
+			}
+		}
+		return null;
 	}
 
 	get finalAmount(): number {
@@ -446,9 +532,15 @@ export class CheckoutPageComponent implements OnInit {
 			return;
 		}
 
-		if (this.isAuthenticated && this.orderType === 'DELIVERY' && !this.checkoutForm.controls.addressId.value) {
-			this.showCheckoutError('Select a delivery address.');
-			return;
+		if (this.isAuthenticated && this.orderType === 'DELIVERY') {
+			if (!this.checkoutForm.controls.addressId.value) {
+				this.showCheckoutError('Select a delivery address.');
+				return;
+			}
+			if (this.selectedSavedAddressNeedsUpdate) {
+				this.showCheckoutError('Please update your selected address with your Governorate, City, and Area to proceed.');
+				return;
+			}
 		}
 
 		if (this.showGuestDeliveryFields && !this.hasGuestDeliveryAddress()) {
@@ -646,7 +738,11 @@ export class CheckoutPageComponent implements OnInit {
 			customerPhone: this.checkoutForm.controls.customerPhone.value?.trim() || undefined,
 			orderType: this.orderType,
 			addressId,
+			governorateId: inlineAddress?.governorateId,
+			deliveryGovernorate: inlineAddress?.governorate,
+			cityId: inlineAddress?.cityId,
 			deliveryCity: inlineAddress?.city,
+			areaId: inlineAddress?.areaId,
 			deliveryArea: inlineAddress?.area,
 			deliveryStreet: inlineAddress?.street,
 			deliveryBuilding: inlineAddress?.building,
@@ -664,7 +760,11 @@ export class CheckoutPageComponent implements OnInit {
 		}
 
 		return {
+			governorateId: this.checkoutForm.controls.guestDeliveryGovernorateId.value?.trim() || undefined,
+			governorate: this.checkoutForm.controls.guestDeliveryGovernorate.value?.trim() || undefined,
+			cityId: this.checkoutForm.controls.guestDeliveryCityId.value?.trim() || undefined,
 			city: this.checkoutForm.controls.guestDeliveryCity.value?.trim() ?? '',
+			areaId: this.checkoutForm.controls.guestDeliveryAreaId.value?.trim() || undefined,
 			area: this.checkoutForm.controls.guestDeliveryArea.value?.trim() ?? '',
 			street: this.checkoutForm.controls.guestDeliveryStreet.value?.trim() ?? '',
 			building: this.checkoutForm.controls.guestDeliveryBuilding.value?.trim() || undefined,
@@ -674,8 +774,9 @@ export class CheckoutPageComponent implements OnInit {
 
 	private hasGuestDeliveryAddress(): boolean {
 		return Boolean(
-			this.checkoutForm.controls.guestDeliveryCity.value?.trim() &&
-			this.checkoutForm.controls.guestDeliveryArea.value?.trim() &&
+			this.checkoutForm.controls.guestDeliveryGovernorateId.value?.trim() &&
+			this.checkoutForm.controls.guestDeliveryCityId.value?.trim() &&
+			this.checkoutForm.controls.guestDeliveryAreaId.value?.trim() &&
 			this.checkoutForm.controls.guestDeliveryStreet.value?.trim()
 		);
 	}
@@ -695,16 +796,20 @@ export class CheckoutPageComponent implements OnInit {
 			this.checkoutForm.controls.addressId.clearValidators();
 		}
 
-		const guestAddressValidators = this.showGuestDeliveryFields ? [Validators.required, Validators.minLength(2)] : [];
-		this.checkoutForm.controls.guestDeliveryCity.setValidators(guestAddressValidators);
-		this.checkoutForm.controls.guestDeliveryArea.setValidators(guestAddressValidators);
-		this.checkoutForm.controls.guestDeliveryStreet.setValidators(guestAddressValidators);
+		const guestSelectValidators = this.showGuestDeliveryFields ? [Validators.required] : [];
+		const guestStreetValidators = this.showGuestDeliveryFields ? [Validators.required, Validators.minLength(2)] : [];
+
+		this.checkoutForm.controls.guestDeliveryGovernorateId.setValidators(guestSelectValidators);
+		this.checkoutForm.controls.guestDeliveryCityId.setValidators(guestSelectValidators);
+		this.checkoutForm.controls.guestDeliveryAreaId.setValidators(guestSelectValidators);
+		this.checkoutForm.controls.guestDeliveryStreet.setValidators(guestStreetValidators);
 
 		this.checkoutForm.controls.customerName.updateValueAndValidity({ emitEvent: false });
 		this.checkoutForm.controls.customerPhone.updateValueAndValidity({ emitEvent: false });
 		this.checkoutForm.controls.addressId.updateValueAndValidity({ emitEvent: false });
-		this.checkoutForm.controls.guestDeliveryCity.updateValueAndValidity({ emitEvent: false });
-		this.checkoutForm.controls.guestDeliveryArea.updateValueAndValidity({ emitEvent: false });
+		this.checkoutForm.controls.guestDeliveryGovernorateId.updateValueAndValidity({ emitEvent: false });
+		this.checkoutForm.controls.guestDeliveryCityId.updateValueAndValidity({ emitEvent: false });
+		this.checkoutForm.controls.guestDeliveryAreaId.updateValueAndValidity({ emitEvent: false });
 		this.checkoutForm.controls.guestDeliveryStreet.updateValueAndValidity({ emitEvent: false });
 	}
 

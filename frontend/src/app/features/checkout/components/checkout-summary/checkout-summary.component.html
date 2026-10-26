@@ -23,12 +23,13 @@
         <dt>Discount</dt>
         <dd>-{{ couponPreview.discountAmount | currency }}</dd>
       </div>
-      <div class="cost-row delivery-fee-row">
+      <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
         <dt>Delivery Fee</dt>
-        <dd>{{ deliveryFee > 0 ? (deliveryFee | currency) : 'Free' }}</dd>
+        <dd *ngIf="!isCourierDelivery">{{ deliveryFee > 0 ? (deliveryFee | currency) : (hasAreaSelected ? 'Free' : 'Select area') }}</dd>
+        <dd *ngIf="isCourierDelivery" class="courier-val-tag">Paid to courier on delivery</dd>
       </div>
       <div class="cost-row total-row">
-        <dt>Grand Total</dt>
+        <dt>Total to Bakery</dt>
         <dd>{{ finalAmount | currency }}</dd>
       </div>
     </dl>
@@ -57,7 +58,8 @@
         </div>
         <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
           <dt>Delivery Fee</dt>
-          <dd>{{ instantDeliveryFee | currency }}</dd>
+          <dd *ngIf="!isCourierDelivery">{{ instantDeliveryFee > 0 ? (instantDeliveryFee | currency) : (hasAreaSelected ? 'Free' : 'Select area') }}</dd>
+          <dd *ngIf="isCourierDelivery" class="courier-val-tag">Paid to courier</dd>
         </div>
         <div class="cost-row total-row split-total-row">
           <dt>Package Total</dt>
@@ -88,7 +90,8 @@
         </div>
         <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
           <dt>Delivery Fee</dt>
-          <dd>{{ scheduledDeliveryFee | currency }}</dd>
+          <dd *ngIf="!isCourierDelivery">{{ scheduledDeliveryFee > 0 ? (scheduledDeliveryFee | currency) : (hasAreaSelected ? 'Free' : 'Select area') }}</dd>
+          <dd *ngIf="isCourierDelivery" class="courier-val-tag">Paid to courier</dd>
         </div>
         <div class="cost-row total-row split-total-row">
           <dt>Package Total</dt>
@@ -108,9 +111,9 @@
     </div>
   </div>
 
-  <div class="delivery-notice-box" *ngIf="orderType === 'DELIVERY' && deliveryFee === 0">
-    <h3>Delivery Notice</h3>
-    <p>Please note that delivery fees are paid directly to the courier and may vary depending on your location.</p>
+  <div class="delivery-notice-box" *ngIf="orderType === 'DELIVERY' && isCourierDelivery">
+    <h3>🚚 3rd-Party Courier Delivery</h3>
+    <p>Orders to your selected area are shipped via an external courier. The delivery fee will be collected directly by the courier upon arrival.</p>
   </div>
 
   <div class="checkout-actions">
