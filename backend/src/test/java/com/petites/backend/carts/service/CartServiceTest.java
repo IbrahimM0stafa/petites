@@ -21,7 +21,6 @@ import com.petites.backend.coupons.service.CouponService;
 import com.petites.backend.products.entity.Product;
 import com.petites.backend.products.repository.ProductRepository;
 import com.petites.backend.products.service.FulfillmentService;
-import com.petites.backend.settings.service.SettingService;
 import com.petites.backend.users.entity.User;
 import com.petites.backend.users.service.UserService;
 import java.lang.reflect.Field;
@@ -60,8 +59,6 @@ class CartServiceTest {
     @Mock
     private FulfillmentService fulfillmentService;
 
-    @Mock
-    private SettingService settingService;
 
     @Mock
     private UserService userService;

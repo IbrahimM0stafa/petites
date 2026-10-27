@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,5 +29,12 @@ public class ImageUploadController {
     public ResponseEntity<Map<String, String>> upload(@RequestParam("file") MultipartFile file) throws IOException {
         String url = imageUploadService.upload(file);
         return ResponseEntity.ok(Map.of("url", url));
+    }
+
+    @DeleteMapping
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF')")
+    public ResponseEntity<Void> delete(@RequestParam("imageUrl") String imageUrl) throws IOException {
+        imageUploadService.delete(imageUrl);
+        return ResponseEntity.noContent().build();
     }
 }

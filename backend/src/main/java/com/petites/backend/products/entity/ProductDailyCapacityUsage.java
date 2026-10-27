@@ -8,6 +8,8 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "product_daily_capacity_usage", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"product_id", "production_date"})
+}, indexes = {
+    @Index(name = "idx_pdcu_production_date", columnList = "production_date")
 })
 public class ProductDailyCapacityUsage extends BaseEntity {
 

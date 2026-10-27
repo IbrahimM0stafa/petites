@@ -81,6 +81,10 @@ public class ChatbotService {
             );
         }
 
+        if (messages.size() > 20) {
+            messages = messages.subList(messages.size() - 20, messages.size());
+        }
+
         String userQuery = messages.get(messages.size() - 1).content();
 
         // 1. Google Gemini AI (Grounded in real DB data, with model fallback)

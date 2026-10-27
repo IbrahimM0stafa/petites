@@ -1,7 +1,5 @@
 package com.petites.backend.categories.service;
 
-import java.util.List;
-
 import com.petites.backend.images.service.ImageUploadService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

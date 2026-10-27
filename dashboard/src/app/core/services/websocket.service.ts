@@ -35,12 +35,22 @@ export class WebSocketService implements OnDestroy {
   constructor() {
     this.initClient();
 
+    let lastToken = this.authState.accessToken();
     effect(() => {
       const token = this.authState.accessToken();
-      if (this.client) {
-        this.client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {};
-        if (token && !this.client.active) {
-          this.client.activate();
+      if (token !== lastToken) {
+        lastToken = token;
+        if (this.client) {
+          this.client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+          if (this.client.active) {
+            void this.client.deactivate().then(() => {
+              if (token) {
+                this.client?.activate();
+              }
+            });
+          } else if (token) {
+            this.client.activate();
+          }
         }
       }
     });
@@ -94,6 +104,11 @@ export class WebSocketService implements OnDestroy {
   }
 
   private getBrokerUrl(): string {
+    if (!environment.apiBaseUrl) {
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      const host = typeof window !== 'undefined' && window.location.host ? window.location.host : 'localhost:8080';
+      return `${isHttps ? 'wss://' : 'ws://'}${host}/ws`;
+    }
     const baseUrl = environment.apiBaseUrl.replace(/\/+$/, '');
     const wsProtocol = baseUrl.startsWith('https://') ? 'wss://' : 'ws://';
     const hostAndPath = baseUrl.replace(/^https?:\/\//, '');

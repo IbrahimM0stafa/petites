@@ -14,7 +14,6 @@ public interface OrderRepository extends JpaRepository<Order, String>, JpaSpecif
 
     List<Order> findByGuestSessionIdOrderByCreatedAtDesc(String guestSessionId);
 
-    List<Order> findAllByOrderByCreatedAtDesc();
 
     Optional<Order> findByIdAndUserId(String id, String userId);
 

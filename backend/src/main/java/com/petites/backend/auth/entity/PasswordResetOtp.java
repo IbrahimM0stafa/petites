@@ -33,6 +33,9 @@ public class PasswordResetOtp extends AuditedEntity {
     @Column(name = "used_at")
     private Instant usedAt;
 
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts = 0;
+
     public User getUser() {
         return user;
     }
@@ -63,5 +66,13 @@ public class PasswordResetOtp extends AuditedEntity {
 
     public void setUsedAt(Instant usedAt) {
         this.usedAt = usedAt;
+    }
+
+    public int getFailedAttempts() {
+        return failedAttempts;
+    }
+
+    public void setFailedAttempts(int failedAttempts) {
+        this.failedAttempts = failedAttempts;
     }
 }

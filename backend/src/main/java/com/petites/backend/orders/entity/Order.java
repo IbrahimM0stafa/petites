@@ -10,6 +10,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -20,7 +21,13 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "orders")
+@Table(name = "orders", indexes = {
+        @Index(name = "idx_orders_user_created", columnList = "user_id, created_at DESC"),
+        @Index(name = "idx_orders_guest_created", columnList = "guest_session_id, created_at DESC"),
+        @Index(name = "idx_orders_status", columnList = "status"),
+        @Index(name = "idx_orders_created_at", columnList = "created_at DESC"),
+        @Index(name = "idx_orders_scheduled_date", columnList = "scheduled_date")
+})
 public class Order extends AuditedEntity {
 
     @Column(name = "order_number", length = 30, nullable = false, unique = true)

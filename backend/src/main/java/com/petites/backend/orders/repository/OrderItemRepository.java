@@ -9,4 +9,6 @@ import org.springframework.stereotype.Repository;
 public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
 
     List<OrderItem> findByOrderIdOrderByIdAsc(String orderId);
+
+    List<OrderItem> findByOrderIdInOrderByIdAsc(java.util.Collection<String> orderIds);
 }

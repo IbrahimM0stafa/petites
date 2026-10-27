@@ -1,7 +1,7 @@
 import { CommonModule } from '@angular/common';
 import { Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { CartResponse } from '../../../../core/models/cart.models';
+import { CartItemResponse, CartResponse } from '../../../../core/models/cart.models';
 import { CouponValidationResponse } from '../../../../core/models/coupon.models';
 import { OrderType } from '../../../../core/models/order.models';
 
@@ -20,8 +20,8 @@ export class CheckoutSummaryComponent {
 	@Input({ required: true }) deliveryFee!: number;
 	@Input({ required: true }) finalAmount!: number;
 	@Input({ required: true }) isMixedOrder!: boolean;
-	@Input({ required: true }) instantItems!: any[];
-	@Input({ required: true }) scheduledItems!: any[];
+	@Input({ required: true }) instantItems!: CartItemResponse[];
+	@Input({ required: true }) scheduledItems!: CartItemResponse[];
 	@Input({ required: true }) instantSubtotal!: number;
 	@Input({ required: true }) scheduledSubtotal!: number;
 	@Input({ required: true }) instantDeliveryFee!: number;

@@ -29,6 +29,16 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 				Boolean(authState.refreshToken());
 
 			if (shouldAttemptRefresh) {
+				const currentAccessToken = authState.accessToken();
+				if (currentAccessToken && currentAccessToken !== accessToken) {
+					const retryRequest = request.clone({
+						context: request.context.set(SKIP_AUTH_REFRESH, true),
+						setHeaders: { Authorization: `Bearer ${currentAccessToken}` }
+					});
+
+					return next(retryRequest);
+				}
+
 				return authService.refreshSession().pipe(
 					switchMap((session) => {
 						const retryRequest = request.clone({

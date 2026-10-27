@@ -1,5 +1,6 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { forkJoin, switchMap } from 'rxjs';
@@ -59,6 +60,7 @@ export class CheckoutPageComponent implements OnInit {
 	private readonly shopService = inject(ShopService);
 	private readonly settingService = inject(SettingService);
 	private readonly deliveryZoneService = inject(DeliveryZoneService);
+	private readonly destroyRef = inject(DestroyRef);
 
 	deliveryFeeRate = 0;
 	isCourierDelivery = false;
@@ -122,14 +124,18 @@ export class CheckoutPageComponent implements OnInit {
 		this.showGuestPrompt = !this.isAuthenticated;
 		this.syncCheckoutValidation();
 
-		this.checkoutForm.controls.addressId.valueChanges.subscribe(() => {
-			this.syncCheckoutValidation();
-			this.syncFeeForCurrentAddress();
-		});
+		this.checkoutForm.controls.addressId.valueChanges
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe(() => {
+				this.syncCheckoutValidation();
+				this.syncFeeForCurrentAddress();
+			});
 
-		this.checkoutForm.controls.scheduledDate.valueChanges.subscribe((dateStr) => {
-			this.validateSelectedDate(dateStr);
-		});
+		this.checkoutForm.controls.scheduledDate.valueChanges
+			.pipe(takeUntilDestroyed(this.destroyRef))
+			.subscribe((dateStr) => {
+				this.validateSelectedDate(dateStr);
+			});
 	}
 
 	loadDeliveryZones(): void {

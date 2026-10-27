@@ -200,7 +200,8 @@ public class CouponService {
     @Transactional
     public void recordUsage(String couponId, String userId) {
         if (couponId == null) return;
-        Coupon coupon = getEntity(couponId);
+        Coupon coupon = couponRepository.findByIdForUpdate(couponId)
+                .orElseThrow(() -> new IllegalArgumentException("Coupon not found"));
         // increment global used count for all coupons
         coupon.setUsedCount(coupon.getUsedCount() + 1);
         couponRepository.save(coupon);
@@ -211,6 +212,21 @@ public class CouponService {
         usage.setUsedCount(usage.getUsedCount() + 1);
         usage.setLastUsedAt(Instant.now());
         couponUsageRepository.save(usage);
+    }
+
+    @Transactional
+    public void releaseUsage(String couponId, String userId) {
+        if (couponId == null) return;
+        couponRepository.findByIdForUpdate(couponId).ifPresent(coupon -> {
+            coupon.setUsedCount(Math.max(0, coupon.getUsedCount() - 1));
+            couponRepository.save(coupon);
+        });
+
+        if (userId == null) return;
+        couponUsageRepository.findByCouponIdAndUserId(couponId, userId).ifPresent(usage -> {
+            usage.setUsedCount(Math.max(0, usage.getUsedCount() - 1));
+            couponUsageRepository.save(usage);
+        });
     }
 
     private Coupon getEntity(String id) {

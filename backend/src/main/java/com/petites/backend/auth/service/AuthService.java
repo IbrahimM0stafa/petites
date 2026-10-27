@@ -3,6 +3,7 @@ package com.petites.backend.auth.service;
 import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
@@ -113,7 +114,7 @@ public class AuthService {
         emailService.sendOtpEmail(user.getEmail(), otp);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(noRollbackFor = IllegalArgumentException.class)
     public boolean verifyOtp(VerifyOtpRequest request) {
         String email = request.email() == null ? null : request.email().trim().toLowerCase();
         User user = userService.findByEmail(email)
@@ -123,13 +124,35 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid or expired OTP");
         }
 
-        passwordResetOtpRepository.findByUserAndOtpAndUsedAtIsNullAndExpiresAtAfter(user, request.otp(), Instant.now())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired OTP"));
+        List<PasswordResetOtp> activeOtps = passwordResetOtpRepository.findActiveForUpdateByUser(user, Instant.now());
+        if (activeOtps.isEmpty()) {
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
+
+        PasswordResetOtp resetOtp = activeOtps.get(0);
+        if (resetOtp.getFailedAttempts() >= 5) {
+            resetOtp.setUsedAt(Instant.now());
+            passwordResetOtpRepository.saveAndFlush(resetOtp);
+            throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
+        }
+
+        String inputOtp = request.otp() == null ? "" : request.otp().trim();
+        if (!resetOtp.getOtp().equals(inputOtp)) {
+            int newAttempts = resetOtp.getFailedAttempts() + 1;
+            resetOtp.setFailedAttempts(newAttempts);
+            if (newAttempts >= 5) {
+                resetOtp.setUsedAt(Instant.now());
+                passwordResetOtpRepository.saveAndFlush(resetOtp);
+                throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
+            }
+            passwordResetOtpRepository.saveAndFlush(resetOtp);
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
 
         return true;
     }
 
-    @Transactional
+    @Transactional(noRollbackFor = IllegalArgumentException.class)
     public void resetPassword(ResetPasswordRequest request) {
         String email = request.email() == null ? null : request.email().trim().toLowerCase();
         User user = userService.findByEmail(email)
@@ -139,8 +162,30 @@ public class AuthService {
             throw new IllegalArgumentException("Invalid or expired OTP");
         }
 
-        PasswordResetOtp resetOtp = passwordResetOtpRepository.findByUserAndOtpAndUsedAtIsNullAndExpiresAtAfter(user, request.otp(), Instant.now())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired OTP"));
+        List<PasswordResetOtp> activeOtps = passwordResetOtpRepository.findActiveForUpdateByUser(user, Instant.now());
+        if (activeOtps.isEmpty()) {
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
+
+        PasswordResetOtp resetOtp = activeOtps.get(0);
+        if (resetOtp.getFailedAttempts() >= 5) {
+            resetOtp.setUsedAt(Instant.now());
+            passwordResetOtpRepository.saveAndFlush(resetOtp);
+            throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
+        }
+
+        String inputOtp = request.otp() == null ? "" : request.otp().trim();
+        if (!resetOtp.getOtp().equals(inputOtp)) {
+            int newAttempts = resetOtp.getFailedAttempts() + 1;
+            resetOtp.setFailedAttempts(newAttempts);
+            if (newAttempts >= 5) {
+                resetOtp.setUsedAt(Instant.now());
+                passwordResetOtpRepository.saveAndFlush(resetOtp);
+                throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
+            }
+            passwordResetOtpRepository.saveAndFlush(resetOtp);
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
 
         // Mark OTP as used
         resetOtp.setUsedAt(Instant.now());

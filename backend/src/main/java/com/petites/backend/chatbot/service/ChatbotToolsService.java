@@ -22,16 +22,25 @@ public class ChatbotToolsService {
 
     /**
      * Search menu items by query string, category, fulfillment mode, or max price limit.
+     * Uses default limit of 50 items for broader catalog coverage in chatbot context.
      */
     public List<ProductResponse> searchMenuItems(String search, String categoryId, String fulfillmentMode, BigDecimal maxPrice, Boolean availableOnly) {
+        return searchMenuItems(search, categoryId, fulfillmentMode, maxPrice, availableOnly, 50);
+    }
+
+    /**
+     * Search menu items with explicit limit.
+     */
+    public List<ProductResponse> searchMenuItems(String search, String categoryId, String fulfillmentMode, BigDecimal maxPrice, Boolean availableOnly, int limit) {
         try {
+            int safeLimit = Math.max(1, Math.min(limit, 100));
             Page<ProductResponse> page = productService.list(
                 categoryId,
                 availableOnly != null ? availableOnly : Boolean.TRUE,
                 fulfillmentMode,
                 maxPrice,
                 search,
-                PageRequest.of(0, 10)
+                PageRequest.of(0, safeLimit)
             );
             return page.getContent();
         } catch (Exception e) {

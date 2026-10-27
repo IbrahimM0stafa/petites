@@ -31,7 +31,6 @@ import com.petites.backend.products.repository.ProductRepository;
 import com.petites.backend.products.service.FulfillmentService;
 import com.petites.backend.loyalty.dto.LoyaltyResponse;
 import com.petites.backend.loyalty.service.LoyaltyService;
-import com.petites.backend.settings.service.SettingService;
 import com.petites.backend.users.entity.User;
 import com.petites.backend.users.service.UserService;
 import java.math.BigDecimal;
@@ -51,7 +50,6 @@ public class CartService {
     private final CartItemRepository cartItemRepository;
     private final ProductRepository productRepository;
     private final FulfillmentService fulfillmentService;
-    private final SettingService settingService;
     private final UserService userService;
     private final LoyaltyService loyaltyService;
     private final OrderRepository orderRepository;
@@ -66,7 +64,6 @@ public class CartService {
                        CartItemRepository cartItemRepository,
                        ProductRepository productRepository,
                        FulfillmentService fulfillmentService,
-                       SettingService settingService,
                        UserService userService,
                        LoyaltyService loyaltyService,
                        OrderRepository orderRepository,
@@ -79,7 +76,6 @@ public class CartService {
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
         this.fulfillmentService = fulfillmentService;
-        this.settingService = settingService;
         this.userService = userService;
         this.loyaltyService = loyaltyService;
         this.orderRepository = orderRepository;
@@ -88,21 +84,6 @@ public class CartService {
         this.addressRepository = addressRepository;
         this.orderWebSocketService = orderWebSocketService;
         this.deliveryZoneService = deliveryZoneService;
-    }
-
-    public CartService(CartRepository cartRepository,
-                       CartItemRepository cartItemRepository,
-                       ProductRepository productRepository,
-                       FulfillmentService fulfillmentService,
-                       SettingService settingService,
-                       UserService userService,
-                       LoyaltyService loyaltyService,
-                       OrderRepository orderRepository,
-                       OrderService orderService,
-                       CouponService couponService,
-                       AddressRepository addressRepository,
-                       com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService) {
-        this(cartRepository, cartItemRepository, productRepository, fulfillmentService, settingService, userService, loyaltyService, orderRepository, orderService, couponService, addressRepository, orderWebSocketService, null);
     }
 
     @Transactional(readOnly = true)
@@ -324,6 +305,10 @@ public class CartService {
             }
 
             savedOrders.add(orderRepository.save(order));
+        }
+
+        if (couponId != null && discountApplied) {
+            couponService.recordUsage(couponId, owner.userId());
         }
 
         cartItemRepository.deleteByCartId(cart.getId());

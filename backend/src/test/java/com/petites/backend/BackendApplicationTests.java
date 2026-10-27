@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.petites.backend.auth.dto.AuthRequest;
 import com.petites.backend.auth.dto.AuthResponse;
@@ -36,8 +35,6 @@ class BackendApplicationTests {
 	private RefreshTokenRepository refreshTokenRepository;
 	@Autowired
 	private UserRepository userRepository;
-	@Autowired
-	private PasswordEncoder passwordEncoder;
 
 	@Test
 	void contextLoads() {

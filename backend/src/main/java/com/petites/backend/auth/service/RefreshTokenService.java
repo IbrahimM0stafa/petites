@@ -50,7 +50,7 @@ public class RefreshTokenService {
     @Transactional
     public RefreshTokenResult rotate(String rawToken) {
         String tokenHash = hash(rawToken);
-        RefreshToken token = refreshTokenRepository.findByTokenHash(tokenHash)
+        RefreshToken token = refreshTokenRepository.findForUpdateByTokenHash(tokenHash)
                 .orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
 
         if (token.getRevokedAt() != null) {

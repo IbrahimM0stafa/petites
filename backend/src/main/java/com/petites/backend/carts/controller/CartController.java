@@ -3,7 +3,6 @@ package com.petites.backend.carts.controller;
 import com.petites.backend.carts.dto.CartItemRequest;
 import com.petites.backend.carts.dto.CartItemUpdateRequest;
 import com.petites.backend.carts.dto.CartResponse;
-import com.petites.backend.carts.dto.CartOwnerRef;
 import com.petites.backend.carts.service.CartAccessService;
 import com.petites.backend.carts.service.CartService;
 import jakarta.validation.Valid;
@@ -36,7 +35,7 @@ public class CartController {
     public CartResponse getCurrentCart(
             @RequestHeader(value = "X-Guest-Token", required = false) String headerToken,
             @RequestParam(value = "token", required = false) String token) {
-        return cartService.getCart(resolveOwner(headerToken, token));
+        return cartService.getCart(cartAccessService.resolveOwner(headerToken, token));
     }
 
     @PostMapping("/items")
@@ -44,7 +43,7 @@ public class CartController {
             @RequestHeader(value = "X-Guest-Token", required = false) String headerToken,
             @RequestParam(value = "token", required = false) String token,
             @Valid @RequestBody CartItemRequest request) {
-        return cartService.addItem(resolveOwner(headerToken, token), request);
+        return cartService.addItem(cartAccessService.resolveOwner(headerToken, token), request);
     }
 
     @PutMapping("/items/{itemId}")
@@ -53,7 +52,7 @@ public class CartController {
             @RequestParam(value = "token", required = false) String token,
             @PathVariable String itemId,
             @Valid @RequestBody CartItemUpdateRequest request) {
-        return cartService.updateItem(resolveOwner(headerToken, token), itemId, request);
+        return cartService.updateItem(cartAccessService.resolveOwner(headerToken, token), itemId, request);
     }
 
     @DeleteMapping("/items/{itemId}")
@@ -61,18 +60,13 @@ public class CartController {
             @RequestHeader(value = "X-Guest-Token", required = false) String headerToken,
             @RequestParam(value = "token", required = false) String token,
             @PathVariable String itemId) {
-        return cartService.removeItem(resolveOwner(headerToken, token), itemId);
+        return cartService.removeItem(cartAccessService.resolveOwner(headerToken, token), itemId);
     }
 
     @DeleteMapping("/items")
     public CartResponse clearCart(
             @RequestHeader(value = "X-Guest-Token", required = false) String headerToken,
             @RequestParam(value = "token", required = false) String token) {
-        return cartService.clearCart(resolveOwner(headerToken, token));
-    }
-
-    private CartOwnerRef resolveOwner(String headerToken, String token) {
-        String actualToken = headerToken != null && !headerToken.isBlank() ? headerToken : token;
-        return cartAccessService.resolveOwner(actualToken);
+        return cartService.clearCart(cartAccessService.resolveOwner(headerToken, token));
     }
 }

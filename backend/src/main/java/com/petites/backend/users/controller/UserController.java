@@ -74,25 +74,26 @@ public class UserController {
     @PutMapping("/{id}")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF') or #id == principal")
     public UserResponse update(@PathVariable String id, @Valid @RequestBody UserUpdateRequest request) {
-        return userService.update(id, request);
+        String currentUserId = getPrincipalId();
+        return userService.update(id, request, currentUserId);
     }
 
     @PatchMapping("/{id}/deactivate")
     @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF') or #id == principal")
     public UserResponse deactivate(@PathVariable String id) {
-        String currentUserId = (String) org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        if (id.equals(currentUserId)) {
-            UserResponse currentUser = userService.get(currentUserId);
-            if (currentUser.roles().contains("SUPER_ADMIN")) {
-                throw new IllegalArgumentException("Superadmin cannot deactivate their own account");
-            }
-        }
-        return userService.setActive(id, false);
+        String currentUserId = getPrincipalId();
+        return userService.setActive(id, false, currentUserId);
     }
 
     @PatchMapping("/{id}/reactivate")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF') or #id == principal")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF')")
     public UserResponse reactivate(@PathVariable String id) {
-        return userService.setActive(id, true);
+        String currentUserId = getPrincipalId();
+        return userService.setActive(id, true, currentUserId);
+    }
+
+    private String getPrincipalId() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        return (auth != null && auth.getPrincipal() instanceof String) ? (String) auth.getPrincipal() : null;
     }
 }

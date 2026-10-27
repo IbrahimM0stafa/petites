@@ -243,11 +243,14 @@ export class ChatbotWidgetComponent implements OnInit {
           this.executeAction(res.action, assistantMsg);
         }
       },
-      error: () => {
+      error: (err: any) => {
         this.isLoading = false;
+        const fallbackMsg = err?.status === 429
+          ? (err.error?.message || 'You are sending messages too quickly. Please wait a moment before trying again.')
+          : 'Sorry, I ran into a network error. Please try asking again!';
         this.messages.push({
           role: 'assistant',
-          content: 'Sorry, I ran into a network error. Please try asking again!',
+          content: fallbackMsg,
           timestamp: new Date()
         });
         this.scrollToBottom();

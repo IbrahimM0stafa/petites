@@ -6,7 +6,11 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
-@Table(name = "instant_delivery_inventory")
+@Table(name = "instant_delivery_inventory", uniqueConstraints = {
+    @UniqueConstraint(columnNames = "product_id")
+}, indexes = {
+    @Index(name = "idx_idi_prod_active_avail", columnList = "product_id, is_active, available_until")
+})
 public class InstantDeliveryInventory extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

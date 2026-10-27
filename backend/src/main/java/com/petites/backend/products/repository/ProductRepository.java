@@ -2,6 +2,7 @@ package com.petites.backend.products.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,15 +15,11 @@ import java.time.Instant;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, String> {
 
-    Page<Product> findByCategoryId(String categoryId, Pageable pageable);
-
-    Page<Product> findByAvailable(boolean available, Pageable pageable);
-
-    Page<Product> findByCategoryIdAndAvailable(String categoryId, boolean available, Pageable pageable);
-
+    @EntityGraph(attributePaths = {"category"})
     Page<Product> findByFeaturedTrueAndAvailableTrue(Pageable pageable);
 
     // Instant delivery queries (active and has stock)
+    @EntityGraph(attributePaths = {"category"})
     @Query("SELECT p FROM Product p WHERE " +
            "(:available IS NULL OR p.available = :available) AND " +
            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
@@ -38,6 +35,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
             Pageable pageable);
 
     // Scheduled eligible queries
+    @EntityGraph(attributePaths = {"category"})
     @Query("SELECT p FROM Product p WHERE " +
            "(:available IS NULL OR p.available = :available) AND " +
            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +
@@ -51,6 +49,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
             Pageable pageable);
 
     // General filtered query for when fulfillmentMode is not specified
+    @EntityGraph(attributePaths = {"category"})
     @Query("SELECT p FROM Product p WHERE " +
            "(:available IS NULL OR p.available = :available) AND " +
            "(:categoryId IS NULL OR p.category.id = :categoryId) AND " +

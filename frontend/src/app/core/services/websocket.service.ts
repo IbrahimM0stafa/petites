@@ -27,9 +27,26 @@ export class CustomerWebSocketService implements OnDestroy {
   constructor() {
     this.initClient();
 
+    let lastToken = this.authState.accessToken();
+
     // Re-subscribe if user logs in or switches
     effect(() => {
       const userId = this.authState.userId();
+      const token = this.authState.accessToken();
+
+      if (token !== lastToken) {
+        lastToken = token;
+        if (this.client) {
+          this.client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+          if (this.client.active) {
+            void this.client.deactivate().then(() => {
+              this.client?.activate();
+            });
+            return;
+          }
+        }
+      }
+
       if (this.isConnected() && userId) {
         this.subscribeToUserOrders(userId);
       } else if (!userId && this.userOrdersSubscription) {
@@ -102,6 +119,7 @@ export class CustomerWebSocketService implements OnDestroy {
       }
 
       let sub: StompSubscription | null = null;
+      let intervalId: ReturnType<typeof setInterval> | null = null;
 
       const performSubscription = () => {
         if (!this.client?.connected) {
@@ -120,15 +138,22 @@ export class CustomerWebSocketService implements OnDestroy {
       if (this.client.connected) {
         performSubscription();
       } else {
-        const intervalId = setInterval(() => {
+        intervalId = setInterval(() => {
           if (this.client?.connected) {
-            clearInterval(intervalId);
+            if (intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
             performSubscription();
           }
         }, 300);
       }
 
       return () => {
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
         if (sub) {
           sub.unsubscribe();
         }
@@ -137,6 +162,11 @@ export class CustomerWebSocketService implements OnDestroy {
   }
 
   private getBrokerUrl(): string {
+    if (!environment.apiBaseUrl) {
+      const isHttps = typeof window !== 'undefined' && window.location.protocol === 'https:';
+      const host = typeof window !== 'undefined' && window.location.host ? window.location.host : 'localhost:8080';
+      return `${isHttps ? 'wss://' : 'ws://'}${host}/ws`;
+    }
     const baseUrl = environment.apiBaseUrl.replace(/\/+$/, '');
     const wsProtocol = baseUrl.startsWith('https://') ? 'wss://' : 'ws://';
     const hostAndPath = baseUrl.replace(/^https?:\/\//, '');

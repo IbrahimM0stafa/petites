@@ -1,3 +1,5 @@
+import { ProductImage } from './shop.models';
+
 export interface Product {
   id: string;
   categoryId: string | null;
@@ -8,7 +10,7 @@ export interface Product {
   mainImage: string | null;
   isAvailable: boolean;
   isFeatured: boolean;
-  images: any[];
+  images: ProductImage[];
   createdAt: string;
   updatedAt: string;
 

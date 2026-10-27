@@ -35,4 +35,9 @@ public class CartAccessService {
 
         return CartOwnerRef.forGuest(guestSessionService.getCurrent(guestToken).id());
     }
+
+    public CartOwnerRef resolveOwner(String headerToken, String token) {
+        String actualToken = headerToken != null && !headerToken.isBlank() ? headerToken : token;
+        return resolveOwner(actualToken);
+    }
 }

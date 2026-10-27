@@ -59,6 +59,42 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(body);
     }
 
+    @ExceptionHandler(com.petites.backend.chatbot.exception.RateLimitExceededException.class)
+    public ResponseEntity<ApiError> handleRateLimitExceeded(com.petites.backend.chatbot.exception.RateLimitExceededException ex) {
+        ApiError body = new ApiError(
+                Instant.now().toString(),
+                HttpStatus.TOO_MANY_REQUESTS.value(),
+                ex.getMessage(),
+                null
+        );
+
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(body);
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ApiError> handleAccessDenied(org.springframework.security.access.AccessDeniedException ex) {
+        ApiError body = new ApiError(
+                Instant.now().toString(),
+                HttpStatus.FORBIDDEN.value(),
+                "Access denied: you do not have permission to perform this action",
+                null
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(body);
+    }
+
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ApiError> handleAuthentication(org.springframework.security.core.AuthenticationException ex) {
+        ApiError body = new ApiError(
+                Instant.now().toString(),
+                HttpStatus.UNAUTHORIZED.value(),
+                "Authentication required to access this resource",
+                null
+        );
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(body);
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnhandled(Exception ex) {
         log.error("Unhandled exception", ex);

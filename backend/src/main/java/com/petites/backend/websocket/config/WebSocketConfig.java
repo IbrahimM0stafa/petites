@@ -89,6 +89,36 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                     }
                 }
 
+                if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
+                    String destination = accessor.getDestination();
+                    java.security.Principal principal = accessor.getUser();
+
+                    if (destination != null && destination.startsWith("/topic/admin/")) {
+                        boolean isAdmin = principal instanceof UsernamePasswordAuthenticationToken auth
+                                && auth.getAuthorities().stream().anyMatch(a ->
+                                        "ROLE_SUPER_ADMIN".equals(a.getAuthority()) || "ROLE_STAFF".equals(a.getAuthority()));
+                        if (!isAdmin) {
+                            log.warn("Unauthorized subscription to {} by user: {}", destination, principal != null ? principal.getName() : "anonymous");
+                            throw new org.springframework.security.access.AccessDeniedException("Unauthorized to subscribe to admin topics");
+                        }
+                    }
+
+                    if (destination != null && destination.startsWith("/topic/users/")) {
+                        String[] parts = destination.split("/");
+                        if (parts.length >= 4) {
+                            String targetUserId = parts[3];
+                            boolean isSelf = principal != null && targetUserId.equals(principal.getName());
+                            boolean isAdmin = principal instanceof UsernamePasswordAuthenticationToken auth
+                                    && auth.getAuthorities().stream().anyMatch(a ->
+                                            "ROLE_SUPER_ADMIN".equals(a.getAuthority()) || "ROLE_STAFF".equals(a.getAuthority()));
+                            if (!isSelf && !isAdmin) {
+                                log.warn("Unauthorized user subscription to {} by user: {}", destination, principal != null ? principal.getName() : "anonymous");
+                                throw new org.springframework.security.access.AccessDeniedException("Unauthorized to subscribe to user topics");
+                            }
+                        }
+                    }
+                }
+
                 return message;
             }
         });

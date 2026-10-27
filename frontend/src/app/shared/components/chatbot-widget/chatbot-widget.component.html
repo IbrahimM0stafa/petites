@@ -352,9 +352,9 @@
               <span>Items Subtotal:</span>
               <span>${{ (msg.cartPreview || cart)?.subtotal || 0 }}</span>
             </div>
-            <div class="total-row discount-row" *ngIf="msg.checkoutCard.couponPreview?.valid">
-              <span>Promo Discount ({{ msg.checkoutCard.couponPreview?.code }}):</span>
-              <span class="discount-amount">-${{ msg.checkoutCard.couponPreview?.discountAmount }}</span>
+            <div class="total-row discount-row" *ngIf="msg.checkoutCard.couponPreview?.valid && msg.checkoutCard.couponPreview as coupon">
+              <span>Promo Discount ({{ coupon.code }}):</span>
+              <span class="discount-amount">-${{ coupon.discountAmount }}</span>
             </div>
             <div class="total-row" *ngIf="msg.checkoutCard.orderType === 'DELIVERY'">
               <span>Delivery Fee:</span>

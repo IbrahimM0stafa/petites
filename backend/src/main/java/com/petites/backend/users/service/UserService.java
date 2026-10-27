@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,7 +93,28 @@ public class UserService {
 
     @Transactional
     public UserResponse update(String id, UserUpdateRequest request) {
+        return update(id, request, null);
+    }
+
+    @Transactional
+    public UserResponse update(String id, UserUpdateRequest request, String actorId) {
         User user = getEntity(id);
+
+        if (actorId != null) {
+            User actor = getEntity(actorId);
+            boolean actorIsSuperAdmin = actor.getRoles().stream().anyMatch(r -> "SUPER_ADMIN".equalsIgnoreCase(r.getName()));
+            boolean actorIsStaff = actor.getRoles().stream().anyMatch(r -> "STAFF".equalsIgnoreCase(r.getName()));
+            boolean isSelf = user.getId().equals(actor.getId());
+            boolean targetIsSuperAdmin = user.getRoles().stream().anyMatch(r -> "SUPER_ADMIN".equalsIgnoreCase(r.getName()));
+            boolean targetIsStaff = user.getRoles().stream().anyMatch(r -> "STAFF".equalsIgnoreCase(r.getName()));
+
+            if (actorIsStaff && !actorIsSuperAdmin && !isSelf && (targetIsSuperAdmin || targetIsStaff)) {
+                throw new AccessDeniedException("Staff cannot modify other staff or superadmin accounts");
+            }
+            if (!actorIsSuperAdmin && !actorIsStaff && !isSelf) {
+                throw new AccessDeniedException("Not authorized to modify this account");
+            }
+        }
 
         if (request.name() != null) {
             user.setName(request.name().trim());
@@ -118,7 +140,48 @@ public class UserService {
 
     @Transactional
     public UserResponse setActive(String id, boolean active) {
+        return setActive(id, active, null);
+    }
+
+    @Transactional
+    public UserResponse setActive(String id, boolean active, String actorId) {
         User user = getEntity(id);
+        boolean targetIsSuperAdmin = user.getRoles().stream().anyMatch(r -> "SUPER_ADMIN".equalsIgnoreCase(r.getName()));
+        boolean targetIsStaff = user.getRoles().stream().anyMatch(r -> "STAFF".equalsIgnoreCase(r.getName()));
+
+        if (actorId != null) {
+            User actor = getEntity(actorId);
+            boolean actorIsSuperAdmin = actor.getRoles().stream().anyMatch(r -> "SUPER_ADMIN".equalsIgnoreCase(r.getName()));
+            boolean actorIsStaff = actor.getRoles().stream().anyMatch(r -> "STAFF".equalsIgnoreCase(r.getName()));
+            boolean isSelf = user.getId().equals(actor.getId());
+
+            if (!active) {
+                if (targetIsSuperAdmin) {
+                    if (isSelf) {
+                        throw new IllegalArgumentException("Superadmin cannot deactivate their own account");
+                    }
+                    throw new AccessDeniedException("Superadmin accounts cannot be deactivated");
+                }
+                if (targetIsStaff && !actorIsSuperAdmin) {
+                    throw new AccessDeniedException("Only superadmin can deactivate staff accounts");
+                }
+                if (!actorIsSuperAdmin && !actorIsStaff && !isSelf) {
+                    throw new AccessDeniedException("Not authorized to deactivate this account");
+                }
+            } else {
+                if (!actorIsSuperAdmin && !actorIsStaff) {
+                    throw new AccessDeniedException("Only staff or superadmin can reactivate accounts");
+                }
+                if ((targetIsSuperAdmin || targetIsStaff) && !actorIsSuperAdmin) {
+                    throw new AccessDeniedException("Only superadmin can reactivate administrative accounts");
+                }
+            }
+        } else {
+            if (!active && targetIsSuperAdmin) {
+                throw new IllegalArgumentException("Superadmin accounts cannot be deactivated");
+            }
+        }
+
         user.setActive(active);
         return toResponse(userRepository.save(user));
     }
@@ -142,6 +205,13 @@ public class UserService {
     public UserResponse incrementRewardRedeemedCount(String id) {
         User user = getEntity(id);
         user.setRewardsRedeemedCount(user.getRewardsRedeemedCount() + 1);
+        return toResponse(userRepository.save(user));
+    }
+
+    @Transactional
+    public UserResponse decrementRewardRedeemedCount(String id) {
+        User user = getEntity(id);
+        user.setRewardsRedeemedCount(Math.max(0, user.getRewardsRedeemedCount() - 1));
         return toResponse(userRepository.save(user));
     }
 

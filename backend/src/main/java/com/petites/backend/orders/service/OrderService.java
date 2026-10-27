@@ -12,13 +12,18 @@ import com.petites.backend.orders.repository.OrderItemRepository;
 import com.petites.backend.orders.repository.OrderRepository;
 import com.petites.backend.loyalty.service.LoyaltyService;
 import com.petites.backend.addresses.dto.AddressResponse;
+import com.petites.backend.addresses.entity.Address;
 import com.petites.backend.addresses.repository.AddressRepository;
-import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -34,24 +39,30 @@ public class OrderService {
     private final com.petites.backend.coupons.service.CouponService couponService;
     private final AddressRepository addressRepository;
     private final com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService;
+    private final com.petites.backend.products.service.FulfillmentService fulfillmentService;
+    private final com.petites.backend.users.service.UserService userService;
 
     public OrderService(OrderRepository orderRepository,
                         OrderItemRepository orderItemRepository,
                         LoyaltyService loyaltyService,
                         com.petites.backend.coupons.service.CouponService couponService,
                         AddressRepository addressRepository,
-                        com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService) {
+                        com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService,
+                        com.petites.backend.products.service.FulfillmentService fulfillmentService,
+                        com.petites.backend.users.service.UserService userService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.loyaltyService = loyaltyService;
         this.couponService = couponService;
         this.addressRepository = addressRepository;
         this.orderWebSocketService = orderWebSocketService;
+        this.fulfillmentService = fulfillmentService;
+        this.userService = userService;
     }
 
     @Transactional(readOnly = true)
     public List<OrderResponse> listOrders(CartOwnerRef owner) {
-        return findOrders(owner).stream().map(this::toResponse).toList();
+        return toResponses(findOrders(owner));
     }
 
     @Transactional(readOnly = true)
@@ -95,8 +106,9 @@ public class OrderService {
             return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
         };
 
-        return orderRepository.findAll(specification, pageable)
-                .map(this::toResponse);
+        Page<Order> orderPage = orderRepository.findAll(specification, pageable);
+        List<OrderResponse> responses = toResponses(orderPage.getContent());
+        return new PageImpl<>(responses, pageable, orderPage.getTotalElements());
     }
 
     @Transactional(readOnly = true)
@@ -113,7 +125,81 @@ public class OrderService {
                 .toList();
 
         AddressResponse addr = buildAddressResponse(order);
+        return toOrderResponse(order, items, addr);
+    }
 
+    private List<OrderResponse> toResponses(List<Order> orders) {
+        if (orders == null || orders.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<String> orderIds = orders.stream().map(Order::getId).toList();
+
+        Map<String, List<OrderItem>> itemsByOrderId = orderItemRepository.findByOrderIdInOrderByIdAsc(orderIds)
+                .stream()
+                .collect(Collectors.groupingBy(item -> item.getOrder().getId()));
+
+        Set<String> addressIdsNeeded = orders.stream()
+                .filter(o -> o.getDeliveryCity() == null && o.getAddressId() != null && !o.getAddressId().isBlank())
+                .map(Order::getAddressId)
+                .collect(Collectors.toSet());
+
+        Map<String, Address> addressMap = addressIdsNeeded.isEmpty()
+                ? Collections.emptyMap()
+                : addressRepository.findAllById(addressIdsNeeded).stream()
+                        .collect(Collectors.toMap(Address::getId, a -> a, (a1, a2) -> a1));
+
+        return orders.stream()
+                .map(order -> {
+                    List<OrderItemResponse> itemResponses = itemsByOrderId.getOrDefault(order.getId(), Collections.emptyList())
+                            .stream()
+                            .map(this::toResponse)
+                            .toList();
+
+                    AddressResponse addr = buildAddressResponseFromMap(order, addressMap);
+                    return toOrderResponse(order, itemResponses, addr);
+                })
+                .toList();
+    }
+
+    private AddressResponse buildAddressResponseFromMap(Order order, Map<String, Address> addressMap) {
+        if (order.getDeliveryCity() != null) {
+            return new AddressResponse(
+                    order.getAddressId(),
+                    order.getUserId(),
+                    order.getGovernorateId(),
+                    order.getDeliveryGovernorate(),
+                    order.getCityId(),
+                    order.getDeliveryCity(),
+                    order.getAreaId(),
+                    order.getDeliveryArea(),
+                    order.getDeliveryStreet(),
+                    order.getDeliveryBuilding(),
+                    order.getDeliveryNotes()
+            );
+        }
+
+        if (order.getAddressId() != null && addressMap.containsKey(order.getAddressId())) {
+            var saved = addressMap.get(order.getAddressId());
+            return new AddressResponse(
+                    saved.getId(),
+                    saved.getUserId(),
+                    saved.getGovernorateId(),
+                    saved.getGovernorate(),
+                    saved.getCityId(),
+                    saved.getCity(),
+                    saved.getAreaId(),
+                    saved.getArea(),
+                    saved.getStreet(),
+                    saved.getBuilding(),
+                    saved.getNotes()
+            );
+        }
+
+        return null;
+    }
+
+    private OrderResponse toOrderResponse(Order order, List<OrderItemResponse> items, AddressResponse addr) {
         return new OrderResponse(
                 order.getId(),
                 order.getOrderNumber(),
@@ -159,19 +245,53 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new IllegalArgumentException("Order not found"));
 
+        if (order.getStatus() == status) {
+            return toResponse(order);
+        }
+
+        if (order.getStatus() == OrderStatus.CANCELLED) {
+            throw new IllegalStateException("Cannot change status of a cancelled order");
+        }
+
+        if (status == OrderStatus.CANCELLED) {
+            if (order.getStatus() == OrderStatus.COMPLETED) {
+                throw new IllegalStateException("Cannot cancel an already completed order");
+            }
+
+            // 1. Release reserved stock / capacity
+            if (order.getItems() != null) {
+                for (OrderItem item : order.getItems()) {
+                    if (order.getDeliveryMode() == DeliveryMode.INSTANT) {
+                        fulfillmentService.releaseInstantQuantity(item.getProductId(), item.getQuantity());
+                    } else if (order.getDeliveryMode() == DeliveryMode.SCHEDULED && order.getScheduledDate() != null) {
+                        fulfillmentService.releaseScheduledCapacity(item.getProductId(), order.getScheduledDate(), item.getQuantity());
+                    }
+                }
+            }
+
+            // 2. Refund loyalty reward if applied
+            if (order.isRewardApplied() && order.getUserId() != null) {
+                userService.decrementRewardRedeemedCount(order.getUserId());
+            }
+
+            // 3. Release coupon usage if coupon was applied
+            if (order.getCouponId() != null) {
+                couponService.releaseUsage(order.getCouponId(), order.getUserId());
+            }
+
+            order.setStatus(OrderStatus.CANCELLED);
+            Order saved = orderRepository.save(order);
+            OrderResponse response = toResponse(saved);
+            orderWebSocketService.notifyOrderStatusUpdated(response);
+            return response;
+        }
+
         boolean completionNotYetProcessed = status == OrderStatus.COMPLETED && !order.isCompletionRecorded();
         order.setStatus(status);
 
         if (completionNotYetProcessed) {
             if (order.getUserId() != null) {
                 loyaltyService.recordCompletedOrder(order.getUserId());
-            }
-            // record coupon usage when order completes
-            if (order.getCouponId() != null) {
-                try {
-                    couponService.recordUsage(order.getCouponId(), order.getUserId());
-                } catch (Exception ignored) {
-                }
             }
             order.setCompletionRecorded(true);
         }

@@ -1,6 +1,5 @@
 package com.petites.backend.carts.controller;
 
-import com.petites.backend.carts.dto.CartOwnerRef;
 import com.petites.backend.carts.dto.CheckoutRequest;
 import com.petites.backend.carts.dto.CheckoutResponse;
 import com.petites.backend.carts.service.CartAccessService;
@@ -30,11 +29,6 @@ public class CheckoutController {
             @RequestHeader(value = "X-Guest-Token", required = false) String headerToken,
             @RequestParam(value = "token", required = false) String token,
             @Valid @RequestBody CheckoutRequest request) {
-        return cartService.checkout(resolveOwner(headerToken, token), request);
-    }
-
-    private CartOwnerRef resolveOwner(String headerToken, String token) {
-        String actualToken = headerToken != null && !headerToken.isBlank() ? headerToken : token;
-        return cartAccessService.resolveOwner(actualToken);
+        return cartService.checkout(cartAccessService.resolveOwner(headerToken, token), request);
     }
 }

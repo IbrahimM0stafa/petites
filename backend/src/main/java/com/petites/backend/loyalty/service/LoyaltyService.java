@@ -35,10 +35,19 @@ public class LoyaltyService {
 
         int target = rewardTarget();
         int completed = user.getCompletedOrdersCount();
-        int remainder = target == 0 ? 0 : completed % target;
-        int untilNext = remainder == 0 ? 0 : target - remainder;
         int redeemed = user.getRewardsRedeemedCount();
-        boolean rewardAvailable = target > 0 && completed > 0 && completed % target == 0 && (completed / target) > redeemed;
+        int remainder = target == 0 ? 0 : completed % target;
+        boolean rewardAvailable = target > 0 && (completed / target) > redeemed;
+        int untilNext;
+        if (target == 0) {
+            untilNext = 0;
+        } else if (rewardAvailable) {
+            untilNext = 0;
+        } else if (remainder == 0) {
+            untilNext = target;
+        } else {
+            untilNext = target - remainder;
+        }
 
         // read optional reward product id from settings
         String rewardProductId = settingService.getSetting("reward_product_id", "").trim();

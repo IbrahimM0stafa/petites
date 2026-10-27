@@ -21,7 +21,7 @@ public class EmailService {
                         @Value("${spring.profiles.active:dev}") String activeProfile) {
         this.mailSender = mailSender;
         this.fromEmail = fromEmail;
-        this.isDev = activeProfile != null && activeProfile.toLowerCase().contains("dev");
+        this.isDev = activeProfile != null && (activeProfile.toLowerCase().contains("dev") || activeProfile.toLowerCase().contains("test"));
     }
 
     public void sendOtpEmail(String toEmail, String otp) {

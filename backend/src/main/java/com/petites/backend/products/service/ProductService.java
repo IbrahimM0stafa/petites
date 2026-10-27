@@ -25,7 +25,6 @@ import com.petites.backend.products.repository.ProductRepository;
 import com.petites.backend.products.entity.InstantDeliveryInventory;
 import java.time.LocalDate;
 import java.time.Instant;
-import java.util.Optional;
 
 @Service
 public class ProductService {
@@ -66,13 +65,21 @@ public class ProductService {
             productPage = productRepository.findAllFiltered(catId, available, maxPrice, searchStr, pageable);
         }
 
-        return productPage.map(this::toResponse);
+        LocalDate earliestDate = fulfillmentService.calculateEarliestScheduledDate();
+        List<String> productIds = productPage.getContent().stream().map(Product::getId).toList();
+        java.util.Map<String, InstantDeliveryInventory> instantMap = fulfillmentService.getActiveInstantInventories(productIds);
+
+        return productPage.map(p -> toResponse(p, earliestDate, instantMap.get(p.getId())));
     }
 
     @Transactional(readOnly = true)
     public Page<ProductResponse> featured(Pageable pageable) {
-        return productRepository.findByFeaturedTrueAndAvailableTrue(pageable)
-                .map(this::toResponse);
+        LocalDate earliestDate = fulfillmentService.calculateEarliestScheduledDate();
+        Page<Product> productPage = productRepository.findByFeaturedTrueAndAvailableTrue(pageable);
+        List<String> productIds = productPage.getContent().stream().map(Product::getId).toList();
+        java.util.Map<String, InstantDeliveryInventory> instantMap = fulfillmentService.getActiveInstantInventories(productIds);
+
+        return productPage.map(p -> toResponse(p, earliestDate, instantMap.get(p.getId())));
     }
 
     @Transactional(readOnly = true)
@@ -182,6 +189,11 @@ public class ProductService {
     }
 
     private ProductResponse toResponse(Product product) {
+        InstantDeliveryInventory activeInstant = fulfillmentService.getActiveInstantInventory(product.getId()).orElse(null);
+        return toResponse(product, fulfillmentService.calculateEarliestScheduledDate(), activeInstant);
+    }
+
+    private ProductResponse toResponse(Product product, LocalDate earliestDate, InstantDeliveryInventory activeInstant) {
         String categoryId = product.getCategory() != null ? product.getCategory().getId() : null;
         String categoryName = product.getCategory() != null ? product.getCategory().getName() : null;
 
@@ -192,13 +204,11 @@ public class ProductService {
                     .toList();
         }
 
-        LocalDate earliestDate = fulfillmentService.calculateEarliestScheduledDate();
         boolean scheduledEligible = product.isAvailable();
 
-        Optional<InstantDeliveryInventory> activeInstant = fulfillmentService.getActiveInstantInventory(product.getId());
-        boolean instantAvailableToday = activeInstant.isPresent();
-        Integer instantQuantityToday = activeInstant.map(InstantDeliveryInventory::getAvailableQuantity).orElse(0);
-        Instant instantAvailableUntil = activeInstant.map(InstantDeliveryInventory::getAvailableUntil).orElse(null);
+        boolean instantAvailableToday = activeInstant != null;
+        Integer instantQuantityToday = activeInstant != null ? activeInstant.getAvailableQuantity() : 0;
+        Instant instantAvailableUntil = activeInstant != null ? activeInstant.getAvailableUntil() : null;
 
         return new ProductResponse(
                 product.getId(),

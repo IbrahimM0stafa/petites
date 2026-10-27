@@ -11,10 +11,10 @@ import com.petites.backend.products.repository.ProductRepository;
 import com.petites.backend.settings.service.SettingService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.annotation.Propagation;
 
 import java.time.*;
 import java.util.Optional;
+import java.util.UUID;
 import com.petites.backend.users.service.UserService;
 import com.petites.backend.products.dto.FulfillmentStatusResponse;
 
@@ -126,22 +126,28 @@ public class FulfillmentService {
      */
     @Transactional
     public void reserveScheduledCapacity(String productId, LocalDate date, int quantity) {
-        if (!isScheduledAvailable(productId, date, quantity)) {
-            throw new IllegalArgumentException("Requested scheduled quantity exceeds capacity or production date is invalid");
+        if (quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be positive");
         }
 
-        Product product = productRepository.findById(productId)
+        productRepository.findById(productId)
                 .orElseThrow(() -> new IllegalArgumentException("Product not found"));
 
+        // Ensure row exists atomically so pessimistic lock can be acquired safely
+        productDailyCapacityUsageRepository.insertIgnoreConflict(
+                UUID.randomUUID().toString(),
+                productId,
+                date
+        );
+
         ProductDailyCapacityUsage usage = productDailyCapacityUsageRepository
-                .findByProductIdAndProductionDate(productId, date)
-                .orElseGet(() -> {
-                    ProductDailyCapacityUsage newUsage = new ProductDailyCapacityUsage();
-                    newUsage.setProduct(product);
-                    newUsage.setProductionDate(date);
-                    newUsage.setReservedQuantity(0);
-                    return newUsage;
-                });
+                .findForUpdateByProductIdAndProductionDate(productId, date)
+                .orElseThrow(() -> new IllegalStateException("Capacity usage row should exist"));
+
+        int dailyCapacity = getScheduledDailyCapacity(productId);
+        if (usage.getReservedQuantity() + quantity > dailyCapacity) {
+            throw new IllegalArgumentException("Requested scheduled quantity exceeds capacity for production date: " + date);
+        }
 
         usage.setReservedQuantity(usage.getReservedQuantity() + quantity);
         productDailyCapacityUsageRepository.save(usage);
@@ -152,7 +158,7 @@ public class FulfillmentService {
      */
     @Transactional
     public void releaseScheduledCapacity(String productId, LocalDate date, int quantity) {
-        productDailyCapacityUsageRepository.findByProductIdAndProductionDate(productId, date)
+        productDailyCapacityUsageRepository.findForUpdateByProductIdAndProductionDate(productId, date)
                 .ifPresent(usage -> {
                     int nextQty = Math.max(0, usage.getReservedQuantity() - quantity);
                     usage.setReservedQuantity(nextQty);
@@ -163,7 +169,7 @@ public class FulfillmentService {
     /**
      * Checks same-day instant availability and quantity for a product.
      */
-    @Transactional
+    @Transactional(readOnly = true)
     public boolean isInstantAvailable(String productId, int quantity) {
         return getActiveInstantInventory(productId)
                 .map(inv -> inv.getAvailableQuantity() >= quantity)
@@ -173,10 +179,25 @@ public class FulfillmentService {
     /**
      * Gets the active, non-expired instant inventory record for a product.
      */
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = false)
+    @Transactional(readOnly = true)
     public Optional<InstantDeliveryInventory> getActiveInstantInventory(String productId) {
         return instantDeliveryInventoryRepository
                 .findFirstByProductIdAndActiveTrueAndAvailableUntilAfterOrderByCreatedAtDesc(productId, Instant.now());
+    }
+
+    @Transactional(readOnly = true)
+    public java.util.Map<String, InstantDeliveryInventory> getActiveInstantInventories(java.util.Collection<String> productIds) {
+        if (productIds == null || productIds.isEmpty()) {
+            return java.util.Collections.emptyMap();
+        }
+        return instantDeliveryInventoryRepository
+                .findByProductIdInAndActiveTrueAndAvailableUntilAfter(productIds, Instant.now())
+                .stream()
+                .collect(java.util.stream.Collectors.toMap(
+                        inv -> inv.getProduct().getId(),
+                        inv -> inv,
+                        (existing, replacement) -> existing
+                ));
     }
 
     /**
@@ -184,7 +205,9 @@ public class FulfillmentService {
      */
     @Transactional
     public void reserveInstantQuantity(String productId, int quantity) {
-        InstantDeliveryInventory inv = getActiveInstantInventory(productId)
+        InstantDeliveryInventory inv = instantDeliveryInventoryRepository
+                .findForUpdateByProductId(productId, Instant.now())
+                .stream().findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No active instant inventory available for this product"));
 
         if (inv.getAvailableQuantity() < quantity) {
@@ -200,7 +223,8 @@ public class FulfillmentService {
      */
     @Transactional
     public void releaseInstantQuantity(String productId, int quantity) {
-        getActiveInstantInventory(productId)
+        instantDeliveryInventoryRepository.findForUpdateByProductId(productId, Instant.now())
+                .stream().findFirst()
                 .ifPresent(inv -> {
                     inv.setAvailableQuantity(inv.getAvailableQuantity() + quantity);
                     instantDeliveryInventoryRepository.save(inv);
@@ -210,7 +234,7 @@ public class FulfillmentService {
     /**
      * Gets the full fulfillment status DTO for admin checking.
      */
-        @Transactional(propagation = Propagation.REQUIRES_NEW)
+    @Transactional(readOnly = true)
     public FulfillmentStatusResponse getFulfillmentStatus(String productId) {
 
         int dailyCapacity = getScheduledDailyCapacity(productId);

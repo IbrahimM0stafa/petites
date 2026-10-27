@@ -33,13 +33,13 @@ public class RoleController {
     }
 
     @PostMapping("/users/{userId}/roles/{roleName}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public UserResponse assignRole(@PathVariable String userId, @PathVariable String roleName) {
         return userService.assignRole(userId, roleName);
     }
 
     @DeleteMapping("/users/{userId}/roles/{roleName}")
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN', 'STAFF')")
+    @PreAuthorize("hasRole('SUPER_ADMIN')")
     public UserResponse removeRole(@PathVariable String userId, @PathVariable String roleName) {
         return userService.removeRole(userId, roleName);
     }

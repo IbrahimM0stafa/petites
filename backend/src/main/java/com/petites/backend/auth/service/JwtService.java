@@ -68,6 +68,7 @@ public class JwtService {
 
         String subject = claims.getSubject();
         String email = claims.get("email", String.class);
+        @SuppressWarnings("unchecked")
         List<String> roles = claims.get("roles", List.class);
 
         return new JwtPayload(subject, email, roles == null ? Set.of() : Set.copyOf(roles));

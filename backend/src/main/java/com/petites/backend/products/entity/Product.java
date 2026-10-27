@@ -11,13 +11,18 @@ import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "products")
+@Table(name = "products", indexes = {
+        @Index(name = "idx_products_category_id", columnList = "category_id"),
+        @Index(name = "idx_products_avail_feat", columnList = "is_available, is_featured"),
+        @Index(name = "idx_products_price", columnList = "price")
+})
 public class Product extends AuditedEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -43,6 +48,7 @@ public class Product extends AuditedEntity {
     private boolean featured = false;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @org.hibernate.annotations.BatchSize(size = 25)
     private List<ProductImage> images = new ArrayList<>();
 
     public Product() {
