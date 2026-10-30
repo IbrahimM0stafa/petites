@@ -1,8 +1,9 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject, Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ProductCardComponent } from '../../../shared/components/product-card/product-card.component';
 import { ShopService } from '../../../core/services/shop.service';
@@ -15,7 +16,7 @@ import { Category, Product } from '../../../core/models/shop.models';
   templateUrl: './shop-page.component.html',
   styleUrls: ['./shop-page.component.css']
 })
-export class ShopPageComponent implements OnInit, OnDestroy {
+export class ShopPageComponent implements OnInit {
   isFilterOpen = false;
   priceRangeMax = 50;
   private hasPriceFilterBeenTouched = false;
@@ -36,7 +37,7 @@ export class ShopPageComponent implements OnInit, OnDestroy {
   // Search state
   searchQuery = '';
   private readonly searchSubject = new Subject<string>();
-  private searchSubscription?: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
 
   // Pagination state
   page = 0;
@@ -51,52 +52,51 @@ export class ShopPageComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     // Set up search debouncing
-    this.searchSubscription = this.searchSubject.pipe(
+    this.searchSubject.pipe(
       debounceTime(400),
-      distinctUntilChanged()
+      distinctUntilChanged(),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.page = 0;
       this.loadProducts();
     });
 
     // 1. Load Categories
-    this.shopService.getCategories().subscribe({
-      next: (catResponse) => {
-        const allOption: Category = { id: null as any, name: 'All', sortOrder: -1 };
-        this.categories = [allOption, ...catResponse.content];
+    this.shopService.getCategories()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (catResponse) => {
+          const allOption: Category = { id: null as any, name: 'All', sortOrder: -1 };
+          this.categories = [allOption, ...catResponse.content];
 
-        // 2. Listen to query params for pre-selecting a category and fulfillment mode
-        this.route.queryParams.subscribe((params) => {
-          const categoryIdParam = params['category'];
-          if (categoryIdParam) {
-            const foundCat = this.categories.find(c => c.id === categoryIdParam);
-            if (foundCat) {
-              this.selectedCategory = foundCat;
-              this.tempCategory = foundCat;
-            }
-          }
+          // 2. Listen to query params for pre-selecting a category and fulfillment mode
+          this.route.queryParams
+            .pipe(takeUntilDestroyed(this.destroyRef))
+            .subscribe((params) => {
+              const categoryIdParam = params['category'];
+              if (categoryIdParam) {
+                const foundCat = this.categories.find(c => c.id === categoryIdParam);
+                if (foundCat) {
+                  this.selectedCategory = foundCat;
+                  this.tempCategory = foundCat;
+                }
+              }
 
-          const fulfillmentParam = params['fulfillment'];
-          if (fulfillmentParam === 'instant' || fulfillmentParam === 'scheduled') {
-            this.currentFulfillmentMode = fulfillmentParam;
-          } else {
-            this.currentFulfillmentMode = 'scheduled';
-          }
+              const fulfillmentParam = params['fulfillment'];
+              if (fulfillmentParam === 'instant' || fulfillmentParam === 'scheduled') {
+                this.currentFulfillmentMode = fulfillmentParam;
+              } else {
+                this.currentFulfillmentMode = 'scheduled';
+              }
 
-          this.loadProducts();
-        });
-      },
-      error: (err) => {
-        console.error('Error loading categories', err);
-        this.loadProducts(); // fallback to load products anyway
-      }
-    });
-  }
-
-  ngOnDestroy(): void {
-    if (this.searchSubscription) {
-      this.searchSubscription.unsubscribe();
-    }
+              this.loadProducts();
+            });
+        },
+        error: (err) => {
+          console.error('Error loading categories', err);
+          this.loadProducts(); // fallback to load products anyway
+        }
+      });
   }
 
   loadProducts(): void {

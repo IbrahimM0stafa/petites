@@ -1,7 +1,12 @@
 package com.petites.backend.websocket.config;
 
+import com.petites.backend.auth.entity.GuestSession;
+import com.petites.backend.auth.repository.GuestSessionRepository;
 import com.petites.backend.auth.service.JwtService;
+import com.petites.backend.orders.repository.OrderRepository;
+import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,12 +36,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     private final List<String> allowedOrigins;
     private final JwtService jwtService;
+    private final OrderRepository orderRepository;
+    private final GuestSessionRepository guestSessionRepository;
 
     public WebSocketConfig(
             @Value("${app.cors.allowed-origins:http://localhost:4200,http://localhost:4300}") List<String> allowedOrigins,
-            JwtService jwtService) {
+            JwtService jwtService,
+            OrderRepository orderRepository,
+            GuestSessionRepository guestSessionRepository) {
         this.allowedOrigins = allowedOrigins;
         this.jwtService = jwtService;
+        this.orderRepository = orderRepository;
+        this.guestSessionRepository = guestSessionRepository;
     }
 
     @Override
@@ -87,6 +98,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                             log.warn("Invalid JWT token during WebSocket STOMP connect: {}", ex.getMessage());
                         }
                     }
+
+                    String guestTokenHeader = accessor.getFirstNativeHeader("X-Guest-Token");
+                    if (guestTokenHeader == null || guestTokenHeader.isBlank()) {
+                        guestTokenHeader = accessor.getFirstNativeHeader("guest-token");
+                    }
+                    if (guestTokenHeader != null && !guestTokenHeader.isBlank() && accessor.getSessionAttributes() != null) {
+                        accessor.getSessionAttributes().put("guestToken", guestTokenHeader.trim());
+                    }
                 }
 
                 if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
@@ -115,6 +134,54 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
                                 log.warn("Unauthorized user subscription to {} by user: {}", destination, principal != null ? principal.getName() : "anonymous");
                                 throw new org.springframework.security.access.AccessDeniedException("Unauthorized to subscribe to user topics");
                             }
+                        }
+                    }
+
+                    if (destination != null && destination.startsWith("/topic/orders/")) {
+                        String[] parts = destination.split("/");
+                        if (parts.length >= 4) {
+                            String orderId = parts[3];
+                            boolean isAdmin = principal instanceof UsernamePasswordAuthenticationToken auth
+                                    && auth.getAuthorities().stream().anyMatch(a ->
+                                            "ROLE_SUPER_ADMIN".equals(a.getAuthority()) || "ROLE_STAFF".equals(a.getAuthority()));
+                            if (isAdmin) {
+                                return message;
+                            }
+
+                            // Authenticated customer ownership check
+                            if (principal instanceof UsernamePasswordAuthenticationToken auth
+                                    && auth.getName() != null
+                                    && !auth.getName().isBlank()
+                                    && !"anonymousUser".equals(auth.getName())) {
+                                if (orderRepository.findByIdAndUserId(orderId, auth.getName()).isPresent()) {
+                                    return message;
+                                }
+                            }
+
+                            // Guest token check
+                            String guestToken = accessor.getFirstNativeHeader("X-Guest-Token");
+                            if (guestToken == null || guestToken.isBlank()) {
+                                guestToken = accessor.getFirstNativeHeader("token");
+                            }
+                            if ((guestToken == null || guestToken.isBlank()) && accessor.getSessionAttributes() != null) {
+                                guestToken = (String) accessor.getSessionAttributes().get("guestToken");
+                            }
+
+                            if (guestToken != null && !guestToken.isBlank()) {
+                                Optional<GuestSession> guestSession = guestSessionRepository.findBySessionToken(guestToken.trim());
+                                if (guestSession.isPresent()) {
+                                    GuestSession session = guestSession.get();
+                                    boolean notExpired = session.getExpiresAt() != null
+                                            ? session.getExpiresAt().isAfter(Instant.now())
+                                            : (session.getCreatedAt() != null && session.getCreatedAt().plus(7, java.time.temporal.ChronoUnit.DAYS).isAfter(Instant.now()));
+                                    if (notExpired && orderRepository.findByIdAndGuestSessionId(orderId, session.getId()).isPresent()) {
+                                        return message;
+                                    }
+                                }
+                            }
+
+                            log.warn("Unauthorized subscription to {} by principal: {}", destination, principal != null ? principal.getName() : "anonymous");
+                            throw new org.springframework.security.access.AccessDeniedException("Unauthorized to subscribe to order topic");
                         }
                     }
                 }

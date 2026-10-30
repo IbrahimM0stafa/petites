@@ -24,6 +24,8 @@ import com.petites.backend.carts.dto.CartItemRequest;
 import com.petites.backend.carts.dto.CartOwnerRef;
 import com.petites.backend.carts.dto.CheckoutRequest;
 import com.petites.backend.carts.dto.CheckoutResponse;
+import com.petites.backend.carts.entity.Cart;
+import com.petites.backend.carts.entity.CartItem;
 import com.petites.backend.carts.enums.CartStatus;
 import com.petites.backend.carts.repository.CartItemRepository;
 import com.petites.backend.carts.repository.CartRepository;
@@ -483,5 +485,70 @@ class Phase3BusinessIntegrityIntegrationTest {
                 IllegalStateException.class,
                 () -> orderService.updateStatus(saved.getId(), OrderStatus.PENDING)
         );
+    }
+
+    @Test
+    void testCleanupAbandonedGuestCarts_PurgesOnlyStaleActiveGuestCartsAndCascadesItems() {
+        // 1. Stale active guest cart (20 days old) with an item
+        Cart staleGuestCart = new Cart();
+        staleGuestCart.setGuestSessionId("guest-session-stale");
+        staleGuestCart.setStatus(CartStatus.ACTIVE);
+        staleGuestCart.setCreatedAt(Instant.now().minus(20, java.time.temporal.ChronoUnit.DAYS));
+        staleGuestCart = cartRepository.save(staleGuestCart);
+        createdCartIds.add(staleGuestCart.getId());
+
+        CartItem staleItem = new CartItem();
+        staleItem.setCart(staleGuestCart);
+        staleItem.setProduct(instantProduct);
+        staleItem.setQuantity(2);
+        staleItem.setUnitPrice(BigDecimal.valueOf(15.00));
+        staleItem.setDeliveryMode(DeliveryMode.INSTANT);
+        staleItem = cartItemRepository.save(staleItem);
+
+        // 2. Recent active guest cart (2 days old) with an item
+        Cart recentGuestCart = new Cart();
+        recentGuestCart.setGuestSessionId("guest-session-recent");
+        recentGuestCart.setStatus(CartStatus.ACTIVE);
+        recentGuestCart.setCreatedAt(Instant.now().minus(2, java.time.temporal.ChronoUnit.DAYS));
+        recentGuestCart = cartRepository.save(recentGuestCart);
+        createdCartIds.add(recentGuestCart.getId());
+
+        CartItem recentItem = new CartItem();
+        recentItem.setCart(recentGuestCart);
+        recentItem.setProduct(instantProduct);
+        recentItem.setQuantity(1);
+        recentItem.setUnitPrice(BigDecimal.valueOf(15.00));
+        recentItem.setDeliveryMode(DeliveryMode.INSTANT);
+        recentItem = cartItemRepository.save(recentItem);
+
+        // 3. Stale ORDERED guest cart (20 days old)
+        Cart orderedGuestCart = new Cart();
+        orderedGuestCart.setGuestSessionId("guest-session-ordered");
+        orderedGuestCart.setStatus(CartStatus.ORDERED);
+        orderedGuestCart.setCreatedAt(Instant.now().minus(20, java.time.temporal.ChronoUnit.DAYS));
+        orderedGuestCart = cartRepository.save(orderedGuestCart);
+        createdCartIds.add(orderedGuestCart.getId());
+
+        // 4. Stale active USER cart (20 days old)
+        Cart userCart = new Cart();
+        userCart.setUserId(testUser.getId());
+        userCart.setStatus(CartStatus.ACTIVE);
+        userCart.setCreatedAt(Instant.now().minus(20, java.time.temporal.ChronoUnit.DAYS));
+        userCart = cartRepository.save(userCart);
+        createdCartIds.add(userCart.getId());
+
+        // Run cleanup
+        int deletedCount = cartService.cleanupAbandonedGuestCarts();
+        Assertions.assertTrue(deletedCount >= 1, "Should delete at least the stale active guest cart");
+
+        // Verify stale guest cart and its cascaded cart items are gone
+        Assertions.assertTrue(cartRepository.findById(staleGuestCart.getId()).isEmpty(), "Stale guest cart must be deleted");
+        Assertions.assertTrue(cartItemRepository.findById(staleItem.getId()).isEmpty(), "Stale guest cart items must cascade delete");
+
+        // Verify recent guest cart, ordered guest cart, and user cart are preserved
+        Assertions.assertTrue(cartRepository.findById(recentGuestCart.getId()).isPresent(), "Recent guest cart must be preserved");
+        Assertions.assertTrue(cartItemRepository.findById(recentItem.getId()).isPresent(), "Recent guest cart items must be preserved");
+        Assertions.assertTrue(cartRepository.findById(orderedGuestCart.getId()).isPresent(), "Ordered guest cart must be preserved");
+        Assertions.assertTrue(cartRepository.findById(userCart.getId()).isPresent(), "User cart must be preserved");
     }
 }

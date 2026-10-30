@@ -28,16 +28,26 @@ export class CustomerWebSocketService implements OnDestroy {
     this.initClient();
 
     let lastToken = this.authState.accessToken();
+    let lastGuestToken = this.authState.guestSessionToken();
 
-    // Re-subscribe if user logs in or switches
+    // Re-subscribe if user logs in, switches, or guest token changes
     effect(() => {
       const userId = this.authState.userId();
       const token = this.authState.accessToken();
+      const guestToken = this.authState.guestSessionToken();
 
-      if (token !== lastToken) {
+      if (token !== lastToken || guestToken !== lastGuestToken) {
         lastToken = token;
+        lastGuestToken = guestToken;
         if (this.client) {
-          this.client.connectHeaders = token ? { Authorization: `Bearer ${token}` } : {};
+          const connectHeaders: Record<string, string> = {};
+          if (token) {
+            connectHeaders['Authorization'] = `Bearer ${token}`;
+          }
+          if (guestToken) {
+            connectHeaders['X-Guest-Token'] = guestToken;
+          }
+          this.client.connectHeaders = connectHeaders;
           if (this.client.active) {
             void this.client.deactivate().then(() => {
               this.client?.activate();
@@ -59,10 +69,19 @@ export class CustomerWebSocketService implements OnDestroy {
   private initClient(): void {
     const brokerUrl = this.getBrokerUrl();
     const token = this.authState.accessToken();
+    const guestToken = this.authState.guestSessionToken();
+
+    const connectHeaders: Record<string, string> = {};
+    if (token) {
+      connectHeaders['Authorization'] = `Bearer ${token}`;
+    }
+    if (guestToken) {
+      connectHeaders['X-Guest-Token'] = guestToken;
+    }
 
     this.client = new Client({
       brokerURL: brokerUrl,
-      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+      connectHeaders,
       reconnectDelay: 5000,
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
@@ -125,14 +144,25 @@ export class CustomerWebSocketService implements OnDestroy {
         if (!this.client?.connected) {
           return;
         }
-        sub = this.client.subscribe(`/topic/orders/${orderId}`, (message: IMessage) => {
-          try {
-            const payload: OrderWebSocketEvent = JSON.parse(message.body);
-            subscriber.next(payload.order);
-          } catch (err) {
-            console.error('Failed to parse order event:', err);
-          }
-        });
+
+        const headers: Record<string, string> = {};
+        const guestToken = this.authState.guestSessionToken();
+        if (guestToken) {
+          headers['X-Guest-Token'] = guestToken;
+        }
+
+        sub = this.client.subscribe(
+          `/topic/orders/${orderId}`,
+          (message: IMessage) => {
+            try {
+              const payload: OrderWebSocketEvent = JSON.parse(message.body);
+              subscriber.next(payload.order);
+            } catch (err) {
+              console.error('Failed to parse order event:', err);
+            }
+          },
+          headers
+        );
       };
 
       if (this.client.connected) {

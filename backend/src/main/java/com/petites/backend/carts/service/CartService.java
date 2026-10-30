@@ -34,17 +34,24 @@ import com.petites.backend.loyalty.service.LoyaltyService;
 import com.petites.backend.users.entity.User;
 import com.petites.backend.users.service.UserService;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class CartService {
+
+    @Value("${app.cart.guest-retention-days:14}")
+    private int guestRetentionDays = 14;
 
     private final CartRepository cartRepository;
     private final CartItemRepository cartItemRepository;
@@ -61,17 +68,17 @@ public class CartService {
 
     @Autowired
     public CartService(CartRepository cartRepository,
-                       CartItemRepository cartItemRepository,
-                       ProductRepository productRepository,
-                       FulfillmentService fulfillmentService,
-                       UserService userService,
-                       LoyaltyService loyaltyService,
-                       OrderRepository orderRepository,
-                       OrderService orderService,
-                       CouponService couponService,
-                       AddressRepository addressRepository,
-                       com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService,
-                       com.petites.backend.addresses.service.DeliveryZoneService deliveryZoneService) {
+            CartItemRepository cartItemRepository,
+            ProductRepository productRepository,
+            FulfillmentService fulfillmentService,
+            UserService userService,
+            LoyaltyService loyaltyService,
+            OrderRepository orderRepository,
+            OrderService orderService,
+            CouponService couponService,
+            AddressRepository addressRepository,
+            com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService,
+            com.petites.backend.addresses.service.DeliveryZoneService deliveryZoneService) {
         this.cartRepository = cartRepository;
         this.cartItemRepository = cartItemRepository;
         this.productRepository = productRepository;
@@ -99,8 +106,8 @@ public class CartService {
         validateItemAvailability(product.getId(), request.quantity(), deliveryMode);
 
         CartItem item = cartItemRepository
-            .findByCartIdAndProductIdAndDeliveryMode(cart.getId(), product.getId(), deliveryMode)
-            .orElseGet(() -> createCartItem(cart, product, deliveryMode));
+                .findByCartIdAndProductIdAndDeliveryMode(cart.getId(), product.getId(), deliveryMode)
+                .orElseGet(() -> createCartItem(cart, product, deliveryMode));
 
         item.setQuantity(item.getQuantity() + request.quantity());
         item.setUnitPrice(product.getPrice());
@@ -158,12 +165,16 @@ public class CartService {
         OrderType orderType = request.orderType() == null ? OrderType.DELIVERY : request.orderType();
         DeliveryAddressSnapshot deliveryAddress = resolveDeliveryAddress(owner, request, orderType);
         String notes = blankToNull(request.notes());
-        Coupon coupon = couponService.resolveForCheckout(blankToNull(request.couponId()), blankToNull(request.couponCode()), cartSubtotal);
-        BigDecimal discountAmount = coupon == null ? BigDecimal.ZERO : couponService.calculateDiscountAmount(coupon, cartSubtotal);
+        Coupon coupon = couponService.resolveForCheckout(blankToNull(request.couponId()),
+                blankToNull(request.couponCode()), cartSubtotal);
+        BigDecimal discountAmount = coupon == null ? BigDecimal.ZERO
+                : couponService.calculateDiscountAmount(coupon, cartSubtotal);
         String couponId = coupon == null ? null : coupon.getId();
-        LocalDate scheduledDate = request.scheduledDate() != null ? request.scheduledDate() : fulfillmentService.calculateEarliestScheduledDate();
+        LocalDate scheduledDate = request.scheduledDate() != null ? request.scheduledDate()
+                : fulfillmentService.calculateEarliestScheduledDate();
         if (request.scheduledDate() != null && fulfillmentService.isDayBlocked(request.scheduledDate())) {
-            throw new IllegalArgumentException("Orders are not accepted on the selected date: " + request.scheduledDate());
+            throw new IllegalArgumentException(
+                    "Orders are not accepted on the selected date: " + request.scheduledDate());
         }
 
         Map<DeliveryMode, List<CartItem>> groupedItems = new LinkedHashMap<>();
@@ -189,7 +200,8 @@ public class CartService {
                         if (attachMode == DeliveryMode.INSTANT) {
                             // ensure product is still available
                             Product maybeReward = productRepository.findById(rewardProductId).orElse(null);
-                            if (maybeReward != null && maybeReward.isAvailable() && fulfillmentService.isInstantAvailable(rewardProductId, 1)) {
+                            if (maybeReward != null && maybeReward.isAvailable()
+                                    && fulfillmentService.isInstantAvailable(rewardProductId, 1)) {
                                 fulfillmentService.reserveInstantQuantity(rewardProductId, 1);
                                 rewardProduct = maybeReward;
                                 rewardAttachMode = attachMode;
@@ -198,7 +210,8 @@ public class CartService {
                             }
                         } else {
                             Product maybeReward = productRepository.findById(rewardProductId).orElse(null);
-                            if (maybeReward != null && maybeReward.isAvailable() && fulfillmentService.isScheduledAvailable(rewardProductId, scheduledDate, 1)) {
+                            if (maybeReward != null && maybeReward.isAvailable()
+                                    && fulfillmentService.isScheduledAvailable(rewardProductId, scheduledDate, 1)) {
                                 fulfillmentService.reserveScheduledCapacity(rewardProductId, scheduledDate, 1);
                                 rewardProduct = maybeReward;
                                 rewardAttachMode = attachMode;
@@ -255,7 +268,8 @@ public class CartService {
             order.setPaymentMethod(PaymentMethod.INSTAPAY);
             order.setSubtotal(subtotal);
 
-            boolean isCourier = orderType == OrderType.DELIVERY && deliveryAddress != null && deliveryAddress.isCourierDelivery();
+            boolean isCourier = orderType == OrderType.DELIVERY && deliveryAddress != null
+                    && deliveryAddress.isCourierDelivery();
             BigDecimal orderDeliveryFee = isCourier || orderType != OrderType.DELIVERY || deliveryAddress == null
                     ? BigDecimal.ZERO
                     : deliveryAddress.deliveryFee();
@@ -344,8 +358,7 @@ public class CartService {
                 cart.getStatus(),
                 cart.getCreatedAt(),
                 subtotal,
-                items
-        );
+                items);
     }
 
     @Transactional(readOnly = true)
@@ -359,8 +372,7 @@ public class CartService {
                 item.getQuantity(),
                 item.getUnitPrice(),
                 item.getDeliveryMode(),
-                lineTotal
-        );
+                lineTotal);
     }
 
     private Cart getOrCreateActiveCart(CartOwnerRef owner) {
@@ -430,7 +442,8 @@ public class CartService {
         try {
             fulfillmentService.reserveScheduledCapacity(product.getId(), scheduledDate, cartItem.getQuantity());
         } catch (IllegalArgumentException ex) {
-            int latestAvailableQuantity = fulfillmentService.getScheduledAvailableQuantity(product.getId(), scheduledDate);
+            int latestAvailableQuantity = fulfillmentService.getScheduledAvailableQuantity(product.getId(),
+                    scheduledDate);
             throw scheduledCapacityException(product, scheduledDate, cartItem.getQuantity(), latestAvailableQuantity);
         }
     }
@@ -439,8 +452,7 @@ public class CartService {
             Product product,
             LocalDate scheduledDate,
             int requestedQuantity,
-            int availableQuantity
-    ) {
+            int availableQuantity) {
         String message = "%s has only %d available for %s. Requested quantity: %d."
                 .formatted(product.getName(), availableQuantity, scheduledDate, requestedQuantity);
         int dailyCapacity = fulfillmentService.getScheduledDailyCapacity(product.getId());
@@ -451,8 +463,7 @@ public class CartService {
                 "scheduledDate", scheduledDate.toString(),
                 "requestedQuantity", String.valueOf(requestedQuantity),
                 "availableQuantity", String.valueOf(availableQuantity),
-                "dailyCapacity", String.valueOf(dailyCapacity)
-        ));
+                "dailyCapacity", String.valueOf(dailyCapacity)));
     }
 
     private String resolveCustomerName(CartOwnerRef owner, String customerName) {
@@ -479,7 +490,6 @@ public class CartService {
         throw new IllegalArgumentException("Customer phone is required");
     }
 
-
     private String blankToNull(String value) {
         if (value == null || value.isBlank()) {
             return null;
@@ -487,7 +497,8 @@ public class CartService {
         return value.trim();
     }
 
-    private DeliveryAddressSnapshot resolveDeliveryAddress(CartOwnerRef owner, CheckoutRequest request, OrderType orderType) {
+    private DeliveryAddressSnapshot resolveDeliveryAddress(CartOwnerRef owner, CheckoutRequest request,
+            OrderType orderType) {
         if (orderType == OrderType.PICKUP) {
             return null;
         }
@@ -501,7 +512,8 @@ public class CartService {
                     .orElseThrow(() -> new IllegalArgumentException("Address not found"));
 
             if (saved.getAreaId() == null || saved.getAreaId().isBlank()) {
-                throw new IllegalArgumentException("Please update this address with your Governorate, City, and Area before placing your order.");
+                throw new IllegalArgumentException(
+                        "Please update this address with your Governorate, City, and Area before placing your order.");
             }
 
             AreaInfo areaInfo = resolveAreaInfo(saved.getAreaId());
@@ -517,8 +529,7 @@ public class CartService {
                     saved.getBuilding(),
                     saved.getNotes(),
                     areaInfo.deliveryFee(),
-                    areaInfo.isCourierDelivery()
-            );
+                    areaInfo.isCourierDelivery());
         }
 
         String areaId = blankToNull(request.areaId());
@@ -540,8 +551,7 @@ public class CartService {
                 blankToNull(request.deliveryBuilding()),
                 blankToNull(request.deliveryNotes()),
                 areaInfo.deliveryFee(),
-                areaInfo.isCourierDelivery()
-        );
+                areaInfo.isCourierDelivery());
     }
 
     private record AreaInfo(
@@ -552,8 +562,8 @@ public class CartService {
             String areaId,
             String areaName,
             BigDecimal deliveryFee,
-            boolean isCourierDelivery
-    ) {}
+            boolean isCourierDelivery) {
+    }
 
     private AreaInfo resolveAreaInfo(String areaId) {
         if (deliveryZoneService == null) {
@@ -567,7 +577,8 @@ public class CartService {
         if (!city.isActive()) {
             throw new IllegalArgumentException("We do not currently operate in " + city.getName());
         }
-        com.petites.backend.addresses.entity.Governorate gov = deliveryZoneService.getGovernorate(city.getGovernorateId());
+        com.petites.backend.addresses.entity.Governorate gov = deliveryZoneService
+                .getGovernorate(city.getGovernorateId());
         if (!gov.isActive()) {
             throw new IllegalArgumentException("We do not currently operate in " + gov.getName());
         }
@@ -580,8 +591,7 @@ public class CartService {
                 area.getId(),
                 area.getName(),
                 area.isCourierDelivery() ? BigDecimal.ZERO : area.getDeliveryFee(),
-                area.isCourierDelivery()
-        );
+                area.isCourierDelivery());
     }
 
     private record DeliveryAddressSnapshot(
@@ -596,7 +606,17 @@ public class CartService {
             String building,
             String notes,
             BigDecimal deliveryFee,
-            boolean isCourierDelivery
-    ) {
+            boolean isCourierDelivery) {
+    }
+
+    @Scheduled(cron = "${app.cart.cleanup-cron:0 0 3 * * ?}")
+    @Transactional
+    public int cleanupAbandonedGuestCarts() {
+        Instant cutoff = Instant.now().minus(guestRetentionDays, ChronoUnit.DAYS);
+        return cartRepository.deleteAbandonedGuestCarts(CartStatus.ACTIVE, cutoff);
+    }
+
+    public void setGuestRetentionDays(int guestRetentionDays) {
+        this.guestRetentionDays = guestRetentionDays;
     }
 }

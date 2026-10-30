@@ -65,8 +65,7 @@ class Phase4RealtimeAndEdgeSecurityTest {
     @DisplayName("SEC-02: Valid ChatRequest passes bean validation")
     void testChatRequest_Valid() {
         ChatRequest req = new ChatRequest(List.of(
-                new ChatMessageDto("user", "Hello, do you have croissants?")
-        ));
+                new ChatMessageDto("user", "Hello, do you have croissants?")));
         Set<ConstraintViolation<ChatRequest>> violations = validator.validate(req);
         Assertions.assertTrue(violations.isEmpty(), "Valid request should have no violations");
     }
@@ -116,8 +115,7 @@ class Phase4RealtimeAndEdgeSecurityTest {
     @DisplayName("SEC-02: Controller rejects invalid request with HTTP 400")
     void testChatbotController_RejectsInvalidPayload() throws Exception {
         ChatRequest invalidReq = new ChatRequest(List.of(
-                new ChatMessageDto("invalid_role", "")
-        ));
+                new ChatMessageDto("invalid_role", "")));
 
         mockMvc.perform(MockMvcRequestBuilders.post("/api/chat")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -135,8 +133,7 @@ class Phase4RealtimeAndEdgeSecurityTest {
     @DisplayName("SEC-02: Rate limiter enforces 20 req/min limit per IP and responds with HTTP 429")
     void testChatbotRateLimiting_EnforcesLimit() throws Exception {
         ChatRequest validReq = new ChatRequest(List.of(
-                new ChatMessageDto("user", "Hello")
-        ));
+                new ChatMessageDto("user", "Hello")));
         String json = objectMapper.writeValueAsString(validReq);
         String testIp = "192.168.1.100";
 
@@ -156,7 +153,8 @@ class Phase4RealtimeAndEdgeSecurityTest {
                 .content(json))
                 .andExpect(MockMvcResultMatchers.status().isTooManyRequests())
                 .andExpect(MockMvcResultMatchers.jsonPath("$.status").value(429))
-                .andExpect(MockMvcResultMatchers.jsonPath("$.message").value("Too many chat requests. Please wait a moment before sending another message."));
+                .andExpect(MockMvcResultMatchers.jsonPath("$.message")
+                        .value("Too many chat requests. Please wait a moment before sending another message."));
 
         // A different IP should NOT be blocked
         mockMvc.perform(MockMvcRequestBuilders.post("/api/chat")
@@ -258,29 +256,29 @@ class Phase4RealtimeAndEdgeSecurityTest {
     }
 
     @Test
-    @DisplayName("OPS-01: Guest can subscribe to individual order topic for order tracking")
-    void testStompAuth_GuestOrderTracking_Permitted() {
+    @DisplayName("Anonymous user cannot subscribe to individual order topic without valid token")
+    void testStompAuth_GuestOrderTracking_AnonymousForbidden() {
         ChannelInterceptor interceptor = getInboundChannelInterceptor();
 
         StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.SUBSCRIBE);
         accessor.setDestination("/topic/orders/ord-uuid-12345");
         accessor.setSessionId("session-6");
-        // Anonymous guest
+        // Anonymous guest without valid guest token or ownership
 
         Message<?> message = MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
 
-        Message<?> result = interceptor.preSend(message, null);
-        Assertions.assertNotNull(result, "Guest order tracking topic should be permitted");
+        Assertions.assertThrows(AccessDeniedException.class, () -> {
+            interceptor.preSend(message, null);
+        });
     }
 
     private ChannelInterceptor getInboundChannelInterceptor() {
-        org.springframework.messaging.simp.config.ChannelRegistration registration =
-                new org.springframework.messaging.simp.config.ChannelRegistration();
+        org.springframework.messaging.simp.config.ChannelRegistration registration = new org.springframework.messaging.simp.config.ChannelRegistration();
         webSocketConfig.configureClientInboundChannel(registration);
 
         try {
-            java.lang.reflect.Field interceptorsField =
-                    org.springframework.messaging.simp.config.ChannelRegistration.class.getDeclaredField("interceptors");
+            java.lang.reflect.Field interceptorsField = org.springframework.messaging.simp.config.ChannelRegistration.class
+                    .getDeclaredField("interceptors");
             interceptorsField.setAccessible(true);
             @SuppressWarnings("unchecked")
             List<ChannelInterceptor> interceptors = (List<ChannelInterceptor>) interceptorsField.get(registration);

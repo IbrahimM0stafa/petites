@@ -27,11 +27,13 @@ import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -39,7 +41,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -238,5 +242,21 @@ class CartServiceTest {
         }
         field.setAccessible(true);
         field.set(entity, id);
+    }
+
+    @Test
+    void cleanupAbandonedGuestCarts_PurgesOnlyActiveGuestCartsOlderThanCutoff() {
+        when(cartRepository.deleteAbandonedGuestCarts(eq(CartStatus.ACTIVE), any(Instant.class)))
+                .thenReturn(5);
+
+        int result = cartService.cleanupAbandonedGuestCarts();
+
+        assertEquals(5, result);
+        ArgumentCaptor<Instant> cutoffCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(cartRepository).deleteAbandonedGuestCarts(eq(CartStatus.ACTIVE), cutoffCaptor.capture());
+
+        Instant capturedCutoff = cutoffCaptor.getValue();
+        Instant expectedCutoff = Instant.now().minus(14, ChronoUnit.DAYS);
+        assertTrue(Math.abs(capturedCutoff.toEpochMilli() - expectedCutoff.toEpochMilli()) < 5000);
     }
 }

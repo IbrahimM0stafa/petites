@@ -26,13 +26,15 @@ public class GuestSessionService {
     }
 
     @Transactional
+    public GuestSessionResponse create() {
+        return create(null);
+    }
+
+    @Transactional
     public GuestSessionResponse create(GuestSessionCreateRequest request) {
         GuestSession session = new GuestSession();
-        Instant expiresAt = request == null ? null : request.expiresAt();
-        if (expiresAt == null) {
-            expiresAt = Instant.now().plus(ttlHours, ChronoUnit.HOURS);
-        }
-        session.setExpiresAt(expiresAt);
+        // Server-enforced TTL: calculate expiration strictly on the server to prevent clients from bypassing TTL limits
+        session.setExpiresAt(Instant.now().plus(ttlHours, ChronoUnit.HOURS));
 
         return toResponse(guestSessionRepository.save(session));
     }
@@ -42,11 +44,21 @@ public class GuestSessionService {
         GuestSession session = guestSessionRepository.findBySessionToken(token)
                 .orElseThrow(() -> new IllegalArgumentException("Guest session not found"));
 
-        if (session.getExpiresAt() != null && session.getExpiresAt().isBefore(Instant.now())) {
+        if (isExpired(session)) {
             throw new IllegalArgumentException("Guest session expired");
         }
 
         return toResponse(session);
+    }
+
+    private boolean isExpired(GuestSession session) {
+        if (session.getExpiresAt() != null) {
+            return session.getExpiresAt().isBefore(Instant.now());
+        }
+        if (session.getCreatedAt() != null) {
+            return session.getCreatedAt().plus(ttlHours, ChronoUnit.HOURS).isBefore(Instant.now());
+        }
+        return true;
     }
 
     @Scheduled(fixedDelayString = "${app.guest-session.cleanup-interval-ms:3600000}")

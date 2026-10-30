@@ -1,4 +1,5 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -26,6 +27,8 @@ export class ProductDetailComponent implements OnInit {
   successMessage = '';
   addingToCart = false;
 
+  private readonly destroyRef = inject(DestroyRef);
+
   constructor(
     private readonly route: ActivatedRoute,
     private readonly shopService: ShopService,
@@ -34,12 +37,14 @@ export class ProductDetailComponent implements OnInit {
   ) { }
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe(params => {
-      const idParam = params.get('id');
-      if (idParam) {
-        this.loadProduct(idParam);
-      }
-    });
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(params => {
+        const idParam = params.get('id');
+        if (idParam) {
+          this.loadProduct(idParam);
+        }
+      });
   }
 
   loadProduct(id: string): void {

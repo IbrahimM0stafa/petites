@@ -61,7 +61,16 @@ class FlywayMigrationIntegrationTest {
         // 2. Execute migration against the empty schema
         MigrateResult result = flyway.migrate();
         Assertions.assertTrue(result.success, "Flyway migration should succeed on empty schema");
-        Assertions.assertEquals(2, result.migrationsExecuted, "V1 and V2 migrations should be executed");
+        Assertions.assertTrue(result.migrationsExecuted > 0, "Flyway migrations should have been executed");
+
+        var infoService = flyway.info();
+        Assertions.assertEquals(0, infoService.pending().length, "There should be no pending migrations after migrate()");
+        var applied = infoService.applied();
+        Assertions.assertTrue(applied.length > 0, "At least one migration should be applied");
+        for (var info : applied) {
+            Assertions.assertTrue(info.getState().isApplied(), "Migration " + info.getScript() + " should be in applied state");
+            Assertions.assertFalse(info.getState().isFailed(), "Migration " + info.getScript() + " should not be failed");
+        }
 
         // 3. Verify all 23 tables exist in the migrated schema
         List<String> tables = new ArrayList<>();

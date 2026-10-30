@@ -75,8 +75,40 @@ public class FulfillmentServiceTest {
     }
 
     @Test
+    public void testCalculateEarliestScheduledDate_BeforeCutoff_YieldsTomorrow() {
+        when(settingService.getSetting("delivery_cutoff_time", "19:00")).thenReturn("23:59");
+        when(settingService.getSetting("blocked_days", "")).thenReturn("");
+
+        LocalDate todayCairo = ZonedDateTime.now(CAIRO_ZONE).toLocalDate();
+        LocalDate expected = todayCairo.plusDays(1);
+        while (fulfillmentService.isDayBlocked(expected)) {
+            expected = expected.plusDays(1);
+        }
+
+        LocalDate actual = fulfillmentService.calculateEarliestScheduledDate();
+        assertEquals(expected, actual);
+    }
+
+    @Test
+    public void testCalculateEarliestScheduledDate_AfterCutoff_YieldsDayAfterTomorrow() {
+        when(settingService.getSetting("delivery_cutoff_time", "19:00")).thenReturn("00:00");
+        when(settingService.getSetting("blocked_days", "")).thenReturn("");
+
+        LocalDate todayCairo = ZonedDateTime.now(CAIRO_ZONE).toLocalDate();
+        LocalDate expected = todayCairo.plusDays(2);
+        while (fulfillmentService.isDayBlocked(expected)) {
+            expected = expected.plusDays(1);
+        }
+
+        LocalDate actual = fulfillmentService.calculateEarliestScheduledDate();
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void testIsScheduledAvailable_WithinCapacity() {
-        LocalDate tomorrow = LocalDate.now(CAIRO_ZONE).plusDays(1);
+        when(settingService.getSetting("delivery_cutoff_time", "19:00")).thenReturn("19:00");
+        when(settingService.getSetting("blocked_days", "")).thenReturn("");
+        LocalDate eligibleDate = fulfillmentService.calculateEarliestScheduledDate();
 
         ProductFulfillment fulfillment = new ProductFulfillment();
         fulfillment.setDailyCapacity(10);
@@ -84,16 +116,24 @@ public class FulfillmentServiceTest {
 
         ProductDailyCapacityUsage usage = new ProductDailyCapacityUsage();
         usage.setReservedQuantity(5);
-        when(productDailyCapacityUsageRepository.findByProductIdAndProductionDate(PRODUCT_ID, tomorrow))
+        when(productDailyCapacityUsageRepository.findByProductIdAndProductionDate(PRODUCT_ID, eligibleDate))
                 .thenReturn(Optional.of(usage));
 
-        when(settingService.getSetting("delivery_cutoff_time", "19:00")).thenReturn("19:00");
-
         // Requested 3: 5 + 3 = 8 <= 10 -> should be true
-        assertTrue(fulfillmentService.isScheduledAvailable(PRODUCT_ID, tomorrow, 3));
+        assertTrue(fulfillmentService.isScheduledAvailable(PRODUCT_ID, eligibleDate, 3));
 
         // Requested 6: 5 + 6 = 11 > 10 -> should be false
-        assertFalse(fulfillmentService.isScheduledAvailable(PRODUCT_ID, tomorrow, 6));
+        assertFalse(fulfillmentService.isScheduledAvailable(PRODUCT_ID, eligibleDate, 6));
+    }
+
+    @Test
+    public void testIsScheduledAvailable_BeforeEarliestDate_ReturnsFalse() {
+        when(settingService.getSetting("delivery_cutoff_time", "19:00")).thenReturn("19:00");
+        when(settingService.getSetting("blocked_days", "")).thenReturn("");
+        LocalDate earliestDate = fulfillmentService.calculateEarliestScheduledDate();
+        LocalDate ineligiblePastDate = earliestDate.minusDays(1);
+
+        assertFalse(fulfillmentService.isScheduledAvailable(PRODUCT_ID, ineligiblePastDate, 1));
     }
 
     @Test
