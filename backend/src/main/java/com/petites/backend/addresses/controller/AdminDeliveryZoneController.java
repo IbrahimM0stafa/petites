@@ -1,5 +1,11 @@
 package com.petites.backend.addresses.controller;
 
+import com.petites.backend.addresses.dto.AreaPayload;
+import com.petites.backend.addresses.dto.AreaResponse;
+import com.petites.backend.addresses.dto.CityPayload;
+import com.petites.backend.addresses.dto.CityResponse;
+import com.petites.backend.addresses.dto.GovernoratePayload;
+import com.petites.backend.addresses.dto.GovernorateResponse;
 import com.petites.backend.addresses.entity.Area;
 import com.petites.backend.addresses.entity.City;
 import com.petites.backend.addresses.entity.Governorate;
@@ -34,30 +40,35 @@ public class AdminDeliveryZoneController {
     // ── Governorates ─────────────────────────────────────────────────────────
 
     @GetMapping("/governorates")
-    public List<Governorate> listGovernorates() {
-        return deliveryZoneService.getAllGovernorates();
+
+    public List<GovernorateResponse> listGovernorates() {
+        return deliveryZoneService.getAllGovernorates().stream()
+                .map(GovernorateResponse::from)
+                .toList();
     }
 
-    public record GovernoratePayload(String name, Boolean active, Integer sortOrder) {}
-
     @PostMapping("/governorates")
-    public ResponseEntity<Governorate> createGovernorate(@RequestBody GovernoratePayload payload) {
+
+    public ResponseEntity<GovernorateResponse> createGovernorate(@RequestBody GovernoratePayload payload) {
         Governorate created = deliveryZoneService.createGovernorate(
                 payload.name(),
                 payload.active() != null ? payload.active() : true,
-                payload.sortOrder() != null ? payload.sortOrder() : 0
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+                payload.sortOrder() != null ? payload.sortOrder() : 0);
+        return ResponseEntity.status(HttpStatus.CREATED).body(GovernorateResponse.from(created));
     }
 
     @PutMapping("/governorates/{id}")
-    public Governorate updateGovernorate(@PathVariable String id, @RequestBody GovernoratePayload payload) {
-        return deliveryZoneService.updateGovernorate(id, payload.name(), payload.active(), payload.sortOrder());
+
+    public GovernorateResponse updateGovernorate(@PathVariable String id, @RequestBody GovernoratePayload payload) {
+        Governorate updated = deliveryZoneService.updateGovernorate(id, payload.name(), payload.active(),
+                payload.sortOrder());
+        return GovernorateResponse.from(updated);
     }
 
     @PatchMapping("/governorates/{id}/toggle-active")
-    public Governorate toggleGovernorate(@PathVariable String id) {
-        return deliveryZoneService.toggleGovernorateActive(id);
+
+    public GovernorateResponse toggleGovernorate(@PathVariable String id) {
+        return GovernorateResponse.from(deliveryZoneService.toggleGovernorateActive(id));
     }
 
     @DeleteMapping("/governorates/{id}")
@@ -69,31 +80,35 @@ public class AdminDeliveryZoneController {
     // ── Cities ───────────────────────────────────────────────────────────────
 
     @GetMapping("/cities")
-    public List<City> listCities(@RequestParam(required = false) String governorateId) {
-        return deliveryZoneService.getCities(governorateId);
+
+    public List<CityResponse> listCities(@RequestParam(required = false) String governorateId) {
+        return deliveryZoneService.getCities(governorateId).stream()
+                .map(CityResponse::from)
+                .toList();
     }
 
-    public record CityPayload(String governorateId, String name, Boolean active, Integer sortOrder) {}
-
     @PostMapping("/cities")
-    public ResponseEntity<City> createCity(@RequestBody CityPayload payload) {
+
+    public ResponseEntity<CityResponse> createCity(@RequestBody CityPayload payload) {
         City created = deliveryZoneService.createCity(
                 payload.governorateId(),
                 payload.name(),
                 payload.active() != null ? payload.active() : true,
-                payload.sortOrder() != null ? payload.sortOrder() : 0
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+                payload.sortOrder() != null ? payload.sortOrder() : 0);
+        return ResponseEntity.status(HttpStatus.CREATED).body(CityResponse.from(created));
     }
 
     @PutMapping("/cities/{id}")
-    public City updateCity(@PathVariable String id, @RequestBody CityPayload payload) {
-        return deliveryZoneService.updateCity(id, payload.name(), payload.active(), payload.sortOrder());
+
+    public CityResponse updateCity(@PathVariable String id, @RequestBody CityPayload payload) {
+        City updated = deliveryZoneService.updateCity(id, payload.name(), payload.active(), payload.sortOrder());
+        return CityResponse.from(updated);
     }
 
     @PatchMapping("/cities/{id}/toggle-active")
-    public City toggleCity(@PathVariable String id) {
-        return deliveryZoneService.toggleCityActive(id);
+
+    public CityResponse toggleCity(@PathVariable String id) {
+        return CityResponse.from(deliveryZoneService.toggleCityActive(id));
     }
 
     @DeleteMapping("/cities/{id}")
@@ -105,52 +120,49 @@ public class AdminDeliveryZoneController {
     // ── Areas ────────────────────────────────────────────────────────────────
 
     @GetMapping("/areas")
-    public List<Area> listAreas(@RequestParam(required = false) String cityId) {
-        return deliveryZoneService.getAreas(cityId);
+
+    public List<AreaResponse> listAreas(@RequestParam(required = false) String cityId) {
+        return deliveryZoneService.getAreas(cityId).stream()
+                .map(AreaResponse::from)
+                .toList();
     }
 
-    public record AreaPayload(
-            String cityId,
-            String name,
-            BigDecimal deliveryFee,
-            Boolean courierDelivery,
-            Boolean active,
-            Integer sortOrder
-    ) {}
-
     @PostMapping("/areas")
-    public ResponseEntity<Area> createArea(@RequestBody AreaPayload payload) {
+
+    public ResponseEntity<AreaResponse> createArea(@RequestBody AreaPayload payload) {
         Area created = deliveryZoneService.createArea(
                 payload.cityId(),
                 payload.name(),
                 payload.deliveryFee() != null ? payload.deliveryFee() : BigDecimal.ZERO,
                 payload.courierDelivery() != null ? payload.courierDelivery() : false,
                 payload.active() != null ? payload.active() : true,
-                payload.sortOrder() != null ? payload.sortOrder() : 0
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(created);
+                payload.sortOrder() != null ? payload.sortOrder() : 0);
+        return ResponseEntity.status(HttpStatus.CREATED).body(AreaResponse.from(created));
     }
 
     @PutMapping("/areas/{id}")
-    public Area updateArea(@PathVariable String id, @RequestBody AreaPayload payload) {
-        return deliveryZoneService.updateArea(
+
+    public AreaResponse updateArea(@PathVariable String id, @RequestBody AreaPayload payload) {
+        Area updated = deliveryZoneService.updateArea(
                 id,
                 payload.name(),
                 payload.deliveryFee(),
                 payload.courierDelivery(),
                 payload.active(),
-                payload.sortOrder()
-        );
+                payload.sortOrder());
+        return AreaResponse.from(updated);
     }
 
     @PatchMapping("/areas/{id}/toggle-active")
-    public Area toggleArea(@PathVariable String id) {
-        return deliveryZoneService.toggleAreaActive(id);
+
+    public AreaResponse toggleArea(@PathVariable String id) {
+        return AreaResponse.from(deliveryZoneService.toggleAreaActive(id));
     }
 
     @PatchMapping("/areas/{id}/toggle-courier")
-    public Area toggleAreaCourier(@PathVariable String id) {
-        return deliveryZoneService.toggleAreaCourier(id);
+
+    public AreaResponse toggleAreaCourier(@PathVariable String id) {
+        return AreaResponse.from(deliveryZoneService.toggleAreaCourier(id));
     }
 
     @DeleteMapping("/areas/{id}")

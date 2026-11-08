@@ -1,7 +1,11 @@
 package com.petites.backend.settings.controller;
 
+import com.petites.backend.settings.dto.SettingResponse;
+import com.petites.backend.settings.dto.SettingUpdateRequest;
 import com.petites.backend.settings.entity.Setting;
 import com.petites.backend.settings.service.SettingService;
+import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,12 +23,18 @@ public class AdminSettingController {
     }
 
     @GetMapping
-    public List<Setting> getAll() {
-        return settingService.getAllSettings();
+
+    public List<SettingResponse> getAll() {
+        return settingService.getAllSettings()
+                .stream()
+                .map(SettingResponse::from)
+                .toList();
     }
 
     @PutMapping
-    public void updateSetting(@RequestParam String key, @RequestParam String value) {
-        settingService.saveSetting(key, value);
+
+    public ResponseEntity<SettingResponse> updateSetting(@Valid @RequestBody SettingUpdateRequest request) {
+        Setting saved = settingService.saveSetting(request.key(), request.value());
+        return ResponseEntity.ok(SettingResponse.from(saved));
     }
 }

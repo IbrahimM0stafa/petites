@@ -19,9 +19,7 @@ export class SettingsService {
     return this.apiClient.get<AdminSetting[]>('/api/admin/settings');
   }
 
-  update(key: string, value: string): Observable<void> {
-    return this.apiClient.put<void>('/api/admin/settings', null, {
-      params: { key, value }
-    });
+    update(key: string, value: string): Observable < AdminSetting > {
+      return this.apiClient.put<AdminSetting>('/api/admin/settings', { key, value });
+    }
   }
-}

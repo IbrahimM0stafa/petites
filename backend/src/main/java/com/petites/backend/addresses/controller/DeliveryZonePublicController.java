@@ -1,7 +1,7 @@
 package com.petites.backend.addresses.controller;
 
+import com.petites.backend.addresses.dto.AreaResponse;
 import com.petites.backend.addresses.dto.DeliveryZoneTreeDto.GovernorateNode;
-import com.petites.backend.addresses.entity.Area;
 import com.petites.backend.addresses.service.DeliveryZoneService;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,7 +25,8 @@ public class DeliveryZonePublicController {
     }
 
     @GetMapping("/area/{id}")
-    public Area getArea(@PathVariable String id) {
-        return deliveryZoneService.getArea(id);
+
+    public AreaResponse getArea(@PathVariable String id) {
+        return AreaResponse.from(deliveryZoneService.getArea(id));
     }
 }

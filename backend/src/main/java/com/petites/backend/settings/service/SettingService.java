@@ -29,7 +29,8 @@ public class SettingService {
     }
 
     @Transactional
-    public void saveSetting(String key, String value) {
+
+    public Setting saveSetting(String key, String value) {
         Setting setting = settingRepository.findByKey(key)
                 .orElseGet(() -> {
                     Setting s = new Setting();
@@ -37,6 +38,7 @@ public class SettingService {
                     return s;
                 });
         setting.setValue(value);
-        settingRepository.save(setting);
+        setting.setUpdatedAt(java.time.Instant.now());
+        return settingRepository.save(setting);
     }
 }
