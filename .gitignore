@@ -1,6 +1,38 @@
 # Environment secrets
 .env
+*.env
 backend/.env
 
 # Docker Compose overrides
 docker-compose.override.yml
+
+# Compiled & Build Artifacts
+target/
+**/target/
+dist/
+**/dist/
+.angular/
+**/.angular/
+node_modules/
+**/node_modules/
+
+# IDE & Editor files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.sublime-project
+*.sublime-workspace
+.classpath
+.project
+.settings/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Tool & Scratch files
+.zencoder/
+*.log
