@@ -107,9 +107,13 @@ public class CouponService {
 
     @Transactional(readOnly = true)
     public Coupon resolveForCheckout(String couponId, String couponCode, BigDecimal subtotal) {
+        return resolveForCheckout(couponId, couponCode, subtotal, currentUserIdOrNull());
+    }
+
+    @Transactional(readOnly = true)
+    public Coupon resolveForCheckout(String couponId, String couponCode, BigDecimal subtotal, String userId) {
         if (couponId != null && !couponId.isBlank()) {
             Coupon coupon = getEntity(couponId.trim());
-            String userId = currentUserIdOrNull();
             String validationError = validateCoupon(coupon, subtotal, userId);
             if (validationError != null) {
                 throw new IllegalArgumentException(validationError);
@@ -120,7 +124,6 @@ public class CouponService {
         if (couponCode != null && !couponCode.isBlank()) {
             Coupon coupon = couponRepository.findByCodeIgnoreCase(couponCode.trim())
                     .orElseThrow(() -> new IllegalArgumentException("Coupon not found"));
-            String userId = currentUserIdOrNull();
             String validationError = validateCoupon(coupon, subtotal, userId);
             if (validationError != null) {
                 throw new IllegalArgumentException(validationError);

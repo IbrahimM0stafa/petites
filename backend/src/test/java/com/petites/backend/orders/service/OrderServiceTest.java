@@ -1,5 +1,6 @@
 package com.petites.backend.orders.service;
 
+import com.petites.backend.addresses.entity.Address;
 import com.petites.backend.addresses.repository.AddressRepository;
 import com.petites.backend.common.enums.DeliveryMode;
 import com.petites.backend.coupons.service.CouponService;
@@ -136,9 +137,7 @@ class OrderServiceTest {
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
-        assertThrows(IllegalStateException.class, () ->
-                orderService.updateStatus(orderId, OrderStatus.CANCELLED)
-        );
+        assertThrows(IllegalStateException.class, () -> orderService.updateStatus(orderId, OrderStatus.CANCELLED));
     }
 
     @Test
@@ -150,9 +149,67 @@ class OrderServiceTest {
 
         when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
 
-        assertThrows(IllegalStateException.class, () ->
-                orderService.updateStatus(orderId, OrderStatus.CONFIRMED)
-        );
+        assertThrows(IllegalStateException.class, () -> orderService.updateStatus(orderId, OrderStatus.CONFIRMED));
+    }
+
+    @Test
+    void toResponseBuildsSnapshotAddressDirectly() throws Exception {
+        String orderId = "order-snap-1";
+        Order order = new Order();
+        assignId(order, orderId);
+        order.setAddressId("addr-1");
+        order.setUserId("user-1");
+        order.setGovernorateId("gov-1");
+        order.setDeliveryGovernorate("Cairo");
+        order.setCityId("city-1");
+        order.setDeliveryCity("Nasr City");
+        order.setAreaId("area-1");
+        order.setDeliveryArea("First Zone");
+        order.setDeliveryStreet("Main St");
+        order.setDeliveryBuilding("Building 5");
+        order.setDeliveryNotes("Ring bell");
+
+        when(orderItemRepository.findByOrderIdOrderByIdAsc(orderId)).thenReturn(List.of());
+
+        var response = orderService.toResponse(order);
+
+        verify(addressRepository, never()).findById(any());
+        assertEquals("Nasr City", response.address().city());
+        assertEquals("Main St", response.address().street());
+        assertEquals("Ring bell", response.address().notes());
+    }
+
+    @Test
+    void toResponseBuildsAddressFromLinkedEntityWhenSnapshotNull() throws Exception {
+        String orderId = "order-linked-1";
+        String addressId = "addr-2";
+        Order order = new Order();
+        assignId(order, orderId);
+        order.setAddressId(addressId);
+        // deliveryCity is null
+
+        Address savedAddress = new Address();
+        assignId(savedAddress, addressId);
+        savedAddress.setUserId("user-2");
+        savedAddress.setGovernorateId("gov-2");
+        savedAddress.setGovernorate("Giza");
+        savedAddress.setCityId("city-2");
+        savedAddress.setCity("Dokki");
+        savedAddress.setAreaId("area-2");
+        savedAddress.setArea("Mossadek");
+        savedAddress.setStreet("Tahrir St");
+        savedAddress.setBuilding("Bldg 12");
+        savedAddress.setNotes("Floor 3");
+
+        when(orderItemRepository.findByOrderIdOrderByIdAsc(orderId)).thenReturn(List.of());
+        when(addressRepository.findById(addressId)).thenReturn(Optional.of(savedAddress));
+
+        var response = orderService.toResponse(order);
+
+        verify(addressRepository, times(1)).findById(addressId);
+        assertEquals("Dokki", response.address().city());
+        assertEquals("Tahrir St", response.address().street());
+        assertEquals("Floor 3", response.address().notes());
     }
 
     private void assignId(Object entity, String id) throws Exception {

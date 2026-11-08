@@ -7,6 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.petites.backend.categories.dto.CategoryCreateRequest;
 import com.petites.backend.categories.dto.CategoryResponse;
@@ -51,6 +53,7 @@ public class CategoryService {
     public CategoryResponse update(String id, CategoryUpdateRequest request) {
         Category category = getEntity(id);
         String previousImageUrl = category.getImageUrl();
+        String imageToDelete = null;
 
         if (request.name() != null) {
             category.setName(request.name().trim());
@@ -58,7 +61,7 @@ public class CategoryService {
         if (request.imageUrl() != null) {
             String nextImageUrl = request.imageUrl().trim().isEmpty() ? null : request.imageUrl().trim();
             if (previousImageUrl != null && !previousImageUrl.equals(nextImageUrl)) {
-                deleteCloudinaryImage(previousImageUrl);
+                imageToDelete = previousImageUrl;
             }
             category.setImageUrl(nextImageUrl);
         }
@@ -66,7 +69,12 @@ public class CategoryService {
             category.setSortOrder(request.sortOrder());
         }
 
-        return toResponse(categoryRepository.save(category));
+        Category savedCategory = categoryRepository.save(category);
+        if (imageToDelete != null) {
+            scheduleImageDeletionAfterCommit(imageToDelete);
+        }
+
+        return toResponse(savedCategory);
     }
 
     @Transactional
@@ -77,9 +85,29 @@ public class CategoryService {
             throw new IllegalArgumentException("Cannot delete category as it has associated products");
         }
 
-        deleteCloudinaryImage(category.getImageUrl());
-
+        String imageToDelete = category.getImageUrl();
         categoryRepository.delete(category);
+
+        if (imageToDelete != null) {
+            scheduleImageDeletionAfterCommit(imageToDelete);
+        }
+    }
+
+    private void scheduleImageDeletionAfterCommit(String imageUrl) {
+        if (imageUrl == null || imageUrl.isBlank()) {
+            return;
+        }
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    deleteCloudinaryImage(imageUrl);
+                }
+            });
+        } else {
+            deleteCloudinaryImage(imageUrl);
+        }
     }
 
     private Category getEntity(String id) {
@@ -104,7 +132,6 @@ public class CategoryService {
                 category.getId(),
                 category.getName(),
                 category.getImageUrl(),
-                category.getSortOrder()
-        );
+                category.getSortOrder());
     }
 }

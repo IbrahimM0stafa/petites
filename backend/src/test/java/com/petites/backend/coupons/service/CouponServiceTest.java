@@ -97,6 +97,40 @@ class CouponServiceTest {
         assertEquals(new BigDecimal("10.00"), response.discountAmount());
     }
 
+    @Test
+    void resolveForCheckout_ExplicitUserId_ResolvesValidCoupon() throws Exception {
+        String code = "SAVE20";
+        BigDecimal subtotal = new BigDecimal("100.00");
+        Coupon coupon = new Coupon();
+        assignId(coupon, "coupon-save20");
+        coupon.setCode(code);
+        coupon.setActive(true);
+
+        when(couponRepository.findByCodeIgnoreCase(code)).thenReturn(Optional.of(coupon));
+
+        Coupon result = couponService.resolveForCheckout(null, code, subtotal, "user-explicit-123");
+
+        assertNotNull(result);
+        assertEquals("coupon-save20", result.getId());
+    }
+
+    @Test
+    void resolveForCheckout_ExplicitUserId_ThrowsWhenUserNull() throws Exception {
+        String code = "SAVE20";
+        BigDecimal subtotal = new BigDecimal("100.00");
+        Coupon coupon = new Coupon();
+        assignId(coupon, "coupon-save20");
+        coupon.setCode(code);
+        coupon.setActive(true);
+
+        when(couponRepository.findByCodeIgnoreCase(code)).thenReturn(Optional.of(coupon));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () ->
+                couponService.resolveForCheckout(null, code, subtotal, null)
+        );
+        assertEquals("you must login to use a coupon code", ex.getMessage());
+    }
+
     private void assignId(Object entity, String id) throws Exception {
         Class<?> currentType = entity.getClass();
         Field field = null;

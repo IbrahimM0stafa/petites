@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.petites.backend.categories.entity.Category;
 import com.petites.backend.categories.repository.CategoryRepository;
@@ -35,7 +37,8 @@ public class ProductService {
     private final ImageUploadService imageUploadService;
     private final FulfillmentService fulfillmentService;
 
-    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository, ImageUploadService imageUploadService, FulfillmentService fulfillmentService) {
+    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository,
+            ImageUploadService imageUploadService, FulfillmentService fulfillmentService) {
         this.productRepository = productRepository;
         this.categoryRepository = categoryRepository;
         this.imageUploadService = imageUploadService;
@@ -51,14 +54,17 @@ public class ProductService {
     }
 
     @Transactional(readOnly = true)
-    public Page<ProductResponse> list(String categoryId, Boolean available, String fulfillmentMode, java.math.BigDecimal maxPrice, String search, Pageable pageable) {
+    public Page<ProductResponse> list(String categoryId, Boolean available, String fulfillmentMode,
+            java.math.BigDecimal maxPrice, String search, Pageable pageable) {
         String catId = (categoryId != null && !categoryId.trim().isEmpty()) ? categoryId.trim() : null;
-        String searchStr = (search != null && !search.trim().isEmpty()) ? "%" + search.trim().toLowerCase() + "%" : null;
+        String searchStr = (search != null && !search.trim().isEmpty()) ? "%" + search.trim().toLowerCase() + "%"
+                : null;
 
         Page<Product> productPage;
 
         if ("instant".equalsIgnoreCase(fulfillmentMode)) {
-            productPage = productRepository.findInstantAvailable(catId, available, maxPrice, searchStr, Instant.now(), pageable);
+            productPage = productRepository.findInstantAvailable(catId, available, maxPrice, searchStr, Instant.now(),
+                    pageable);
         } else if ("scheduled".equalsIgnoreCase(fulfillmentMode)) {
             productPage = productRepository.findScheduledEligible(catId, available, maxPrice, searchStr, pageable);
         } else {
@@ -67,7 +73,8 @@ public class ProductService {
 
         LocalDate earliestDate = fulfillmentService.calculateEarliestScheduledDate();
         List<String> productIds = productPage.getContent().stream().map(Product::getId).toList();
-        java.util.Map<String, InstantDeliveryInventory> instantMap = fulfillmentService.getActiveInstantInventories(productIds);
+        java.util.Map<String, InstantDeliveryInventory> instantMap = fulfillmentService
+                .getActiveInstantInventories(productIds);
 
         return productPage.map(p -> toResponse(p, earliestDate, instantMap.get(p.getId())));
     }
@@ -77,7 +84,8 @@ public class ProductService {
         LocalDate earliestDate = fulfillmentService.calculateEarliestScheduledDate();
         Page<Product> productPage = productRepository.findByFeaturedTrueAndAvailableTrue(pageable);
         List<String> productIds = productPage.getContent().stream().map(Product::getId).toList();
-        java.util.Map<String, InstantDeliveryInventory> instantMap = fulfillmentService.getActiveInstantInventories(productIds);
+        java.util.Map<String, InstantDeliveryInventory> instantMap = fulfillmentService
+                .getActiveInstantInventories(productIds);
 
         return productPage.map(p -> toResponse(p, earliestDate, instantMap.get(p.getId())));
     }
@@ -99,7 +107,8 @@ public class ProductService {
 
         if (request.categoryId() != null && !request.categoryId().trim().isEmpty()) {
             Category category = categoryRepository.findById(request.categoryId().trim())
-                    .orElseThrow(() -> new IllegalArgumentException("Category not found with ID: " + request.categoryId()));
+                    .orElseThrow(
+                            () -> new IllegalArgumentException("Category not found with ID: " + request.categoryId()));
             product.setCategory(category);
         }
 
@@ -118,6 +127,7 @@ public class ProductService {
     public ProductResponse update(String id, ProductUpdateRequest request) {
         Product product = getEntity(id);
         String previousMainImage = product.getMainImage();
+        List<String> imagesToDelete = new ArrayList<>();
 
         if (request.name() != null) {
             product.setName(request.name().trim());
@@ -131,7 +141,7 @@ public class ProductService {
         if (request.mainImage() != null) {
             String nextMainImage = request.mainImage().trim().isEmpty() ? null : request.mainImage().trim();
             if (previousMainImage != null && !previousMainImage.equals(nextMainImage)) {
-                deleteCloudinaryImage(previousMainImage);
+                imagesToDelete.add(previousMainImage);
             }
             product.setMainImage(nextMainImage);
         }
@@ -156,7 +166,9 @@ public class ProductService {
         if (request.imageUrls() != null) {
             List<ProductImage> existingImages = new ArrayList<>(product.getImages());
             for (ProductImage image : existingImages) {
-                deleteCloudinaryImage(image.getImageUrl());
+                if (image.getImageUrl() != null && !image.getImageUrl().isBlank()) {
+                    imagesToDelete.add(image.getImageUrl());
+                }
             }
             product.getImages().clear();
             for (String url : request.imageUrls()) {
@@ -166,10 +178,33 @@ public class ProductService {
             }
         }
 
-        return toResponse(productRepository.save(product));
+        Product savedProduct = productRepository.save(product);
+
+        scheduleImageDeletionsAfterCommit(imagesToDelete);
+
+        return toResponse(savedProduct);
     }
 
-    
+    private void scheduleImageDeletionsAfterCommit(List<String> imagesToDelete) {
+        if (imagesToDelete == null || imagesToDelete.isEmpty()) {
+            return;
+        }
+
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    for (String url : imagesToDelete) {
+                        deleteCloudinaryImage(url);
+                    }
+                }
+            });
+        } else {
+            for (String url : imagesToDelete) {
+                deleteCloudinaryImage(url);
+            }
+        }
+    }
 
     private Product getEntity(String id) {
         return productRepository.findById(id)
@@ -189,11 +224,13 @@ public class ProductService {
     }
 
     private ProductResponse toResponse(Product product) {
-        InstantDeliveryInventory activeInstant = fulfillmentService.getActiveInstantInventory(product.getId()).orElse(null);
+        InstantDeliveryInventory activeInstant = fulfillmentService.getActiveInstantInventory(product.getId())
+                .orElse(null);
         return toResponse(product, fulfillmentService.calculateEarliestScheduledDate(), activeInstant);
     }
 
-    private ProductResponse toResponse(Product product, LocalDate earliestDate, InstantDeliveryInventory activeInstant) {
+    private ProductResponse toResponse(Product product, LocalDate earliestDate,
+            InstantDeliveryInventory activeInstant) {
         String categoryId = product.getCategory() != null ? product.getCategory().getId() : null;
         String categoryName = product.getCategory() != null ? product.getCategory().getName() : null;
 
@@ -227,7 +264,6 @@ public class ProductService {
                 earliestDate,
                 instantAvailableToday,
                 instantQuantityToday,
-                instantAvailableUntil
-        );
+                instantAvailableUntil);
     }
 }

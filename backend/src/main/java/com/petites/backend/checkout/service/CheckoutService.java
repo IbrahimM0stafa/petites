@@ -1,0 +1,483 @@
+package com.petites.backend.checkout.service;
+
+import com.petites.backend.addresses.entity.Address;
+import com.petites.backend.addresses.repository.AddressRepository;
+import com.petites.backend.addresses.service.DeliveryZoneService;
+import com.petites.backend.carts.dto.CartOwnerRef;
+import com.petites.backend.carts.entity.Cart;
+import com.petites.backend.carts.entity.CartItem;
+import com.petites.backend.carts.enums.CartStatus;
+import com.petites.backend.carts.repository.CartItemRepository;
+import com.petites.backend.carts.repository.CartRepository;
+import com.petites.backend.checkout.dto.CheckoutRequest;
+import com.petites.backend.checkout.dto.CheckoutResponse;
+import com.petites.backend.checkout.exception.CheckoutAvailabilityException;
+import com.petites.backend.common.enums.DeliveryMode;
+import com.petites.backend.coupons.entity.Coupon;
+import com.petites.backend.coupons.service.CouponService;
+import com.petites.backend.loyalty.dto.LoyaltyResponse;
+import com.petites.backend.loyalty.service.LoyaltyService;
+import com.petites.backend.orders.dto.OrderResponse;
+import com.petites.backend.orders.entity.Order;
+import com.petites.backend.orders.entity.OrderItem;
+import com.petites.backend.orders.enums.OrderStatus;
+import com.petites.backend.orders.enums.OrderType;
+import com.petites.backend.orders.enums.PaymentMethod;
+import com.petites.backend.orders.repository.OrderRepository;
+import com.petites.backend.orders.service.OrderService;
+import com.petites.backend.products.entity.Product;
+import com.petites.backend.products.repository.ProductRepository;
+import com.petites.backend.products.service.FulfillmentService;
+import com.petites.backend.users.entity.User;
+import com.petites.backend.users.service.UserService;
+import com.petites.backend.websocket.service.OrderWebSocketService;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@Service
+public class CheckoutService {
+
+    private final CartRepository cartRepository;
+    private final CartItemRepository cartItemRepository;
+    private final ProductRepository productRepository;
+    private final FulfillmentService fulfillmentService;
+    private final UserService userService;
+    private final LoyaltyService loyaltyService;
+    private final OrderRepository orderRepository;
+    private final OrderService orderService;
+    private final CouponService couponService;
+    private final AddressRepository addressRepository;
+    private final OrderWebSocketService orderWebSocketService;
+    private final DeliveryZoneService deliveryZoneService;
+
+    @Autowired
+    public CheckoutService(
+            CartRepository cartRepository,
+            CartItemRepository cartItemRepository,
+            ProductRepository productRepository,
+            FulfillmentService fulfillmentService,
+            UserService userService,
+            LoyaltyService loyaltyService,
+            OrderRepository orderRepository,
+            OrderService orderService,
+            CouponService couponService,
+            AddressRepository addressRepository,
+            OrderWebSocketService orderWebSocketService,
+            DeliveryZoneService deliveryZoneService) {
+        this.cartRepository = cartRepository;
+        this.cartItemRepository = cartItemRepository;
+        this.productRepository = productRepository;
+        this.fulfillmentService = fulfillmentService;
+        this.userService = userService;
+        this.loyaltyService = loyaltyService;
+        this.orderRepository = orderRepository;
+        this.orderService = orderService;
+        this.couponService = couponService;
+        this.addressRepository = addressRepository;
+        this.orderWebSocketService = orderWebSocketService;
+        this.deliveryZoneService = deliveryZoneService;
+    }
+
+    @Transactional
+    public CheckoutResponse checkout(CartOwnerRef owner, CheckoutRequest request) {
+        Cart cart = getOrCreateActiveCart(owner);
+        List<CartItem> items = cartItemRepository.findByCartIdOrderByCreatedAtAsc(cart.getId());
+        if (items.isEmpty()) {
+            throw new IllegalArgumentException("Cart is empty");
+        }
+
+        BigDecimal cartSubtotal = items.stream()
+                .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        String customerName = resolveCustomerName(owner, request.customerName());
+        String customerPhone = resolveCustomerPhone(owner, request.customerPhone());
+        OrderType orderType = request.orderType() == null ? OrderType.DELIVERY : request.orderType();
+        DeliveryAddressSnapshot deliveryAddress = resolveDeliveryAddress(owner, request, orderType);
+        String notes = blankToNull(request.notes());
+        Coupon coupon = couponService.resolveForCheckout(blankToNull(request.couponId()), blankToNull(request.couponCode()), cartSubtotal, owner.userId());
+        BigDecimal discountAmount = coupon == null ? BigDecimal.ZERO
+                : couponService.calculateDiscountAmount(coupon, cartSubtotal);
+        String couponId = coupon == null ? null : coupon.getId();
+        LocalDate scheduledDate = request.scheduledDate() != null ? request.scheduledDate()
+                : fulfillmentService.calculateEarliestScheduledDate();
+        if (request.scheduledDate() != null && fulfillmentService.isDayBlocked(request.scheduledDate())) {
+            throw new IllegalArgumentException(
+                    "Orders are not accepted on the selected date: " + request.scheduledDate());
+        }
+
+        Map<DeliveryMode, List<CartItem>> groupedItems = new LinkedHashMap<>();
+        for (CartItem item : items) {
+            groupedItems.computeIfAbsent(item.getDeliveryMode(), key -> new ArrayList<>()).add(item);
+        }
+
+        // Attempt automatic loyalty reward redemption for authenticated users.
+        Product rewardProduct = null;
+        DeliveryMode rewardAttachMode = null;
+        boolean rewardClaimed = false;
+        if (owner.isUser()) {
+            try {
+                LoyaltyResponse loyalty = loyaltyService.getMyStatus(owner.userId());
+                if (loyalty.rewardAvailable() && loyalty.rewardProductId() != null) {
+                    String rewardProductId = loyalty.rewardProductId();
+                    // choose attach mode: prefer INSTANT if present, otherwise first group
+                    DeliveryMode attachMode = groupedItems.containsKey(DeliveryMode.INSTANT)
+                            ? DeliveryMode.INSTANT
+                            : (groupedItems.keySet().stream().findFirst().orElse(null));
+                    if (attachMode != null) {
+                        // try reserve inventory for reward according to attach mode
+                        if (attachMode == DeliveryMode.INSTANT) {
+                            // ensure product is still available
+                            Product maybeReward = productRepository.findById(rewardProductId).orElse(null);
+                            if (maybeReward != null && maybeReward.isAvailable()
+                                    && fulfillmentService.isInstantAvailable(rewardProductId, 1)) {
+                                fulfillmentService.reserveInstantQuantity(rewardProductId, 1);
+                                rewardProduct = maybeReward;
+                                rewardAttachMode = attachMode;
+                                userService.incrementRewardRedeemedCount(owner.userId());
+                                rewardClaimed = true;
+                            }
+                        } else {
+                            Product maybeReward = productRepository.findById(rewardProductId).orElse(null);
+                            if (maybeReward != null && maybeReward.isAvailable()
+                                    && fulfillmentService.isScheduledAvailable(rewardProductId, scheduledDate, 1)) {
+                                fulfillmentService.reserveScheduledCapacity(rewardProductId, scheduledDate, 1);
+                                rewardProduct = maybeReward;
+                                rewardAttachMode = attachMode;
+                                userService.incrementRewardRedeemedCount(owner.userId());
+                                rewardClaimed = true;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {
+                // if anything goes wrong, skip reward silently
+            }
+        }
+
+        List<Order> savedOrders = new ArrayList<>();
+        boolean discountApplied = false;
+        boolean rewardAppliedToOrder = false;
+        for (Map.Entry<DeliveryMode, List<CartItem>> entry : groupedItems.entrySet()) {
+            DeliveryMode deliveryMode = entry.getKey();
+            List<CartItem> groupItems = entry.getValue();
+            BigDecimal subtotal = BigDecimal.ZERO;
+
+            for (CartItem cartItem : groupItems) {
+                // ensure product wasn't disabled after it was added to cart
+                if (!cartItem.getProduct().isAvailable()) {
+                    throw new IllegalArgumentException("Product is not available");
+                }
+                if (deliveryMode == DeliveryMode.INSTANT) {
+                    fulfillmentService.reserveInstantQuantity(cartItem.getProduct().getId(), cartItem.getQuantity());
+                } else {
+                    reserveScheduledCapacityForCheckout(cartItem, scheduledDate);
+                }
+                subtotal = subtotal.add(cartItem.getUnitPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+            }
+
+            Order order = new Order();
+            order.setUserId(owner.userId());
+            order.setGuestSessionId(owner.guestSessionId());
+            if (deliveryAddress != null) {
+                order.setAddressId(deliveryAddress.addressId());
+                order.setGovernorateId(deliveryAddress.governorateId());
+                order.setDeliveryGovernorate(deliveryAddress.governorate());
+                order.setCityId(deliveryAddress.cityId());
+                order.setDeliveryCity(deliveryAddress.city());
+                order.setAreaId(deliveryAddress.areaId());
+                order.setDeliveryArea(deliveryAddress.area());
+                order.setDeliveryStreet(deliveryAddress.street());
+                order.setDeliveryBuilding(deliveryAddress.building());
+                order.setDeliveryNotes(deliveryAddress.notes());
+            }
+            order.setDeliveryMode(deliveryMode);
+            order.setOrderType(orderType);
+            order.setStatus(OrderStatus.PENDING);
+            order.setPaymentMethod(PaymentMethod.INSTAPAY);
+            order.setSubtotal(subtotal);
+
+            boolean isCourier = orderType == OrderType.DELIVERY && deliveryAddress != null
+                    && deliveryAddress.isCourierDelivery();
+            BigDecimal orderDeliveryFee = isCourier || orderType != OrderType.DELIVERY || deliveryAddress == null
+                    ? BigDecimal.ZERO
+                    : deliveryAddress.deliveryFee();
+
+            order.setCourierDelivery(isCourier);
+            order.setDeliveryFee(orderDeliveryFee);
+
+            BigDecimal orderDiscount = BigDecimal.ZERO;
+            if (!discountApplied && discountAmount.signum() > 0) {
+                orderDiscount = discountAmount.min(subtotal.add(orderDeliveryFee));
+                discountApplied = true;
+            }
+            order.setDiscountAmount(orderDiscount);
+            order.setTotalAmount(subtotal.add(orderDeliveryFee).subtract(orderDiscount).max(BigDecimal.ZERO));
+            order.setCustomerName(customerName);
+            order.setCustomerPhone(customerPhone);
+            order.setScheduledDate(deliveryMode == DeliveryMode.SCHEDULED ? scheduledDate : null);
+            order.setNotes(notes);
+            order.setCouponId(orderDiscount.signum() > 0 ? couponId : null);
+            order.setRewardApplied(false);
+
+            for (CartItem cartItem : groupItems) {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(order);
+                orderItem.setProductId(cartItem.getProduct().getId());
+                orderItem.setProductName(cartItem.getProduct().getName());
+                orderItem.setProductImage(cartItem.getProduct().getMainImage());
+                orderItem.setQuantity(cartItem.getQuantity());
+                orderItem.setUnitPrice(cartItem.getUnitPrice());
+                orderItem.setLineTotal(cartItem.getUnitPrice().multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+                order.getItems().add(orderItem);
+            }
+
+            // attach reward product to the first matching order if claimed
+            if (rewardClaimed && !rewardAppliedToOrder && rewardAttachMode == deliveryMode && rewardProduct != null) {
+                OrderItem rewardItem = new OrderItem();
+                rewardItem.setOrder(order);
+                rewardItem.setProductId(rewardProduct.getId());
+                rewardItem.setProductName(rewardProduct.getName());
+                rewardItem.setProductImage(rewardProduct.getMainImage());
+                rewardItem.setQuantity(1);
+                rewardItem.setUnitPrice(BigDecimal.ZERO);
+                rewardItem.setLineTotal(BigDecimal.ZERO);
+                order.getItems().add(rewardItem);
+                order.setRewardApplied(true);
+                rewardAppliedToOrder = true;
+            }
+
+            savedOrders.add(orderRepository.save(order));
+        }
+
+        orderRepository.flush();
+
+        if (couponId != null && discountApplied) {
+            couponService.recordUsage(couponId, owner.userId());
+        }
+
+        cartItemRepository.deleteByCartId(cart.getId());
+        cart.setStatus(CartStatus.ORDERED);
+        cartRepository.save(cart);
+
+        List<OrderResponse> responses = savedOrders.stream().map(orderService::toResponse).toList();
+        for (OrderResponse response : responses) {
+            orderWebSocketService.notifyOrderCreated(response);
+        }
+        BigDecimal totalAmount = responses.stream()
+                .map(OrderResponse::totalAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        return new CheckoutResponse(cart.getId(), responses, totalAmount);
+    }
+
+    private Cart getOrCreateActiveCart(CartOwnerRef owner) {
+        Cart cart = findActiveCart(owner).orElseGet(() -> {
+            Cart created = new Cart();
+            created.setUserId(owner.userId());
+            created.setGuestSessionId(owner.guestSessionId());
+            created.setStatus(CartStatus.ACTIVE);
+            return cartRepository.save(created);
+        });
+
+        if (cart.getStatus() != CartStatus.ACTIVE) {
+            cart.setStatus(CartStatus.ACTIVE);
+            cart = cartRepository.save(cart);
+        }
+
+        return cart;
+    }
+
+    private Optional<Cart> findActiveCart(CartOwnerRef owner) {
+        if (owner.isUser()) {
+            return cartRepository.findByUserIdAndStatus(owner.userId(), CartStatus.ACTIVE);
+        }
+        if (owner.isGuest()) {
+            return cartRepository.findByGuestSessionIdAndStatus(owner.guestSessionId(), CartStatus.ACTIVE);
+        }
+        throw new IllegalArgumentException("Cart owner is required");
+    }
+
+    private void reserveScheduledCapacityForCheckout(CartItem cartItem, LocalDate scheduledDate) {
+        Product product = cartItem.getProduct();
+        int availableQuantity = fulfillmentService.getScheduledAvailableQuantity(product.getId(), scheduledDate);
+        if (availableQuantity < cartItem.getQuantity()) {
+            throw scheduledCapacityException(product, scheduledDate, cartItem.getQuantity(), availableQuantity);
+        }
+
+        try {
+            fulfillmentService.reserveScheduledCapacity(product.getId(), scheduledDate, cartItem.getQuantity());
+        } catch (IllegalArgumentException ex) {
+            int latestAvailableQuantity = fulfillmentService.getScheduledAvailableQuantity(product.getId(), scheduledDate);
+            throw scheduledCapacityException(product, scheduledDate, cartItem.getQuantity(), latestAvailableQuantity);
+        }
+    }
+
+    private CheckoutAvailabilityException scheduledCapacityException(
+            Product product,
+            LocalDate scheduledDate,
+            int requestedQuantity,
+            int availableQuantity) {
+        String message = "%s has only %d available for %s. Requested quantity: %d."
+                .formatted(product.getName(), availableQuantity, scheduledDate, requestedQuantity);
+        int dailyCapacity = fulfillmentService.getScheduledDailyCapacity(product.getId());
+
+        return new CheckoutAvailabilityException(message, Map.of(
+                "productId", product.getId(),
+                "productName", product.getName(),
+                "scheduledDate", scheduledDate.toString(),
+                "requestedQuantity", String.valueOf(requestedQuantity),
+                "availableQuantity", String.valueOf(availableQuantity),
+                "dailyCapacity", String.valueOf(dailyCapacity)));
+    }
+
+    private String resolveCustomerName(CartOwnerRef owner, String customerName) {
+        if (customerName != null && !customerName.isBlank()) {
+            return customerName.trim();
+        }
+        if (owner.isUser()) {
+            return userService.findById(owner.userId())
+                    .map(User::getName)
+                    .orElseThrow(() -> new IllegalArgumentException("Customer name is required"));
+        }
+        throw new IllegalArgumentException("Customer name is required");
+    }
+
+    private String resolveCustomerPhone(CartOwnerRef owner, String customerPhone) {
+        if (customerPhone != null && !customerPhone.isBlank()) {
+            return customerPhone.trim();
+        }
+        if (owner.isUser()) {
+            return userService.findById(owner.userId())
+                    .map(User::getPhone)
+                    .orElseThrow(() -> new IllegalArgumentException("Customer phone is required"));
+        }
+        throw new IllegalArgumentException("Customer phone is required");
+    }
+
+    private String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
+    }
+
+    private DeliveryAddressSnapshot resolveDeliveryAddress(CartOwnerRef owner, CheckoutRequest request, OrderType orderType) {
+        if (orderType == OrderType.PICKUP) {
+            return null;
+        }
+
+        String addressId = blankToNull(request.addressId());
+        if (addressId != null) {
+            if (!owner.isUser()) {
+                throw new IllegalArgumentException("Only authenticated users can use saved addresses");
+            }
+            Address saved = addressRepository.findByIdAndUserId(addressId, owner.userId())
+                    .orElseThrow(() -> new IllegalArgumentException("Address not found"));
+
+            if (saved.getAreaId() == null || saved.getAreaId().isBlank()) {
+                throw new IllegalArgumentException(
+                        "Please update this address with your Governorate, City, and Area before placing your order.");
+            }
+
+            AreaInfo areaInfo = resolveAreaInfo(saved.getAreaId());
+            return new DeliveryAddressSnapshot(
+                    saved.getId(),
+                    areaInfo.governorateId(),
+                    areaInfo.governorateName(),
+                    areaInfo.cityId(),
+                    areaInfo.cityName(),
+                    areaInfo.areaId(),
+                    areaInfo.areaName(),
+                    saved.getStreet(),
+                    saved.getBuilding(),
+                    saved.getNotes(),
+                    areaInfo.deliveryFee(),
+                    areaInfo.isCourierDelivery());
+        }
+
+        String areaId = blankToNull(request.areaId());
+        String street = blankToNull(request.deliveryStreet());
+        if (areaId == null || street == null) {
+            throw new IllegalArgumentException("Delivery area and street address are required");
+        }
+
+        AreaInfo areaInfo = resolveAreaInfo(areaId);
+        return new DeliveryAddressSnapshot(
+                null,
+                areaInfo.governorateId(),
+                areaInfo.governorateName(),
+                areaInfo.cityId(),
+                areaInfo.cityName(),
+                areaInfo.areaId(),
+                areaInfo.areaName(),
+                street,
+                blankToNull(request.deliveryBuilding()),
+                blankToNull(request.deliveryNotes()),
+                areaInfo.deliveryFee(),
+                areaInfo.isCourierDelivery());
+    }
+
+    private record AreaInfo(
+            String governorateId,
+            String governorateName,
+            String cityId,
+            String cityName,
+            String areaId,
+            String areaName,
+            BigDecimal deliveryFee,
+            boolean isCourierDelivery) {
+    }
+
+    private AreaInfo resolveAreaInfo(String areaId) {
+        if (deliveryZoneService == null) {
+            return new AreaInfo(null, null, null, null, areaId, null, BigDecimal.ZERO, false);
+        }
+        com.petites.backend.addresses.entity.Area area = deliveryZoneService.getArea(areaId);
+        if (!area.isActive()) {
+            throw new IllegalArgumentException("We do not currently deliver to " + area.getName());
+        }
+        com.petites.backend.addresses.entity.City city = deliveryZoneService.getCity(area.getCityId());
+        if (!city.isActive()) {
+            throw new IllegalArgumentException("We do not currently operate in " + city.getName());
+        }
+        com.petites.backend.addresses.entity.Governorate gov = deliveryZoneService.getGovernorate(city.getGovernorateId());
+        if (!gov.isActive()) {
+            throw new IllegalArgumentException("We do not currently operate in " + gov.getName());
+        }
+
+        return new AreaInfo(
+                gov.getId(),
+                gov.getName(),
+                city.getId(),
+                city.getName(),
+                area.getId(),
+                area.getName(),
+                area.isCourierDelivery() ? BigDecimal.ZERO : area.getDeliveryFee(),
+                area.isCourierDelivery());
+    }
+
+    private record DeliveryAddressSnapshot(
+            String addressId,
+            String governorateId,
+            String governorate,
+            String cityId,
+            String city,
+            String areaId,
+            String area,
+            String street,
+            String building,
+            String notes,
+            BigDecimal deliveryFee,
+            boolean isCourierDelivery) {
+    }
+}
+

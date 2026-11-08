@@ -43,13 +43,13 @@ public class OrderService {
     private final com.petites.backend.users.service.UserService userService;
 
     public OrderService(OrderRepository orderRepository,
-                        OrderItemRepository orderItemRepository,
-                        LoyaltyService loyaltyService,
-                        com.petites.backend.coupons.service.CouponService couponService,
-                        AddressRepository addressRepository,
-                        com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService,
-                        com.petites.backend.products.service.FulfillmentService fulfillmentService,
-                        com.petites.backend.users.service.UserService userService) {
+            OrderItemRepository orderItemRepository,
+            LoyaltyService loyaltyService,
+            com.petites.backend.coupons.service.CouponService couponService,
+            AddressRepository addressRepository,
+            com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService,
+            com.petites.backend.products.service.FulfillmentService fulfillmentService,
+            com.petites.backend.users.service.UserService userService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.loyaltyService = loyaltyService;
@@ -71,7 +71,8 @@ public class OrderService {
     }
 
     @Transactional(readOnly = true)
-    public Page<OrderResponse> listAllOrders(OrderStatus status, OrderType orderType, DeliveryMode deliveryMode, LocalDate scheduledDate, LocalDate placedDate, String orderNumber, Pageable pageable) {
+    public Page<OrderResponse> listAllOrders(OrderStatus status, OrderType orderType, DeliveryMode deliveryMode,
+            LocalDate scheduledDate, LocalDate placedDate, String orderNumber, Pageable pageable) {
         Specification<Order> specification = (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new java.util.ArrayList<>();
 
@@ -100,7 +101,8 @@ public class OrderService {
             }
 
             if (orderNumber != null && !orderNumber.isBlank()) {
-                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("orderNumber")), "%" + orderNumber.toLowerCase().trim() + "%"));
+                predicates.add(criteriaBuilder.like(criteriaBuilder.lower(root.get("orderNumber")),
+                        "%" + orderNumber.toLowerCase().trim() + "%"));
             }
 
             return criteriaBuilder.and(predicates.toArray(Predicate[]::new));
@@ -151,7 +153,8 @@ public class OrderService {
 
         return orders.stream()
                 .map(order -> {
-                    List<OrderItemResponse> itemResponses = itemsByOrderId.getOrDefault(order.getId(), Collections.emptyList())
+                    List<OrderItemResponse> itemResponses = itemsByOrderId
+                            .getOrDefault(order.getId(), Collections.emptyList())
                             .stream()
                             .map(this::toResponse)
                             .toList();
@@ -163,37 +166,13 @@ public class OrderService {
     }
 
     private AddressResponse buildAddressResponseFromMap(Order order, Map<String, Address> addressMap) {
-        if (order.getDeliveryCity() != null) {
-            return new AddressResponse(
-                    order.getAddressId(),
-                    order.getUserId(),
-                    order.getGovernorateId(),
-                    order.getDeliveryGovernorate(),
-                    order.getCityId(),
-                    order.getDeliveryCity(),
-                    order.getAreaId(),
-                    order.getDeliveryArea(),
-                    order.getDeliveryStreet(),
-                    order.getDeliveryBuilding(),
-                    order.getDeliveryNotes()
-            );
+        AddressResponse snapshot = buildSnapshotAddress(order);
+        if (snapshot != null) {
+            return snapshot;
         }
 
         if (order.getAddressId() != null && addressMap.containsKey(order.getAddressId())) {
-            var saved = addressMap.get(order.getAddressId());
-            return new AddressResponse(
-                    saved.getId(),
-                    saved.getUserId(),
-                    saved.getGovernorateId(),
-                    saved.getGovernorate(),
-                    saved.getCityId(),
-                    saved.getCity(),
-                    saved.getAreaId(),
-                    saved.getArea(),
-                    saved.getStreet(),
-                    saved.getBuilding(),
-                    saved.getNotes()
-            );
+            return toAddressResponse(addressMap.get(order.getAddressId()));
         }
 
         return null;
@@ -223,8 +202,7 @@ public class OrderService {
                 order.isRewardApplied(),
                 order.getCreatedAt(),
                 items,
-                order.isCourierDelivery()
-        );
+                order.isCourierDelivery());
     }
 
     @Transactional(readOnly = true)
@@ -236,8 +214,7 @@ public class OrderService {
                 item.getProductImage(),
                 item.getQuantity(),
                 item.getUnitPrice(),
-                item.getLineTotal()
-        );
+                item.getLineTotal());
     }
 
     @Transactional
@@ -264,7 +241,8 @@ public class OrderService {
                     if (order.getDeliveryMode() == DeliveryMode.INSTANT) {
                         fulfillmentService.releaseInstantQuantity(item.getProductId(), item.getQuantity());
                     } else if (order.getDeliveryMode() == DeliveryMode.SCHEDULED && order.getScheduledDate() != null) {
-                        fulfillmentService.releaseScheduledCapacity(item.getProductId(), order.getScheduledDate(), item.getQuantity());
+                        fulfillmentService.releaseScheduledCapacity(item.getProductId(), order.getScheduledDate(),
+                                item.getQuantity());
                     }
                 }
             }
@@ -303,41 +281,54 @@ public class OrderService {
     }
 
     private AddressResponse buildAddressResponse(Order order) {
-        if (order.getDeliveryCity() != null) {
-            return new AddressResponse(
-                    order.getAddressId(),
-                    order.getUserId(),
-                    order.getGovernorateId(),
-                    order.getDeliveryGovernorate(),
-                    order.getCityId(),
-                    order.getDeliveryCity(),
-                    order.getAreaId(),
-                    order.getDeliveryArea(),
-                    order.getDeliveryStreet(),
-                    order.getDeliveryBuilding(),
-                    order.getDeliveryNotes()
-            );
+        AddressResponse snapshot = buildSnapshotAddress(order);
+        if (snapshot != null) {
+            return snapshot;
         }
 
         if (order.getAddressId() != null) {
             return addressRepository.findById(order.getAddressId())
-                    .map(saved -> new AddressResponse(
-                            saved.getId(),
-                            saved.getUserId(),
-                            saved.getGovernorateId(),
-                            saved.getGovernorate(),
-                            saved.getCityId(),
-                            saved.getCity(),
-                            saved.getAreaId(),
-                            saved.getArea(),
-                            saved.getStreet(),
-                            saved.getBuilding(),
-                            saved.getNotes()
-                    ))
+                    .map(this::toAddressResponse)
                     .orElse(null);
         }
 
         return null;
+    }
+
+    private AddressResponse buildSnapshotAddress(Order order) {
+        if (order.getDeliveryCity() == null) {
+            return null;
+        }
+        return new AddressResponse(
+                order.getAddressId(),
+                order.getUserId(),
+                order.getGovernorateId(),
+                order.getDeliveryGovernorate(),
+                order.getCityId(),
+                order.getDeliveryCity(),
+                order.getAreaId(),
+                order.getDeliveryArea(),
+                order.getDeliveryStreet(),
+                order.getDeliveryBuilding(),
+                order.getDeliveryNotes());
+    }
+
+    private AddressResponse toAddressResponse(Address address) {
+        if (address == null) {
+            return null;
+        }
+        return new AddressResponse(
+                address.getId(),
+                address.getUserId(),
+                address.getGovernorateId(),
+                address.getGovernorate(),
+                address.getCityId(),
+                address.getCity(),
+                address.getAreaId(),
+                address.getArea(),
+                address.getStreet(),
+                address.getBuilding(),
+                address.getNotes());
     }
 
     private List<Order> findOrders(CartOwnerRef owner) {

@@ -1,4 +1,4 @@
-package com.petites.backend.carts.exception;
+package com.petites.backend.checkout.exception;
 
 import java.util.Map;
 

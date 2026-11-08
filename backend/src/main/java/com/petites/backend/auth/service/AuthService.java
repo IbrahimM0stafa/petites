@@ -37,11 +37,11 @@ public class AuthService {
     private final SecureRandom secureRandom = new SecureRandom();
 
     public AuthService(UserService userService,
-                       PasswordEncoder passwordEncoder,
-                       JwtService jwtService,
-                       RefreshTokenService refreshTokenService,
-                       PasswordResetOtpRepository passwordResetOtpRepository,
-                       EmailService emailService) {
+            PasswordEncoder passwordEncoder,
+            JwtService jwtService,
+            RefreshTokenService refreshTokenService,
+            PasswordResetOtpRepository passwordResetOtpRepository,
+            EmailService emailService) {
         this.userService = userService;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -66,9 +66,11 @@ public class AuthService {
         JwtService.JwtToken token = jwtService.issueToken(user);
         refreshTokenService.revokeAllActiveForUser(user);
         RefreshTokenService.RefreshTokenResult refresh = refreshTokenService.issue(user);
-        Set<String> roles = user.getRoles().stream().map(role -> role.getName()).collect(java.util.stream.Collectors.toSet());
+        Set<String> roles = user.getRoles().stream().map(role -> role.getName())
+                .collect(java.util.stream.Collectors.toSet());
 
-        return new AuthResponse(token.token(), token.expiresAt(), refresh.token(), refresh.expiresAt(), user.getId(), roles);
+        return new AuthResponse(token.token(), token.expiresAt(), refresh.token(), refresh.expiresAt(), user.getId(),
+                roles);
     }
 
     @Transactional
@@ -82,7 +84,8 @@ public class AuthService {
                 .map(role -> role.getName())
                 .collect(java.util.stream.Collectors.toSet());
 
-        return new AuthResponse(token.token(), token.expiresAt(), refresh.token(), refresh.expiresAt(), user.getId(), roles);
+        return new AuthResponse(token.token(), token.expiresAt(), refresh.token(), refresh.expiresAt(), user.getId(),
+                roles);
     }
 
     @Transactional
@@ -116,76 +119,16 @@ public class AuthService {
 
     @Transactional(noRollbackFor = IllegalArgumentException.class)
     public boolean verifyOtp(VerifyOtpRequest request) {
-        String email = request.email() == null ? null : request.email().trim().toLowerCase();
-        User user = userService.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired OTP"));
-
-        if (!user.isActive()) {
-            throw new IllegalArgumentException("Invalid or expired OTP");
-        }
-
-        List<PasswordResetOtp> activeOtps = passwordResetOtpRepository.findActiveForUpdateByUser(user, Instant.now());
-        if (activeOtps.isEmpty()) {
-            throw new IllegalArgumentException("Invalid or expired OTP");
-        }
-
-        PasswordResetOtp resetOtp = activeOtps.get(0);
-        if (resetOtp.getFailedAttempts() >= 5) {
-            resetOtp.setUsedAt(Instant.now());
-            passwordResetOtpRepository.saveAndFlush(resetOtp);
-            throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
-        }
-
-        String inputOtp = request.otp() == null ? "" : request.otp().trim();
-        if (!resetOtp.getOtp().equals(inputOtp)) {
-            int newAttempts = resetOtp.getFailedAttempts() + 1;
-            resetOtp.setFailedAttempts(newAttempts);
-            if (newAttempts >= 5) {
-                resetOtp.setUsedAt(Instant.now());
-                passwordResetOtpRepository.saveAndFlush(resetOtp);
-                throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
-            }
-            passwordResetOtpRepository.saveAndFlush(resetOtp);
-            throw new IllegalArgumentException("Invalid or expired OTP");
-        }
-
+        User user = resolveActiveUserByEmail(request.email());
+        validateAndGetActiveOtp(user, request.otp());
         return true;
     }
 
+
     @Transactional(noRollbackFor = IllegalArgumentException.class)
     public void resetPassword(ResetPasswordRequest request) {
-        String email = request.email() == null ? null : request.email().trim().toLowerCase();
-        User user = userService.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired OTP"));
-
-        if (!user.isActive()) {
-            throw new IllegalArgumentException("Invalid or expired OTP");
-        }
-
-        List<PasswordResetOtp> activeOtps = passwordResetOtpRepository.findActiveForUpdateByUser(user, Instant.now());
-        if (activeOtps.isEmpty()) {
-            throw new IllegalArgumentException("Invalid or expired OTP");
-        }
-
-        PasswordResetOtp resetOtp = activeOtps.get(0);
-        if (resetOtp.getFailedAttempts() >= 5) {
-            resetOtp.setUsedAt(Instant.now());
-            passwordResetOtpRepository.saveAndFlush(resetOtp);
-            throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
-        }
-
-        String inputOtp = request.otp() == null ? "" : request.otp().trim();
-        if (!resetOtp.getOtp().equals(inputOtp)) {
-            int newAttempts = resetOtp.getFailedAttempts() + 1;
-            resetOtp.setFailedAttempts(newAttempts);
-            if (newAttempts >= 5) {
-                resetOtp.setUsedAt(Instant.now());
-                passwordResetOtpRepository.saveAndFlush(resetOtp);
-                throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
-            }
-            passwordResetOtpRepository.saveAndFlush(resetOtp);
-            throw new IllegalArgumentException("Invalid or expired OTP");
-        }
+        User user = resolveActiveUserByEmail(request.email());
+        PasswordResetOtp resetOtp = validateAndGetActiveOtp(user, request.otp());
 
         // Mark OTP as used
         resetOtp.setUsedAt(Instant.now());
@@ -196,7 +139,48 @@ public class AuthService {
 
         // Revoke active sessions / refresh tokens
         refreshTokenService.revokeAllActiveForUser(user);
-        log.info("Password reset successfully for user: {}", email);
+        log.info("Password reset successfully for user: {}", user.getEmail());
+    }
+
+
+    private User resolveActiveUserByEmail(String rawEmail) {
+        String email = rawEmail == null ? null : rawEmail.trim().toLowerCase();
+        User user = userService.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid or expired OTP"));
+
+        if (!user.isActive()) {
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
+        return user;
+    }
+
+    private PasswordResetOtp validateAndGetActiveOtp(User user, String rawOtp) {
+        List<PasswordResetOtp> activeOtps = passwordResetOtpRepository.findActiveForUpdateByUser(user, Instant.now());
+        if (activeOtps.isEmpty()) {
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
+
+        PasswordResetOtp resetOtp = activeOtps.get(0);
+        if (resetOtp.getFailedAttempts() >= 5) {
+            resetOtp.setUsedAt(Instant.now());
+            passwordResetOtpRepository.saveAndFlush(resetOtp);
+            throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
+        }
+
+        String inputOtp = rawOtp == null ? "" : rawOtp.trim();
+        if (!resetOtp.getOtp().equals(inputOtp)) {
+            int newAttempts = resetOtp.getFailedAttempts() + 1;
+            resetOtp.setFailedAttempts(newAttempts);
+            if (newAttempts >= 5) {
+                resetOtp.setUsedAt(Instant.now());
+                passwordResetOtpRepository.saveAndFlush(resetOtp);
+                throw new IllegalArgumentException("Too many failed attempts. OTP has been invalidated.");
+            }
+            passwordResetOtpRepository.saveAndFlush(resetOtp);
+            throw new IllegalArgumentException("Invalid or expired OTP");
+        }
+
+        return resetOtp;
     }
 
     @Scheduled(fixedDelayString = "${app.jwt.refresh-cleanup-interval-ms:3600000}")

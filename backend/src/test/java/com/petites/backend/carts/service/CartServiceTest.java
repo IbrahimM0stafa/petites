@@ -1,32 +1,20 @@
 package com.petites.backend.carts.service;
 
+import com.petites.backend.carts.dto.CartItemRequest;
 import com.petites.backend.carts.dto.CartOwnerRef;
-import com.petites.backend.carts.dto.CheckoutRequest;
-import com.petites.backend.carts.dto.CheckoutResponse;
+import com.petites.backend.carts.dto.CartResponse;
 import com.petites.backend.carts.entity.Cart;
 import com.petites.backend.carts.entity.CartItem;
 import com.petites.backend.carts.enums.CartStatus;
-import com.petites.backend.carts.exception.CheckoutAvailabilityException;
-import com.petites.backend.addresses.dto.AddressResponse;
-import com.petites.backend.addresses.repository.AddressRepository;
 import com.petites.backend.carts.repository.CartItemRepository;
 import com.petites.backend.carts.repository.CartRepository;
 import com.petites.backend.common.enums.DeliveryMode;
-import com.petites.backend.orders.dto.OrderResponse;
-import com.petites.backend.orders.entity.Order;
-import com.petites.backend.orders.enums.OrderType;
-import com.petites.backend.orders.repository.OrderRepository;
-import com.petites.backend.orders.service.OrderService;
-import com.petites.backend.coupons.service.CouponService;
 import com.petites.backend.products.entity.Product;
 import com.petites.backend.products.repository.ProductRepository;
 import com.petites.backend.products.service.FulfillmentService;
-import com.petites.backend.users.entity.User;
-import com.petites.backend.users.service.UserService;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -40,11 +28,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -63,33 +49,13 @@ class CartServiceTest {
     @Mock
     private FulfillmentService fulfillmentService;
 
-
-    @Mock
-    private UserService userService;
-
-    @Mock
-    private OrderRepository orderRepository;
-
-    @Mock
-    private OrderService orderService;
-
-    @Mock
-    private CouponService couponService;
-
-    @Mock
-    private AddressRepository addressRepository;
-
-    @Mock
-    private com.petites.backend.websocket.service.OrderWebSocketService orderWebSocketService;
-
     @InjectMocks
     private CartService cartService;
 
     @Test
-    void checkoutSplitsMixedCartIntoSeparateOrders() throws Exception {
+    void getCart_ReturnsCartResponseWithItemsAndSubtotal() throws Exception {
         String userId = "user-1";
         String cartId = "cart-1";
-        LocalDate scheduledDate = LocalDate.now().plusDays(2);
 
         Cart cart = new Cart();
         assignId(cart, cartId);
@@ -97,85 +63,107 @@ class CartServiceTest {
         cart.setStatus(CartStatus.ACTIVE);
         cart.setCreatedAt(Instant.now());
 
-        Product instantProduct = product("instant-1", "Cupcake", "cupcake.jpg", new BigDecimal("30.00"));
-        Product scheduledProduct = product("scheduled-1", "Cake", "cake.jpg", new BigDecimal("20.00"));
-
-        CartItem instantItem = cartItem(cart, instantProduct, 2, DeliveryMode.INSTANT);
-        CartItem scheduledItem = cartItem(cart, scheduledProduct, 1, DeliveryMode.SCHEDULED);
-
-        User user = new User();
-        user.setName("Mona");
-        user.setPhone("01000000000");
+        Product product = product("prod-1", "Macaron", "macaron.jpg", new BigDecimal("15.00"));
+        CartItem item = cartItem(cart, product, 2, DeliveryMode.INSTANT);
 
         when(cartRepository.findByUserIdAndStatus(userId, CartStatus.ACTIVE)).thenReturn(Optional.of(cart));
-        when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of(instantItem, scheduledItem));
-        when(userService.findById(userId)).thenReturn(Optional.of(user));
-        when(couponService.resolveForCheckout(null, null, new BigDecimal("80.00"))).thenReturn(null);
-        when(fulfillmentService.getScheduledAvailableQuantity("scheduled-1", scheduledDate)).thenReturn(1);
-        when(orderRepository.save(any(Order.class))).thenAnswer(invocation -> {
-            Order order = invocation.getArgument(0);
-            if (order.getId() == null) {
-                assignId(order, UUID.randomUUID().toString());
-            }
-            return order;
-        });
-        when(orderService.toResponse(any(Order.class))).thenAnswer(invocation -> toOrderResponse(invocation.getArgument(0)));
+        when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of(item));
 
-        CheckoutResponse response = cartService.checkout(
-                CartOwnerRef.forUser(userId),
-            new CheckoutRequest(null, null, OrderType.PICKUP, null, "Handle carefully", null, null, scheduledDate, null, null, null, null, null)
-        );
+        CartResponse response = cartService.getCart(CartOwnerRef.forUser(userId));
 
         assertNotNull(response);
-        assertEquals(2, response.orders().size());
-        assertEquals(new BigDecimal("80.00"), response.totalAmount());
-        verify(fulfillmentService).reserveInstantQuantity("instant-1", 2);
-        verify(fulfillmentService).reserveScheduledCapacity("scheduled-1", scheduledDate, 1);
+        assertEquals(cartId, response.cartId());
+        assertEquals(1, response.items().size());
+        assertEquals(new BigDecimal("30.00"), response.subtotal());
+    }
+
+    @Test
+    void addItem_CreatesNewCartItemWhenNotAlreadyInCart() throws Exception {
+        String userId = "user-1";
+        String cartId = "cart-1";
+        String productId = "prod-1";
+
+        Cart cart = new Cart();
+        assignId(cart, cartId);
+        cart.setUserId(userId);
+        cart.setStatus(CartStatus.ACTIVE);
+
+        Product product = product(productId, "Croissant", "croissant.jpg", new BigDecimal("25.00"));
+
+        when(cartRepository.findByUserIdAndStatus(userId, CartStatus.ACTIVE)).thenReturn(Optional.of(cart));
+        when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        when(fulfillmentService.isInstantAvailable(productId, 2)).thenReturn(true);
+        when(cartItemRepository.findByCartIdAndProductIdAndDeliveryMode(cartId, productId, DeliveryMode.INSTANT))
+                .thenReturn(Optional.empty());
+        when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of());
+
+        CartItemRequest request = new CartItemRequest(productId, 2, DeliveryMode.INSTANT);
+        cartService.addItem(CartOwnerRef.forUser(userId), request);
+
+        ArgumentCaptor<CartItem> captor = ArgumentCaptor.forClass(CartItem.class);
+        verify(cartItemRepository).save(captor.capture());
+        CartItem savedItem = captor.getValue();
+        assertEquals(2, savedItem.getQuantity());
+        assertEquals(new BigDecimal("25.00"), savedItem.getUnitPrice());
+        assertEquals(DeliveryMode.INSTANT, savedItem.getDeliveryMode());
+    }
+
+    @Test
+    void removeItem_DeletesItemFromCart() throws Exception {
+        String userId = "user-1";
+        String cartId = "cart-1";
+        String itemId = "item-1";
+
+        Cart cart = new Cart();
+        assignId(cart, cartId);
+        cart.setUserId(userId);
+        cart.setStatus(CartStatus.ACTIVE);
+
+        CartItem item = new CartItem();
+        assignId(item, itemId);
+        item.setCart(cart);
+
+        when(cartRepository.findByUserIdAndStatus(userId, CartStatus.ACTIVE)).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByIdAndCartId(itemId, cartId)).thenReturn(Optional.of(item));
+        when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of());
+
+        cartService.removeItem(CartOwnerRef.forUser(userId), itemId);
+
+        verify(cartItemRepository).delete(item);
+    }
+
+    @Test
+    void clearCart_DeletesAllItemsByCartId() throws Exception {
+        String userId = "user-1";
+        String cartId = "cart-1";
+
+        Cart cart = new Cart();
+        assignId(cart, cartId);
+        cart.setUserId(userId);
+        cart.setStatus(CartStatus.ACTIVE);
+
+        when(cartRepository.findByUserIdAndStatus(userId, CartStatus.ACTIVE)).thenReturn(Optional.of(cart));
+        when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of());
+
+        cartService.clearCart(CartOwnerRef.forUser(userId));
+
         verify(cartItemRepository).deleteByCartId(cartId);
     }
 
     @Test
-    void checkoutReportsScheduledCapacityProblemWithProductDetails() throws Exception {
-        String userId = "user-1";
-        String cartId = "cart-1";
-        LocalDate scheduledDate = LocalDate.now().plusDays(2);
+    void cleanupAbandonedGuestCarts_PurgesOnlyActiveGuestCartsOlderThanCutoff() {
+        when(cartRepository.deleteAbandonedGuestCarts(eq(CartStatus.ACTIVE), any(Instant.class)))
+                .thenReturn(5);
 
-        Cart cart = new Cart();
-        assignId(cart, cartId);
-        cart.setUserId(userId);
-        cart.setStatus(CartStatus.ACTIVE);
-        cart.setCreatedAt(Instant.now());
+        int result = cartService.cleanupAbandonedGuestCarts();
 
-        Product scheduledProduct = product("scheduled-1", "Cake", "cake.jpg", new BigDecimal("20.00"));
-        CartItem scheduledItem = cartItem(cart, scheduledProduct, 3, DeliveryMode.SCHEDULED);
+        assertEquals(5, result);
+        ArgumentCaptor<Instant> cutoffCaptor = ArgumentCaptor.forClass(Instant.class);
+        verify(cartRepository).deleteAbandonedGuestCarts(eq(CartStatus.ACTIVE), cutoffCaptor.capture());
 
-        User user = new User();
-        user.setName("Mona");
-        user.setPhone("01000000000");
-
-        when(cartRepository.findByUserIdAndStatus(userId, CartStatus.ACTIVE)).thenReturn(Optional.of(cart));
-        when(cartItemRepository.findByCartIdOrderByCreatedAtAsc(cartId)).thenReturn(List.of(scheduledItem));
-        when(userService.findById(userId)).thenReturn(Optional.of(user));
-        when(couponService.resolveForCheckout(null, null, new BigDecimal("60.00"))).thenReturn(null);
-        when(fulfillmentService.getScheduledAvailableQuantity("scheduled-1", scheduledDate)).thenReturn(1);
-        when(fulfillmentService.getScheduledDailyCapacity("scheduled-1")).thenReturn(2);
-
-        CheckoutAvailabilityException exception = assertThrows(
-                CheckoutAvailabilityException.class,
-                () -> cartService.checkout(
-                        CartOwnerRef.forUser(userId),
-                        new CheckoutRequest(null, null, OrderType.PICKUP, null, null, null, null, scheduledDate, null, null, null, null, null)
-                )
-        );
-
-        assertEquals("Cake has only 1 available for " + scheduledDate + ". Requested quantity: 3.", exception.getMessage());
-        assertEquals("scheduled-1", exception.getFields().get("productId"));
-        assertEquals("Cake", exception.getFields().get("productName"));
-        assertEquals(scheduledDate.toString(), exception.getFields().get("scheduledDate"));
-        assertEquals("3", exception.getFields().get("requestedQuantity"));
-        assertEquals("1", exception.getFields().get("availableQuantity"));
-        assertEquals("2", exception.getFields().get("dailyCapacity"));
-        verify(fulfillmentService, never()).reserveScheduledCapacity("scheduled-1", scheduledDate, 3);
+        Instant capturedCutoff = cutoffCaptor.getValue();
+        Instant expectedCutoff = Instant.now().minus(14, ChronoUnit.DAYS);
+        assertTrue(Math.abs(capturedCutoff.toEpochMilli() - expectedCutoff.toEpochMilli()) < 5000);
     }
 
     private Product product(String id, String name, String image, BigDecimal price) throws Exception {
@@ -200,33 +188,6 @@ class CartServiceTest {
         return item;
     }
 
-    private OrderResponse toOrderResponse(Order order) {
-        return new OrderResponse(
-                order.getId(),
-                order.getOrderNumber(),
-                order.getUserId(),
-                order.getGuestSessionId(),
-                order.getAddressId(),
-                (AddressResponse) null,
-                order.getDeliveryMode(),
-                order.getOrderType(),
-                order.getStatus(),
-                order.getPaymentMethod(),
-                order.getSubtotal(),
-                order.getDeliveryFee(),
-                order.getDiscountAmount(),
-                order.getTotalAmount(),
-                order.getCustomerName(),
-                order.getCustomerPhone(),
-                order.getScheduledDate(),
-                order.getNotes(),
-                order.getCouponId(),
-                order.isRewardApplied(),
-                order.getCreatedAt(),
-                List.of()
-        );
-    }
-
     private void assignId(Object entity, String id) throws Exception {
         Class<?> currentType = entity.getClass();
         Field field = null;
@@ -242,21 +203,5 @@ class CartServiceTest {
         }
         field.setAccessible(true);
         field.set(entity, id);
-    }
-
-    @Test
-    void cleanupAbandonedGuestCarts_PurgesOnlyActiveGuestCartsOlderThanCutoff() {
-        when(cartRepository.deleteAbandonedGuestCarts(eq(CartStatus.ACTIVE), any(Instant.class)))
-                .thenReturn(5);
-
-        int result = cartService.cleanupAbandonedGuestCarts();
-
-        assertEquals(5, result);
-        ArgumentCaptor<Instant> cutoffCaptor = ArgumentCaptor.forClass(Instant.class);
-        verify(cartRepository).deleteAbandonedGuestCarts(eq(CartStatus.ACTIVE), cutoffCaptor.capture());
-
-        Instant capturedCutoff = cutoffCaptor.getValue();
-        Instant expectedCutoff = Instant.now().minus(14, ChronoUnit.DAYS);
-        assertTrue(Math.abs(capturedCutoff.toEpochMilli() - expectedCutoff.toEpochMilli()) < 5000);
     }
 }
