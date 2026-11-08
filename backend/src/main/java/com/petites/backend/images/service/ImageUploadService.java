@@ -17,15 +17,13 @@ public class ImageUploadService {
             "image/jpeg",
             "image/png",
             "image/webp",
-            "image/gif"
-    );
+            "image/gif");
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
             ".jpg",
             ".jpeg",
             ".png",
             ".webp",
-            ".gif"
-    );
+            ".gif");
 
     private final Cloudinary cloudinary;
 
@@ -35,7 +33,8 @@ public class ImageUploadService {
 
     /**
      * Uploads a file to Cloudinary and returns the secure URL.
-     * Validates file size, MIME content type, and passes bytes to Cloudinary uploader.
+     * Validates file size, MIME content type, and passes bytes to Cloudinary
+     * uploader.
      */
     public String upload(MultipartFile file) throws IOException {
         validateFile(file);
@@ -74,19 +73,28 @@ public class ImageUploadService {
     /**
      * Deletes an image from Cloudinary given its secure URL.
      * Extracts the public ID from the URL and calls the Cloudinary destroy API.
+     * Safely ignores null or blank URLs without throwing NullPointerException.
      */
     public void delete(String url) throws IOException {
+        if (url == null || url.isBlank()) {
+            return;
+        }
+
         String publicId = extractPublicId(url);
         if (publicId != null && !publicId.isBlank()) {
             cloudinary.uploader().destroy(publicId, ObjectUtils.asMap(
                     "resource_type", "image",
-                    "invalidate", true
-            ));
+                    "invalidate", true));
         }
     }
 
     private String extractPublicId(String url) {
-        // Expected format: https://res.cloudinary.com/<cloud>/<resource_type>/upload/v<version>/<folder>/<publicId>.<ext>
+        if (url == null || url.isBlank()) {
+            return null;
+        }
+
+        // Expected format:
+        // https://res.cloudinary.com/<cloud>/<resource_type>/upload/v<version>/<folder>/<publicId>.<ext>
         int uploadIdx = url.indexOf("/upload/");
         if (uploadIdx == -1) {
             return null;

@@ -43,6 +43,6 @@ export class OrderService {
   }
 
   updateOrderStatus(id: string, status: OrderStatus): Observable<OrderResponse> {
-    return this.apiClient.put<OrderResponse>(`/api/orders/${id}/status`, { status });
+    return this.apiClient.put<OrderResponse>(`/api/admin/orders/${id}/status`, { status });
   }
 }
