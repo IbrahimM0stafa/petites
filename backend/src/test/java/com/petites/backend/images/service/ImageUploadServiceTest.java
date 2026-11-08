@@ -70,9 +70,11 @@ class ImageUploadServiceTest {
     @Test
     @DisplayName("PERF-03: Successfully uploads valid image bytes to Cloudinary")
     void testUpload_ValidImage_Success() throws IOException {
-        MockMultipartFile validFile = new MockMultipartFile("file", "photo.webp", "image/webp", "image-content".getBytes());
+        MockMultipartFile validFile = new MockMultipartFile("file", "photo.webp", "image/webp",
+                "image-content".getBytes());
         when(uploader.upload(any(byte[].class), anyMap()))
-                .thenReturn(Map.of("secure_url", "https://res.cloudinary.com/petites/image/upload/v1234/products/photo.webp"));
+                .thenReturn(Map.of("secure_url",
+                        "https://res.cloudinary.com/petites/image/upload/v1234/products/photo.webp"));
 
         String url = imageUploadService.upload(validFile);
         Assertions.assertEquals("https://res.cloudinary.com/petites/image/upload/v1234/products/photo.webp", url);

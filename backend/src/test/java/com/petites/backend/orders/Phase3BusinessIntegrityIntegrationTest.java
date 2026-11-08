@@ -22,8 +22,9 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import com.petites.backend.carts.dto.CartItemRequest;
 import com.petites.backend.carts.dto.CartOwnerRef;
-import com.petites.backend.carts.dto.CheckoutRequest;
-import com.petites.backend.carts.dto.CheckoutResponse;
+import com.petites.backend.checkout.dto.CheckoutRequest;
+import com.petites.backend.checkout.dto.CheckoutResponse;
+import com.petites.backend.checkout.service.CheckoutService;
 import com.petites.backend.carts.entity.Cart;
 import com.petites.backend.carts.entity.CartItem;
 import com.petites.backend.carts.enums.CartStatus;
@@ -102,6 +103,9 @@ class Phase3BusinessIntegrityIntegrationTest {
 
     @Autowired
     private CartService cartService;
+
+    @Autowired
+    private CheckoutService checkoutService;
 
     @Autowired
     private CartItemRepository cartItemRepository;
@@ -219,7 +223,8 @@ class Phase3BusinessIntegrityIntegrationTest {
             productRepository.findById(scheduledProduct.getId()).ifPresent(productRepository::delete);
         }
         if (instantProduct != null && instantProduct.getId() != null) {
-            instantInventoryRepository.findByProductId(instantProduct.getId()).ifPresent(instantInventoryRepository::delete);
+            instantInventoryRepository.findByProductId(instantProduct.getId())
+                    .ifPresent(instantInventoryRepository::delete);
             fulfillmentRepository.findByProductId(instantProduct.getId()).ifPresent(fulfillmentRepository::delete);
             productRepository.findById(instantProduct.getId()).ifPresent(productRepository::delete);
         }
@@ -260,7 +265,8 @@ class Phase3BusinessIntegrityIntegrationTest {
             }
         }
 
-        Assertions.assertEquals(5, successfulBookings, "All 5 concurrent 1-slot bookings should succeed without duplicate key errors");
+        Assertions.assertEquals(5, successfulBookings,
+                "All 5 concurrent 1-slot bookings should succeed without duplicate key errors");
 
         ProductDailyCapacityUsage usage = capacityUsageRepository
                 .findByProductIdAndProductionDate(scheduledProduct.getId(), targetDate)
@@ -278,8 +284,7 @@ class Phase3BusinessIntegrityIntegrationTest {
         // Try reserving 2 slots -> exceeds capacity (4 + 2 > 5)
         IllegalArgumentException ex = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> fulfillmentService.reserveScheduledCapacity(scheduledProduct.getId(), targetDate, 2)
-        );
+                () -> fulfillmentService.reserveScheduledCapacity(scheduledProduct.getId(), targetDate, 2));
         Assertions.assertTrue(ex.getMessage().contains("exceeds capacity"));
 
         ProductDailyCapacityUsage usage = capacityUsageRepository
@@ -327,7 +332,7 @@ class Phase3BusinessIntegrityIntegrationTest {
                 null
         );
 
-        CheckoutResponse checkoutResponse = cartService.checkout(owner, checkoutRequest);
+        CheckoutResponse checkoutResponse = checkoutService.checkout(owner, checkoutRequest);
         Assertions.assertNotNull(checkoutResponse);
         Assertions.assertFalse(checkoutResponse.orders().isEmpty());
         createdOrderIds.add(checkoutResponse.orders().get(0).orderId());
@@ -341,7 +346,7 @@ class Phase3BusinessIntegrityIntegrationTest {
         cartService.addItem(owner, new CartItemRequest(instantProduct.getId(), 1, DeliveryMode.INSTANT));
         IllegalArgumentException ex = Assertions.assertThrows(
                 IllegalArgumentException.class,
-                () -> cartService.checkout(owner, checkoutRequest)
+                () -> checkoutService.checkout(owner, checkoutRequest)
         );
         Assertions.assertTrue(ex.getMessage().toLowerCase().contains("coupon") || ex.getMessage().toLowerCase().contains("usage"));
     }
@@ -364,7 +369,8 @@ class Phase3BusinessIntegrityIntegrationTest {
         userService.incrementRewardRedeemedCount(testUser.getId());
         fulfillmentService.reserveInstantQuantity(instantProduct.getId(), 2);
 
-        InstantDeliveryInventory invBefore = instantInventoryRepository.findByProductId(instantProduct.getId()).orElseThrow();
+        InstantDeliveryInventory invBefore = instantInventoryRepository.findByProductId(instantProduct.getId())
+                .orElseThrow();
         Assertions.assertEquals(8, invBefore.getAvailableQuantity());
 
         Order order = new Order();
@@ -395,7 +401,8 @@ class Phase3BusinessIntegrityIntegrationTest {
         Assertions.assertEquals(OrderStatus.CANCELLED, cancelledResponse.status());
 
         // 1. Instant stock refunded to 10
-        InstantDeliveryInventory invAfter = instantInventoryRepository.findByProductId(instantProduct.getId()).orElseThrow();
+        InstantDeliveryInventory invAfter = instantInventoryRepository.findByProductId(instantProduct.getId())
+                .orElseThrow();
         Assertions.assertEquals(10, invAfter.getAvailableQuantity());
 
         // 2. Coupon usedCount refunded to 0
@@ -461,8 +468,7 @@ class Phase3BusinessIntegrityIntegrationTest {
         // Attempting to cancel a completed order must throw IllegalStateException
         Assertions.assertThrows(
                 IllegalStateException.class,
-                () -> orderService.updateStatus(completedOrder.getId(), OrderStatus.CANCELLED)
-        );
+                () -> orderService.updateStatus(completedOrder.getId(), OrderStatus.CANCELLED));
 
         // Test idempotency on cancelled order
         Order orderToCancel = new Order();
@@ -476,15 +482,16 @@ class Phase3BusinessIntegrityIntegrationTest {
         OrderResponse res1 = orderService.updateStatus(saved.getId(), OrderStatus.CANCELLED);
         Assertions.assertEquals(OrderStatus.CANCELLED, res1.status());
 
-        // Calling cancel again on already cancelled order returns same response without error
+        // Calling cancel again on already cancelled order returns same response without
+        // error
         OrderResponse res2 = orderService.updateStatus(saved.getId(), OrderStatus.CANCELLED);
         Assertions.assertEquals(OrderStatus.CANCELLED, res2.status());
 
-        // Attempting to transition from CANCELLED to PENDING throws IllegalStateException
+        // Attempting to transition from CANCELLED to PENDING throws
+        // IllegalStateException
         Assertions.assertThrows(
                 IllegalStateException.class,
-                () -> orderService.updateStatus(saved.getId(), OrderStatus.PENDING)
-        );
+                () -> orderService.updateStatus(saved.getId(), OrderStatus.PENDING));
     }
 
     @Test
@@ -542,13 +549,18 @@ class Phase3BusinessIntegrityIntegrationTest {
         Assertions.assertTrue(deletedCount >= 1, "Should delete at least the stale active guest cart");
 
         // Verify stale guest cart and its cascaded cart items are gone
-        Assertions.assertTrue(cartRepository.findById(staleGuestCart.getId()).isEmpty(), "Stale guest cart must be deleted");
-        Assertions.assertTrue(cartItemRepository.findById(staleItem.getId()).isEmpty(), "Stale guest cart items must cascade delete");
+        Assertions.assertTrue(cartRepository.findById(staleGuestCart.getId()).isEmpty(),
+                "Stale guest cart must be deleted");
+        Assertions.assertTrue(cartItemRepository.findById(staleItem.getId()).isEmpty(),
+                "Stale guest cart items must cascade delete");
 
         // Verify recent guest cart, ordered guest cart, and user cart are preserved
-        Assertions.assertTrue(cartRepository.findById(recentGuestCart.getId()).isPresent(), "Recent guest cart must be preserved");
-        Assertions.assertTrue(cartItemRepository.findById(recentItem.getId()).isPresent(), "Recent guest cart items must be preserved");
-        Assertions.assertTrue(cartRepository.findById(orderedGuestCart.getId()).isPresent(), "Ordered guest cart must be preserved");
+        Assertions.assertTrue(cartRepository.findById(recentGuestCart.getId()).isPresent(),
+                "Recent guest cart must be preserved");
+        Assertions.assertTrue(cartItemRepository.findById(recentItem.getId()).isPresent(),
+                "Recent guest cart items must be preserved");
+        Assertions.assertTrue(cartRepository.findById(orderedGuestCart.getId()).isPresent(),
+                "Ordered guest cart must be preserved");
         Assertions.assertTrue(cartRepository.findById(userCart.getId()).isPresent(), "User cart must be preserved");
     }
 }
