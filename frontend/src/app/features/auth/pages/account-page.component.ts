@@ -6,6 +6,7 @@ import { Router, RouterLink } from '@angular/router';
 import { AddressUpdateRequest, SavedAddressResponse } from '../../../core/models/address.models';
 import { isRefreshTokenRejected, readApiErrorMessage } from '../../../core/models/api-error.model';
 import { AreaNode, CityNode, GovernorateNode } from '../../../core/models/delivery-zone.model';
+import { DeliveryZoneUtil } from '../../../core/utils/delivery-zone.util';
 import { LoyaltyResponse } from '../../../core/models/loyalty.models';
 import { UserResponse } from '../../../core/models/user.models';
 import { AddressService } from '../../../core/services/address.service';
@@ -76,7 +77,7 @@ export class AccountPageComponent implements OnInit {
 		private readonly cartService: CartService,
 		private readonly loyaltyService: LoyaltyService,
 		private readonly router: Router
-	) {}
+	) { }
 
 	ngOnInit(): void {
 		this.loadProfile();
@@ -97,24 +98,16 @@ export class AccountPageComponent implements OnInit {
 	}
 
 	get availableCities(): CityNode[] {
-		const govId = this.addressForm.controls.governorateId.value;
-		if (!govId) return [];
-		return this.zoneTree.find((g) => g.id === govId)?.cities ?? [];
+		return DeliveryZoneUtil.getCities(this.zoneTree, this.addressForm.controls.governorateId.value);
 	}
 
 	get availableAreas(): AreaNode[] {
-		const cityId = this.addressForm.controls.cityId.value;
-		if (!cityId) return [];
-		for (const gov of this.zoneTree) {
-			const city = gov.cities.find((c) => c.id === cityId);
-			if (city) return city.areas;
-		}
-		return [];
+		return DeliveryZoneUtil.getAreas(this.zoneTree, this.addressForm.controls.cityId.value);
 	}
 
 	onGovernorateChange(): void {
 		const govId = this.addressForm.controls.governorateId.value;
-		const gov = this.zoneTree.find((g) => g.id === govId);
+		const gov = DeliveryZoneUtil.findGovernorate(this.zoneTree, govId);
 		this.addressForm.patchValue({
 			governorate: gov?.name ?? '',
 			cityId: '',
@@ -126,7 +119,7 @@ export class AccountPageComponent implements OnInit {
 
 	onCityChange(): void {
 		const cityId = this.addressForm.controls.cityId.value;
-		const city = this.availableCities.find((c) => c.id === cityId);
+		const city = DeliveryZoneUtil.findCity(this.zoneTree, cityId);
 		this.addressForm.patchValue({
 			city: city?.name ?? '',
 			areaId: '',
@@ -136,7 +129,7 @@ export class AccountPageComponent implements OnInit {
 
 	onAreaChange(): void {
 		const areaId = this.addressForm.controls.areaId.value;
-		const area = this.availableAreas.find((a) => a.id === areaId);
+		const area = DeliveryZoneUtil.findArea(this.zoneTree, areaId);
 		this.addressForm.patchValue({
 			area: area?.name ?? ''
 		});
@@ -194,50 +187,44 @@ export class AccountPageComponent implements OnInit {
 		let areaId = address.areaId ?? '';
 
 		if (!areaId && address.area) {
-			for (const gov of this.zoneTree) {
-				for (const city of gov.cities) {
-					const matched = city.areas.find(a => a.name.toLowerCase() === address.area.toLowerCase());
-					if (matched) {
-						govId = gov.id;
-						cityId = city.id;
-						areaId = matched.id;
-						break;
-					}
+				const matched = DeliveryZoneUtil.findAreaByName(this.zoneTree, address.area);
+				if (matched) {
+					govId = matched.governorate.id;
+					cityId = matched.city.id;
+					areaId = matched.area.id;
 				}
-				if (areaId) break;
 			}
+
+			this.addressForm.reset({
+				governorateId: govId,
+				governorate: address.governorate ?? '',
+				cityId: cityId,
+				city: address.city,
+				areaId: areaId,
+				area: address.area,
+				street: address.street,
+				building: address.building ?? '',
+				notes: address.notes ?? ''
+			});
 		}
 
-		this.addressForm.reset({
-			governorateId: govId,
-			governorate: address.governorate ?? '',
-			cityId: cityId,
-			city: address.city,
-			areaId: areaId,
-			area: address.area,
-			street: address.street,
-			building: address.building ?? '',
-			notes: address.notes ?? ''
-		});
-	}
+		clearAddressForm(): void {
+			this.editingAddressId = null;
+			this.addressForm.reset({
+				governorateId: '',
+				governorate: '',
+				cityId: '',
+				city: '',
+				areaId: '',
+				area: '',
+				street: '',
+				building: '',
+				notes: ''
+			});
+		}
 
-	clearAddressForm(): void {
-		this.editingAddressId = null;
-		this.addressForm.reset({
-			governorateId: '',
-			governorate: '',
-			cityId: '',
-			city: '',
-			areaId: '',
-			area: '',
-			street: '',
-			building: '',
-			notes: ''
-		});
-	}
-
-	saveAddress(): void {
-		if (this.addressForm.invalid) {
+		saveAddress(): void {
+			if(this.addressForm.invalid) {
 			this.addressForm.markAllAsTouched();
 			return;
 		}

@@ -1,0 +1,16 @@
+<div class="guest-auth-modal" role="dialog" aria-modal="true" aria-labelledby="guest-auth-title">
+  <div class="guest-auth-backdrop" aria-hidden="true" (click)="dismiss.emit()"></div>
+  <section class="guest-auth-card">
+    <button type="button" class="guest-auth-close" (click)="dismiss.emit()" aria-label="Dismiss prompt">×</button>
+    <p class="guest-auth-eyebrow">Delivery tip</p>
+    <h2 id="guest-auth-title">Sign in to save addresses and reorder faster</h2>
+    <p class="guest-auth-copy">You can continue as a guest, but logging in or creating an account keeps your delivery
+      details for future orders.</p>
+    <div class="guest-auth-actions">
+      <a routerLink="/login" class="purchase-btn purchase-btn--secondary">Log in</a>
+      <a routerLink="/signup" class="purchase-btn purchase-btn--primary">Create account</a>
+      <button type="button" class="purchase-btn purchase-btn--secondary" (click)="dismiss.emit()">Continue as
+        guest</button>
+    </div>
+  </section>
+</div>

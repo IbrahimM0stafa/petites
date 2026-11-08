@@ -1,0 +1,115 @@
+.guest-auth-modal {
+	position: fixed;
+	inset: 0;
+	z-index: 2000;
+	display: grid;
+	place-items: center;
+	padding: 1.25rem;
+}
+
+.guest-auth-backdrop {
+	position: absolute;
+	inset: 0;
+	background: rgba(43, 27, 18, 0.48);
+	backdrop-filter: blur(6px);
+	z-index: 2000;
+}
+
+.guest-auth-card {
+	position: relative;
+	z-index: 2001;
+	max-width: 520px;
+	width: min(520px, 100%);
+	padding: 1.75rem;
+	border-radius: 1.5rem;
+	background: linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(255, 246, 239, 0.98));
+	border: 1px solid rgba(183, 149, 132, 0.25);
+	box-shadow: 0 30px 80px rgba(43, 27, 18, 0.24);
+	display: grid;
+	gap: 0.9rem;
+}
+
+.guest-auth-close {
+	position: absolute;
+	top: 0.85rem;
+	right: 0.85rem;
+	width: 2rem;
+	height: 2rem;
+	border: 0;
+	border-radius: 999px;
+	background: rgba(103, 67, 50, 0.08);
+	color: var(--petites-brown, #674332);
+	font-size: 1.25rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.guest-auth-eyebrow {
+	margin: 0;
+	text-transform: uppercase;
+	letter-spacing: 0.12em;
+	font-size: 0.75rem;
+	font-weight: 800;
+	color: #cb6a5b;
+}
+
+.guest-auth-card h2 {
+	margin: 0;
+	font-family: Georgia, serif;
+	font-size: clamp(1.55rem, 3vw, 2rem);
+	color: #4a2b21;
+	line-height: 1.2;
+}
+
+.guest-auth-copy {
+	margin: 0;
+	color: var(--petites-brown-soft, #674332);
+	line-height: 1.55;
+}
+
+.guest-auth-actions {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+	justify-content: flex-end;
+	padding-top: 0.25rem;
+}
+
+.purchase-btn {
+	display: inline-flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.85rem 1.4rem;
+	border-radius: 99px;
+	font-size: 0.95rem;
+	font-weight: 700;
+	cursor: pointer;
+	border: none;
+	text-decoration: none;
+	transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+	flex: 1 1 140px;
+}
+
+.purchase-btn--primary {
+	background: #cb6a5b;
+	color: white;
+	box-shadow: 0 4px 16px rgba(203, 106, 91, 0.3);
+}
+
+.purchase-btn--primary:hover:not(:disabled) {
+	background: #b55446;
+	box-shadow: 0 6px 20px rgba(203, 106, 91, 0.45);
+	transform: translateY(-1px);
+}
+
+.purchase-btn--secondary {
+	background: rgba(103, 67, 50, 0.06);
+	color: var(--petites-brown, #674332);
+	border: 1px solid rgba(103, 67, 50, 0.1);
+}
+
+.purchase-btn--secondary:hover:not(:disabled) {
+	background: rgba(103, 67, 50, 0.12);
+	color: #4a2b21;
+}

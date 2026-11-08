@@ -2,7 +2,6 @@ import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core'
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
 
 import { ChatbotService } from '../../../core/services/chatbot.service';
 import { CartService } from '../../../core/services/cart.service';
@@ -12,16 +11,18 @@ import { AuthStateService } from '../../../core/services/auth-state.service';
 import { AddressService } from '../../../core/services/address.service';
 import { SettingService } from '../../../core/services/setting.service';
 import { CouponService } from '../../../core/services/coupon.service';
-import { ShopService } from '../../../core/services/shop.service';
 import { DatePickerComponent } from '../date-picker/date-picker.component';
 import { ChatAction, ChatMessage, InChatCheckoutState } from '../../../core/models/chatbot.models';
 import { Product } from '../../../core/models/product.model';
 import { CartResponse } from '../../../core/models/cart.models';
-import { CheckoutRequest, CheckoutResponse } from '../../../core/models/order.models';
+import { CheckoutResponse } from '../../../core/models/order.models';
 import { SavedAddressResponse } from '../../../core/models/address.models';
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { AreaNode, CityNode, GovernorateNode } from '../../../core/models/delivery-zone.model';
 import { DeliveryZoneService } from '../../../core/services/delivery-zone.service';
+import { DeliveryZoneUtil } from '../../../core/utils/delivery-zone.util';
+import { CheckoutDateUtil } from '../../../features/checkout/utils/checkout-date.util';
+import { InChatCheckoutCoordinator } from './services/in-chat-checkout-coordinator.service';
 
 @Component({
   selector: 'app-chatbot-widget',
@@ -42,9 +43,9 @@ export class ChatbotWidgetComponent implements OnInit {
   private readonly addressService = inject(AddressService);
   private readonly settingService = inject(SettingService);
   private readonly couponService = inject(CouponService);
-  private readonly shopService = inject(ShopService);
   private readonly router = inject(Router);
   private readonly deliveryZoneService = inject(DeliveryZoneService);
+  private readonly inChatCheckoutCoordinator = inject(InChatCheckoutCoordinator);
 
   @ViewChild('scrollContainer') private scrollContainer?: ElementRef;
 
@@ -104,7 +105,7 @@ export class ChatbotWidgetComponent implements OnInit {
           this.blockedDays = res.blockedDays;
         }
       },
-      error: () => {}
+      error: () => { }
     });
 
     this.deliveryZoneService.getTree().subscribe({
@@ -353,110 +354,23 @@ export class ChatbotWidgetComponent implements OnInit {
 
   setupCheckoutCard(assistantMsg: ChatMessage, cart: CartResponse): void {
     const defaultAddress = this.savedAddresses.length > 0 ? this.savedAddresses[0] : null;
+    const card = this.inChatCheckoutCoordinator.createInitialCard(
+      defaultAddress,
+      this.deliveryFeeRate,
+      this.zoneTree
+    );
+
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const defaultDate = tomorrow.toISOString().split('T')[0];
-
-    const card: InChatCheckoutState = {
-      customerName: '',
-      customerPhone: '',
-      orderType: 'DELIVERY',
-      addressId: defaultAddress ? defaultAddress.id : undefined,
-      deliveryGovernorateId: defaultAddress?.governorateId || undefined,
-      deliveryGovernorate: defaultAddress?.governorate || undefined,
-      deliveryCityId: defaultAddress?.cityId || undefined,
-      deliveryCity: defaultAddress ? defaultAddress.city : '',
-      deliveryAreaId: defaultAddress?.areaId || undefined,
-      deliveryArea: defaultAddress ? defaultAddress.area : '',
-      deliveryStreet: defaultAddress ? defaultAddress.street : '',
-      deliveryBuilding: defaultAddress?.building || '',
-      deliveryNotes: defaultAddress?.notes || '',
-      scheduledDate: defaultDate,
-      minScheduledDate: '',
-      couponCode: '',
-      couponPreview: null,
-      validatingCoupon: false,
-      couponError: undefined,
-      notes: '',
-      isSubmitting: false,
-      deliveryFee: this.deliveryFeeRate,
-      isCourierDelivery: false
-    };
-
-    if (defaultAddress && defaultAddress.areaId) {
-      const matched = this.findAreaInTree(defaultAddress.areaId);
-      if (matched) {
-        card.deliveryFee = matched.courierDelivery ? 0 : matched.deliveryFee;
-        card.isCourierDelivery = matched.courierDelivery;
-      }
-    }
+    card.scheduledDate = tomorrow.toISOString().split('T')[0];
 
     assistantMsg.checkoutCard = card;
     assistantMsg.cartPreview = cart;
 
-    this.updateCardMinScheduledDate(card, cart);
-    this.scrollToBottom();
-  }
-
-  private updateCardMinScheduledDate(card: InChatCheckoutState, cart: CartResponse | null): void {
-    const scheduledItems = cart?.items?.filter((item) => item.deliveryMode === 'SCHEDULED') ?? [];
-    if (scheduledItems.length === 0) {
-      card.minScheduledDate = '';
-      return;
-    }
-
-    const requests = scheduledItems.map((item) => this.shopService.getProductDetail(item.productId));
-    forkJoin(requests).subscribe({
-      next: (products) => {
-        const dates = products.map((p) => p.earliestScheduledDate).filter(Boolean);
-        if (dates.length > 0) {
-          dates.sort();
-          card.minScheduledDate = dates[dates.length - 1];
-        } else {
-          card.minScheduledDate = this.getTodayCairoFormatted();
-        }
-        
-        // Ensure scheduledDate is at least minScheduledDate and not on a blocked day
-        if (!card.scheduledDate || card.scheduledDate < card.minScheduledDate || this.isDateBlocked(card.scheduledDate)) {
-          card.scheduledDate = this.findNextAvailableDate(card.minScheduledDate);
-        }
-      },
-      error: () => {
-        card.minScheduledDate = this.getTodayCairoFormatted();
-        if (!card.scheduledDate || card.scheduledDate < card.minScheduledDate || this.isDateBlocked(card.scheduledDate)) {
-          card.scheduledDate = this.findNextAvailableDate(card.minScheduledDate);
-        }
-      }
+    this.inChatCheckoutCoordinator.updateCardMinScheduledDate(card, cart, this.blockedDays, () => {
+      this.scrollToBottom();
     });
-  }
-
-  private getTodayCairoFormatted(): string {
-    const options: Intl.DateTimeFormatOptions = {
-      timeZone: 'Africa/Cairo',
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    };
-    const formatter = new Intl.DateTimeFormat('fr-CA', options);
-    return formatter.format(new Date());
-  }
-
-  private findNextAvailableDate(startDateStr: string): string {
-    if (!startDateStr) return '';
-    const parts = startDateStr.split('-');
-    let date = parts.length === 3 ? new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10)) : new Date();
-    
-    for (let i = 0; i < 21; i++) {
-      const y = date.getFullYear();
-      const m = (date.getMonth() + 1).toString().padStart(2, '0');
-      const d = date.getDate().toString().padStart(2, '0');
-      const str = `${y}-${m}-${d}`;
-      if (!this.isDateBlocked(str)) {
-        return str;
-      }
-      date.setDate(date.getDate() + 1);
-    }
-    return startDateStr;
+    this.scrollToBottom();
   }
 
   validateInChatCoupon(card: InChatCheckoutState, cart: CartResponse | null): void {
@@ -499,33 +413,20 @@ export class ChatbotWidgetComponent implements OnInit {
   }
 
   findAreaInTree(areaId?: string | null): AreaNode | null {
-    if (!areaId) return null;
-    for (const gov of this.zoneTree) {
-      for (const city of gov.cities) {
-        const area = city.areas.find(a => a.id === areaId);
-        if (area) return area;
-      }
-    }
-    return null;
+    return DeliveryZoneUtil.findArea(this.zoneTree, areaId);
   }
 
   getAvailableCities(govId?: string): CityNode[] {
-    if (!govId) return [];
-    return this.zoneTree.find(g => g.id === govId)?.cities ?? [];
+    return DeliveryZoneUtil.getCities(this.zoneTree, govId);
   }
 
   getAvailableAreas(cityId?: string): AreaNode[] {
-    if (!cityId) return [];
-    for (const gov of this.zoneTree) {
-      const city = gov.cities.find(c => c.id === cityId);
-      if (city) return city.areas;
-    }
-    return [];
+    return DeliveryZoneUtil.getAreas(this.zoneTree, cityId);
   }
 
   onCardGovernorateChange(card: InChatCheckoutState, govId: string): void {
     card.deliveryGovernorateId = govId;
-    const gov = this.zoneTree.find(g => g.id === govId);
+    const gov = DeliveryZoneUtil.findGovernorate(this.zoneTree, govId);
     card.deliveryGovernorate = gov?.name || '';
     card.deliveryCityId = undefined;
     card.deliveryCity = '';
@@ -537,8 +438,7 @@ export class ChatbotWidgetComponent implements OnInit {
 
   onCardCityChange(card: InChatCheckoutState, cityId: string): void {
     card.deliveryCityId = cityId;
-    const cities = this.getAvailableCities(card.deliveryGovernorateId);
-    const city = cities.find(c => c.id === cityId);
+    const city = DeliveryZoneUtil.findCity(this.zoneTree, cityId);
     card.deliveryCity = city?.name || '';
     card.deliveryAreaId = undefined;
     card.deliveryArea = '';
@@ -548,8 +448,7 @@ export class ChatbotWidgetComponent implements OnInit {
 
   onCardAreaChange(card: InChatCheckoutState, areaId: string): void {
     card.deliveryAreaId = areaId;
-    const areas = this.getAvailableAreas(card.deliveryCityId);
-    const area = areas.find(a => a.id === areaId);
+    const area = DeliveryZoneUtil.findArea(this.zoneTree, areaId);
     card.deliveryArea = area?.name || '';
     if (area) {
       card.deliveryFee = area.courierDelivery ? 0 : area.deliveryFee;
@@ -642,80 +541,32 @@ export class ChatbotWidgetComponent implements OnInit {
     if (!card || card.isSubmitting) return;
 
     card.error = undefined;
-
-    // Basic Validation: only require name & phone for non-authenticated guests
-    if (!this.isAuthenticated) {
-      if (!card.customerName.trim() || card.customerName.trim().length < 2) {
-        card.error = 'Please enter your full name (minimum 2 characters).';
-        return;
-      }
-      if (!card.customerPhone.trim() || card.customerPhone.trim().length < 7) {
-        card.error = 'Please enter a valid phone number.';
-        return;
-      }
-    }
-
-    // Delivery Address Validation
-    const isUsingSavedAddress = this.isAuthenticated && Boolean(card.addressId && card.addressId !== 'NEW');
-    if (card.orderType === 'DELIVERY' && !isUsingSavedAddress) {
-      if (!card.deliveryStreet.trim() || !card.deliveryAreaId || !card.deliveryCityId || !card.deliveryGovernorateId) {
-        card.error = 'Please select governorate, city, area and enter street for delivery.';
-        return;
-      }
-    }
-
-    const hasScheduled = msg.cartPreview?.items?.some(i => i.deliveryMode === 'SCHEDULED');
-    if (hasScheduled) {
-      if (!card.scheduledDate) {
-        card.error = 'Please choose a scheduled delivery date for scheduled bakery items.';
-        return;
-      }
-      if (card.minScheduledDate && card.scheduledDate < card.minScheduledDate) {
-        card.error = `Selected scheduled date cannot be earlier than ${card.minScheduledDate}.`;
-        return;
-      }
-      if (this.isDateBlocked(card.scheduledDate)) {
-        card.error = 'Selected date falls on a blocked bakery delivery day. Please choose another date.';
-        return;
-      }
+    const validationError = this.inChatCheckoutCoordinator.validateCard(
+      card,
+      msg.cartPreview ?? null,
+      this.isAuthenticated,
+      this.blockedDays
+    );
+    if (validationError) {
+      card.error = validationError;
+      return;
     }
 
     card.isSubmitting = true;
-
-    const couponCode = card.couponCode?.trim() || '';
-    const payload: CheckoutRequest = {
-      customerName: card.customerName.trim() || undefined,
-      customerPhone: card.customerPhone.trim() || undefined,
-      orderType: card.orderType,
-      addressId: isUsingSavedAddress ? card.addressId : null,
-      governorateId: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryGovernorateId : undefined,
-      deliveryGovernorate: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryGovernorate : undefined,
-      cityId: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryCityId : undefined,
-      deliveryCity: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryCity.trim() : undefined,
-      areaId: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryAreaId : undefined,
-      deliveryArea: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryArea.trim() : undefined,
-      deliveryStreet: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryStreet.trim() : undefined,
-      deliveryBuilding: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryBuilding.trim() : undefined,
-      deliveryNotes: card.orderType === 'DELIVERY' && !isUsingSavedAddress ? card.deliveryNotes.trim() : undefined,
-      notes: card.notes.trim() || undefined,
-      couponId: card.couponPreview?.valid ? card.couponPreview.couponId : null,
-      couponCode: card.couponPreview?.valid ? null : (couponCode || null),
-      scheduledDate: hasScheduled ? card.scheduledDate || null : null
-    };
+    const payload = this.inChatCheckoutCoordinator.buildCheckoutPayload(
+      card,
+      msg.cartPreview ?? null,
+      this.isAuthenticated
+    );
 
     this.checkoutService.submitCheckout(payload).subscribe({
       next: (response: CheckoutResponse) => {
         card.isSubmitting = false;
 
         const amountToTransfer = response.orders.reduce((sum, order) => sum + (order.totalAmount ?? 0), 0);
-        const formattedAmount = new Intl.NumberFormat('en-EG', {
-          style: 'currency',
-          currency: 'EGP'
-        }).format(amountToTransfer);
-
+        const formattedAmount = this.inChatCheckoutCoordinator.formatCurrency(amountToTransfer);
         const orderNum = response.orders[0]?.orderNumber || 'CONFIRMED';
 
-        // Add confirmed message
         this.messages.push({
           role: 'assistant',
           content: `🎉 **Order Placed Successfully!**\nYour order **#${orderNum}** has been received! Please complete payment via InstaPay using the details below so we can start baking and preparing your treats:`,
@@ -728,7 +579,6 @@ export class ChatbotWidgetComponent implements OnInit {
           timestamp: new Date()
         });
 
-        // Clear in-chat checkout card from previous message
         msg.checkoutCard = undefined;
         this.scrollToBottom();
       },
@@ -741,28 +591,11 @@ export class ChatbotWidgetComponent implements OnInit {
   }
 
   isDateBlocked(dateStr: string | null): boolean {
-    if (!dateStr) return false;
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return false;
-
-    const year = parseInt(parts[0], 10);
-    const month = parseInt(parts[1], 10) - 1;
-    const day = parseInt(parts[2], 10);
-    const date = new Date(year, month, day);
-
-    if (isNaN(date.getTime())) return false;
-
-    const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-    const selectedDayName = daysOfWeek[date.getDay()];
-    return this.blockedDays.includes(selectedDayName);
+    return CheckoutDateUtil.isDateBlocked(dateStr, this.blockedDays);
   }
 
   calculateCheckoutTotal(card: InChatCheckoutState, cart: CartResponse | null): number {
-    if (!cart) return 0;
-    const itemsTotal = cart.subtotal || 0;
-    const discount = (card.couponPreview && card.couponPreview.valid) ? card.couponPreview.discountAmount : 0;
-    const delivery = (card.orderType === 'DELIVERY' && !card.isCourierDelivery) ? (card.deliveryFee ?? this.deliveryFeeRate) : 0;
-    return Math.max(0, itemsTotal - discount + delivery);
+    return this.inChatCheckoutCoordinator.calculateCheckoutTotal(card, cart, this.deliveryFeeRate);
   }
 
   hasScheduledItems(cart: CartResponse | null): boolean {

@@ -7,12 +7,12 @@ import { forkJoin, switchMap } from 'rxjs';
 import { ShopService } from '../../../core/services/shop.service';
 import { SettingService } from '../../../core/services/setting.service';
 
-import { AddressCreateRequest, SavedAddressResponse } from '../../../core/models/address.models';
+import { SavedAddressResponse } from '../../../core/models/address.models';
 import { CartResponse } from '../../../core/models/cart.models';
 import { CouponValidationResponse } from '../../../core/models/coupon.models';
 import { LoyaltyResponse } from '../../../core/models/loyalty.models';
 import { CheckoutResponse, OrderResponse, OrderType } from '../../../core/models/order.models';
-import { readApiErrorMessage, readApiFieldErrors } from '../../../core/models/api-error.model';
+import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { AddressService } from '../../../core/services/address.service';
 import { AuthStateService } from '../../../core/services/auth-state.service';
 import { CartService } from '../../../core/services/cart.service';
@@ -28,6 +28,15 @@ import { CouponFormComponent } from '../components/coupon-form/coupon-form.compo
 import { CheckoutSummaryComponent } from '../components/checkout-summary/checkout-summary.component';
 import { SuccessOrdersComponent } from '../components/success-orders/success-orders.component';
 import { PaymentFormComponent } from '../components/payment-form/payment-form.component';
+import { GuestPromptModalComponent } from '../components/guest-prompt-modal/guest-prompt-modal.component';
+import { CheckoutErrorModalComponent } from '../components/checkout-error-modal/checkout-error-modal.component';
+import { InstapayPopupModalComponent } from '../components/instapay-popup-modal/instapay-popup-modal.component';
+
+import { CheckoutDateUtil } from '../utils/checkout-date.util';
+import { CheckoutPricingUtil } from '../utils/checkout-pricing.util';
+import { CheckoutFormUtil } from '../utils/checkout-form.util';
+import { CheckoutErrorUtil } from '../utils/checkout-error.util';
+import { CheckoutRewardUtil } from '../utils/checkout-reward.util';
 
 @Component({
 	selector: 'app-checkout-page',
@@ -40,7 +49,10 @@ import { PaymentFormComponent } from '../components/payment-form/payment-form.co
 		CouponFormComponent,
 		CheckoutSummaryComponent,
 		SuccessOrdersComponent,
-		PaymentFormComponent
+		PaymentFormComponent,
+		GuestPromptModalComponent,
+		CheckoutErrorModalComponent,
+		InstapayPopupModalComponent
 	],
 	templateUrl: './checkout-page.component.html',
 	styleUrl: './checkout-page.component.css'
@@ -166,21 +178,7 @@ export class CheckoutPageComponent implements OnInit {
 	}
 
 	validateSelectedDate(dateStr: string | null): void {
-		if (!dateStr) return;
-		const parts = dateStr.split('-');
-		if (parts.length !== 3) return;
-		
-		const year = parseInt(parts[0], 10);
-		const month = parseInt(parts[1], 10) - 1;
-		const day = parseInt(parts[2], 10);
-		const date = new Date(year, month, day);
-		
-		if (isNaN(date.getTime())) return;
-
-		const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-		const selectedDayName = daysOfWeek[date.getDay()];
-
-		if (this.blockedDays.includes(selectedDayName)) {
+		if (this.isDateBlocked(dateStr)) {
 			this.checkoutForm.controls.scheduledDate.setErrors({ blockedDay: true });
 		} else {
 			const errors = this.checkoutForm.controls.scheduledDate.errors;
@@ -192,20 +190,7 @@ export class CheckoutPageComponent implements OnInit {
 	}
 
 	isDateBlocked(dateStr: string | null): boolean {
-		if (!dateStr) return false;
-		const parts = dateStr.split('-');
-		if (parts.length !== 3) return false;
-		
-		const year = parseInt(parts[0], 10);
-		const month = parseInt(parts[1], 10) - 1;
-		const day = parseInt(parts[2], 10);
-		const date = new Date(year, month, day);
-		
-		if (isNaN(date.getTime())) return false;
-
-		const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
-		const selectedDayName = daysOfWeek[date.getDay()];
-		return this.blockedDays.includes(selectedDayName);
+		return CheckoutDateUtil.isDateBlocked(dateStr, this.blockedDays);
 	}
 
 	get cart(): CartResponse | null {
@@ -217,27 +202,22 @@ export class CheckoutPageComponent implements OnInit {
 	}
 
 	get isMixedOrder(): boolean {
-		const items = this.cart?.items ?? [];
-		const hasInstant = items.some((item) => item.deliveryMode === 'INSTANT');
-		const hasScheduled = items.some((item) => item.deliveryMode === 'SCHEDULED');
-		return hasInstant && hasScheduled;
+		return CheckoutPricingUtil.isMixedOrder(this.cart);
 	}
 
 	get deliveryFee(): number {
-		if (this.orderType === 'DELIVERY') {
-			if (this.isCourierDelivery) {
-				return 0;
-			}
-			return this.isMixedOrder ? (this.deliveryFeeRate * 2) : this.deliveryFeeRate;
-		}
-		return 0;
+		return CheckoutPricingUtil.calculateDeliveryFee(
+			this.orderType,
+			this.isCourierDelivery,
+			this.isMixedOrder,
+			this.deliveryFeeRate
+		);
 	}
-
 
 	get selectedSavedAddress(): SavedAddressResponse | null {
 		const addressId = this.checkoutForm.controls.addressId.value;
 		if (addressId && addressId !== 'new') {
-			return this.addresses.find(a => a.id === addressId) || null;
+			return this.addresses.find((a) => a.id === addressId) || null;
 		}
 		return null;
 	}
@@ -268,7 +248,7 @@ export class CheckoutPageComponent implements OnInit {
 		const saved = this.selectedSavedAddress;
 		if (saved) {
 			if (saved.areaId && this.zoneTree.length > 0) {
-				const matched = this.findAreaInTree(saved.areaId);
+				const matched = CheckoutPricingUtil.findAreaInTree(this.zoneTree, saved.areaId);
 				if (matched) {
 					this.deliveryFeeRate = matched.courierDelivery ? 0 : matched.deliveryFee;
 					this.isCourierDelivery = matched.courierDelivery;
@@ -282,7 +262,7 @@ export class CheckoutPageComponent implements OnInit {
 
 		const areaId = this.checkoutForm.controls.guestDeliveryAreaId.value;
 		if (areaId) {
-			const matched = this.findAreaInTree(areaId);
+			const matched = CheckoutPricingUtil.findAreaInTree(this.zoneTree, areaId);
 			if (matched) {
 				this.deliveryFeeRate = matched.courierDelivery ? 0 : matched.deliveryFee;
 				this.isCourierDelivery = matched.courierDelivery;
@@ -294,20 +274,8 @@ export class CheckoutPageComponent implements OnInit {
 		this.isCourierDelivery = false;
 	}
 
-	private findAreaInTree(areaId?: string | null): AreaNode | null {
-		if (!areaId) return null;
-		for (const gov of this.zoneTree) {
-			for (const city of gov.cities) {
-				const area = city.areas.find(a => a.id === areaId);
-				if (area) return area;
-			}
-		}
-		return null;
-	}
-
 	get finalAmount(): number {
-		const baseAmount = this.couponPreview?.finalAmount ?? this.subtotal;
-		return baseAmount + this.deliveryFee;
+		return CheckoutPricingUtil.calculateFinalAmount(this.subtotal, this.deliveryFee, this.couponPreview);
 	}
 
 	get hasScheduledItems(): boolean {
@@ -339,15 +307,11 @@ export class CheckoutPageComponent implements OnInit {
 	}
 
 	get instantDiscount(): number {
-		if (!this.couponPreview?.valid) return 0;
-		const totalDiscount = this.couponPreview.discountAmount;
-		return Math.min(totalDiscount, this.instantSubtotal + this.instantDeliveryFee);
+		return CheckoutPricingUtil.getInstantDiscount(this.instantSubtotal, this.instantDeliveryFee, this.couponPreview);
 	}
 
 	get scheduledDiscount(): number {
-		if (!this.couponPreview?.valid) return 0;
-		const totalDiscount = this.couponPreview.discountAmount;
-		return Math.max(0, totalDiscount - this.instantDiscount);
+		return CheckoutPricingUtil.getScheduledDiscount(this.instantDiscount, this.couponPreview);
 	}
 
 	get instantTotal(): number {
@@ -425,24 +389,13 @@ export class CheckoutPageComponent implements OnInit {
 					dates.sort();
 					this.minScheduledDate = dates[dates.length - 1];
 				} else {
-					this.minScheduledDate = this.getTodayCairoFormatted();
+					this.minScheduledDate = CheckoutDateUtil.getTodayCairoFormatted();
 				}
 			},
 			error: () => {
-				this.minScheduledDate = this.getTodayCairoFormatted();
+				this.minScheduledDate = CheckoutDateUtil.getTodayCairoFormatted();
 			}
 		});
-	}
-
-	private getTodayCairoFormatted(): string {
-		const options: Intl.DateTimeFormatOptions = {
-			timeZone: 'Africa/Cairo',
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit'
-		};
-		const formatter = new Intl.DateTimeFormat('fr-CA', options);
-		return formatter.format(new Date());
 	}
 
 	loadAddresses(): void {
@@ -549,7 +502,7 @@ export class CheckoutPageComponent implements OnInit {
 			}
 		}
 
-		if (this.showGuestDeliveryFields && !this.hasGuestDeliveryAddress()) {
+		if (this.showGuestDeliveryFields && !CheckoutFormUtil.hasGuestDeliveryAddress(this.checkoutForm)) {
 			this.showCheckoutError('Enter a delivery address to place a guest delivery order.');
 			this.checkoutForm.markAllAsTouched();
 			return;
@@ -562,7 +515,7 @@ export class CheckoutPageComponent implements OnInit {
 				return;
 			}
 			if (this.minScheduledDate && selectedDateVal < this.minScheduledDate) {
-				this.showCheckoutError(`Scheduled date cannot be earlier than ${this.formatCheckoutDate(this.minScheduledDate)}.`);
+				this.showCheckoutError(`Scheduled date cannot be earlier than ${CheckoutDateUtil.formatCheckoutDate(this.minScheduledDate)}.`);
 				return;
 			}
 			if (this.isDateBlocked(selectedDateVal)) {
@@ -584,7 +537,7 @@ export class CheckoutPageComponent implements OnInit {
 	}
 
 	private submitAuthenticatedNewAddressCheckout(): void {
-		const newAddress = this.buildGuestDeliveryAddress();
+		const newAddress = CheckoutFormUtil.buildGuestDeliveryAddress(this.checkoutForm);
 		if (!newAddress) {
 			return;
 		}
@@ -595,18 +548,21 @@ export class CheckoutPageComponent implements OnInit {
 		this.statusMessage = '';
 
 		this.addressService.createAddress(newAddress).pipe(
-			switchMap((address) => this.checkoutService.submitCheckout(this.buildCheckoutRequest(address.id)))
+			switchMap((address) => this.checkoutService.submitCheckout(this.buildCheckoutPayload(address.id)))
 		).subscribe({
 			next: (response) => this.handleCheckoutSuccess(response),
 			error: (error) => {
 				this.placingOrder = false;
-				this.showCheckoutError(this.readCheckoutErrorMessage(error), this.isCheckoutAvailabilityError(error) ? 'basket' : 'checkout');
+				this.showCheckoutError(
+					CheckoutErrorUtil.readCheckoutErrorMessage(error),
+					CheckoutErrorUtil.isCheckoutAvailabilityError(error) ? 'basket' : 'checkout'
+				);
 			}
 		});
 	}
 
 	private submitGuestDeliveryCheckout(): void {
-		const guestAddress = this.buildGuestDeliveryAddress();
+		const guestAddress = CheckoutFormUtil.buildGuestDeliveryAddress(this.checkoutForm);
 		if (!guestAddress) {
 			return;
 		}
@@ -619,13 +575,16 @@ export class CheckoutPageComponent implements OnInit {
 		this.purchaseSession
 			.ensureGuestSessionIfAnonymous()
 			.pipe(
-				switchMap(() => this.checkoutService.submitCheckout(this.buildCheckoutRequest(null, guestAddress)))
+				switchMap(() => this.checkoutService.submitCheckout(this.buildCheckoutPayload(null, guestAddress)))
 			)
 			.subscribe({
 				next: (response) => this.handleCheckoutSuccess(response),
 				error: (error) => {
 					this.placingOrder = false;
-					this.showCheckoutError(this.readCheckoutErrorMessage(error), this.isCheckoutAvailabilityError(error) ? 'basket' : 'checkout');
+					this.showCheckoutError(
+						CheckoutErrorUtil.readCheckoutErrorMessage(error),
+						CheckoutErrorUtil.isCheckoutAvailabilityError(error) ? 'basket' : 'checkout'
+					);
 				}
 			});
 	}
@@ -636,58 +595,33 @@ export class CheckoutPageComponent implements OnInit {
 		this.showErrorPopup = false;
 		this.statusMessage = '';
 
-		this.checkoutService.submitCheckout(this.buildCheckoutRequest(addressId)).subscribe({
+		this.checkoutService.submitCheckout(this.buildCheckoutPayload(addressId)).subscribe({
 			next: (response) => this.handleCheckoutSuccess(response),
 			error: (error) => {
 				this.placingOrder = false;
-				this.showCheckoutError(this.readCheckoutErrorMessage(error), this.isCheckoutAvailabilityError(error) ? 'basket' : 'checkout');
+				this.showCheckoutError(
+					CheckoutErrorUtil.readCheckoutErrorMessage(error),
+					CheckoutErrorUtil.isCheckoutAvailabilityError(error) ? 'basket' : 'checkout'
+				);
 			}
 		});
+	}
+
+	private buildCheckoutPayload(addressId: string | null, inlineAddress?: any) {
+		return CheckoutFormUtil.buildCheckoutRequest(
+			this.checkoutForm,
+			this.orderType,
+			this.couponPreview,
+			this.hasScheduledItems,
+			addressId,
+			inlineAddress
+		);
 	}
 
 	private showCheckoutError(message: string, mode: 'checkout' | 'basket' = 'checkout'): void {
 		this.errorMessage = message;
 		this.errorPopupMode = mode;
 		this.showErrorPopup = true;
-	}
-
-	private isCheckoutAvailabilityError(error: unknown): boolean {
-		const fields = readApiFieldErrors(error);
-		return Boolean(fields?.['productName']?.[0] && fields?.['requestedQuantity']?.[0] && fields?.['availableQuantity']?.[0]);
-	}
-
-	private readCheckoutErrorMessage(error: unknown): string {
-		const fields = readApiFieldErrors(error);
-		const productName = fields?.['productName']?.[0];
-		const scheduledDate = fields?.['scheduledDate']?.[0];
-		const requestedQuantity = fields?.['requestedQuantity']?.[0];
-		const availableQuantity = fields?.['availableQuantity']?.[0];
-		const dailyCapacity = fields?.['dailyCapacity']?.[0];
-
-		if (productName && scheduledDate && requestedQuantity && availableQuantity) {
-			const requested = Number(requestedQuantity);
-			const capacity = Number(dailyCapacity);
-			if (Number.isFinite(requested) && Number.isFinite(capacity) && requested > capacity) {
-				return `${productName} can only be ordered up to ${dailyCapacity} per day. Your cart has ${requestedQuantity}. Please reduce the quantity.`;
-			}
-
-			return `${productName} has only ${availableQuantity} available on ${this.formatCheckoutDate(scheduledDate)}. Your cart has ${requestedQuantity}. Choose another date or reduce the quantity.`;
-		}
-
-		return readApiErrorMessage(error, 'Unable to complete checkout.');
-	}
-
-	private formatCheckoutDate(value: string): string {
-		const date = new Date(`${value}T00:00:00`);
-		if (Number.isNaN(date.getTime())) {
-			return value;
-		}
-
-		return new Intl.DateTimeFormat('en-EG', {
-			month: 'short',
-			day: 'numeric',
-			year: 'numeric'
-		}).format(date);
 	}
 
 	private handleCheckoutSuccess(response: CheckoutResponse): void {
@@ -699,7 +633,7 @@ export class CheckoutPageComponent implements OnInit {
 		} catch (e) {
 			// ignore storage quota errors
 		}
-		const rewardSummary = this.findRewardSummary(response.orders);
+		const rewardSummary = CheckoutRewardUtil.findRewardSummary(response.orders, this.rewardProductId, this.rewardProductName);
 		if (rewardSummary) {
 			this.statusMessage = `Reward applied - enjoy your free ${rewardSummary.productName}!`;
 		} else if (this.showRewardTeaser) {
@@ -719,135 +653,12 @@ export class CheckoutPageComponent implements OnInit {
 		this.loadCart();
 	}
 
-	private buildInstapayHint(orders: OrderResponse[]): string {
-		const amountToTransfer = orders.reduce((sum, order) => sum + (order.totalAmount ?? 0), 0);
-		const formattedAmount = new Intl.NumberFormat('en-EG', {
-			style: 'currency',
-			currency: 'EGP'
-		}).format(amountToTransfer);
-
-		return `Please confirm your order by transferring ${formattedAmount} using InstaPay. Click the payment link: ${this.instapayPaymentLink}. Click the link to send money to ${this.instapayHandle}. Powered by InstaPay.`;
-	}
-
-	orderQuickDetails(order: OrderResponse): string {
-		return `${order.orderType} · ${order.status} · ${new Intl.NumberFormat('en-EG', {
-			style: 'currency',
-			currency: 'EGP'
-		}).format(order.totalAmount)}`;
-	}
-
-	private buildCheckoutRequest(addressId: string | null, inlineAddress?: AddressCreateRequest | null) {
-		const couponCode = this.checkoutForm.controls.couponCode.value?.trim() ?? '';
-
-		return {
-			customerName: this.checkoutForm.controls.customerName.value?.trim() || undefined,
-			customerPhone: this.checkoutForm.controls.customerPhone.value?.trim() || undefined,
-			orderType: this.orderType,
-			addressId,
-			governorateId: inlineAddress?.governorateId,
-			deliveryGovernorate: inlineAddress?.governorate,
-			cityId: inlineAddress?.cityId,
-			deliveryCity: inlineAddress?.city,
-			areaId: inlineAddress?.areaId,
-			deliveryArea: inlineAddress?.area,
-			deliveryStreet: inlineAddress?.street,
-			deliveryBuilding: inlineAddress?.building,
-			deliveryNotes: inlineAddress?.notes,
-			notes: this.checkoutForm.controls.notes.value?.trim() || undefined,
-			couponId: this.couponPreview?.valid ? this.couponPreview.couponId : null,
-			couponCode: this.couponPreview?.valid ? null : couponCode || null,
-			scheduledDate: this.hasScheduledItems ? this.checkoutForm.controls.scheduledDate.value || null : null
-		};
-	}
-
-	private buildGuestDeliveryAddress(): AddressCreateRequest | null {
-		if (!this.hasGuestDeliveryAddress()) {
-			return null;
-		}
-
-		return {
-			governorateId: this.checkoutForm.controls.guestDeliveryGovernorateId.value?.trim() || undefined,
-			governorate: this.checkoutForm.controls.guestDeliveryGovernorate.value?.trim() || undefined,
-			cityId: this.checkoutForm.controls.guestDeliveryCityId.value?.trim() || undefined,
-			city: this.checkoutForm.controls.guestDeliveryCity.value?.trim() ?? '',
-			areaId: this.checkoutForm.controls.guestDeliveryAreaId.value?.trim() || undefined,
-			area: this.checkoutForm.controls.guestDeliveryArea.value?.trim() ?? '',
-			street: this.checkoutForm.controls.guestDeliveryStreet.value?.trim() ?? '',
-			building: this.checkoutForm.controls.guestDeliveryBuilding.value?.trim() || undefined,
-			notes: this.checkoutForm.controls.guestDeliveryNotes.value?.trim() || undefined
-		};
-	}
-
-	private hasGuestDeliveryAddress(): boolean {
-		return Boolean(
-			this.checkoutForm.controls.guestDeliveryGovernorateId.value?.trim() &&
-			this.checkoutForm.controls.guestDeliveryCityId.value?.trim() &&
-			this.checkoutForm.controls.guestDeliveryAreaId.value?.trim() &&
-			this.checkoutForm.controls.guestDeliveryStreet.value?.trim()
-		);
-	}
-
 	private syncCheckoutValidation(): void {
-		if (this.isAuthenticated) {
-			this.checkoutForm.controls.customerName.clearValidators();
-			this.checkoutForm.controls.customerPhone.clearValidators();
-		} else {
-			this.checkoutForm.controls.customerName.setValidators([Validators.required, Validators.minLength(2)]);
-			this.checkoutForm.controls.customerPhone.setValidators([Validators.required, Validators.minLength(7)]);
-		}
-
-		if (this.isAuthenticated && this.orderType === 'DELIVERY') {
-			this.checkoutForm.controls.addressId.setValidators([Validators.required]);
-		} else {
-			this.checkoutForm.controls.addressId.clearValidators();
-		}
-
-		const guestSelectValidators = this.showGuestDeliveryFields ? [Validators.required] : [];
-		const guestStreetValidators = this.showGuestDeliveryFields ? [Validators.required, Validators.minLength(2)] : [];
-
-		this.checkoutForm.controls.guestDeliveryGovernorateId.setValidators(guestSelectValidators);
-		this.checkoutForm.controls.guestDeliveryCityId.setValidators(guestSelectValidators);
-		this.checkoutForm.controls.guestDeliveryAreaId.setValidators(guestSelectValidators);
-		this.checkoutForm.controls.guestDeliveryStreet.setValidators(guestStreetValidators);
-
-		this.checkoutForm.controls.customerName.updateValueAndValidity({ emitEvent: false });
-		this.checkoutForm.controls.customerPhone.updateValueAndValidity({ emitEvent: false });
-		this.checkoutForm.controls.addressId.updateValueAndValidity({ emitEvent: false });
-		this.checkoutForm.controls.guestDeliveryGovernorateId.updateValueAndValidity({ emitEvent: false });
-		this.checkoutForm.controls.guestDeliveryCityId.updateValueAndValidity({ emitEvent: false });
-		this.checkoutForm.controls.guestDeliveryAreaId.updateValueAndValidity({ emitEvent: false });
-		this.checkoutForm.controls.guestDeliveryStreet.updateValueAndValidity({ emitEvent: false });
-	}
-
-
-	private findRewardSummary(orders: OrderResponse[]): { productName: string } | null {
-		for (const order of orders) {
-			if (order.rewardApplied) {
-				return { productName: this.rewardProductName };
-			}
-
-			const rewardItem = order.items.find((item) => this.isRewardItem(item));
-			if (rewardItem) {
-				return { productName: rewardItem.productName?.trim() || this.rewardProductName };
-			}
-		}
-
-		return null;
-	}
-
-	private isRewardItem(item: OrderResponse['items'][number]): boolean {
-		if (item.unitPrice !== 0) {
-			return false;
-		}
-
-		const rewardProductId = this.rewardProductId.toLowerCase();
-		const productId = item.productId?.trim().toLowerCase() ?? '';
-		if (rewardProductId && productId === rewardProductId) {
-			return true;
-		}
-
-		const rewardProductName = this.rewardProductName.toLowerCase();
-		const productName = item.productName?.trim().toLowerCase() ?? '';
-		return Boolean(rewardProductName && productName === rewardProductName);
+		CheckoutFormUtil.syncCheckoutValidation(
+			this.checkoutForm,
+			this.isAuthenticated,
+			this.orderType,
+			this.showGuestDeliveryFields
+		);
 	}
 }

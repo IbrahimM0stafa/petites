@@ -92,118 +92,16 @@
 	border-color: rgba(82, 167, 124, 0.18);
 }
 
-.guest-auth-modal {
-	position: fixed;
-	inset: 0;
-	z-index: 2000;
-	display: grid;
-	place-items: center;
-	padding: 1.25rem;
-}
-
-.guest-auth-backdrop {
-	position: absolute;
-	inset: 0;
-	background: rgba(43, 27, 18, 0.48);
-	backdrop-filter: blur(6px);
-	z-index: 2000;
-}
-
-.guest-auth-card {
-	position: relative;
-	z-index: 2001;
-	max-width: 520px;
-	width: min(520px, 100%);
-	padding: 1.75rem;
-	border-radius: 1.5rem;
-	background: linear-gradient(180deg, rgba(255, 252, 248, 0.98), rgba(255, 246, 239, 0.98));
-	border: 1px solid rgba(183, 149, 132, 0.25);
-	box-shadow: 0 30px 80px rgba(43, 27, 18, 0.24);
-	display: grid;
-	gap: 0.9rem;
-}
-
-.guest-auth-close {
-	position: absolute;
-	top: 0.85rem;
-	right: 0.85rem;
-	width: 2rem;
-	height: 2rem;
-	border: 0;
-	border-radius: 999px;
-	background: rgba(103, 67, 50, 0.08);
-	color: var(--petites-brown, #674332);
-	font-size: 1.25rem;
-	line-height: 1;
-	cursor: pointer;
-}
-
-.guest-auth-eyebrow {
-	margin: 0;
-	text-transform: uppercase;
-	letter-spacing: 0.12em;
-	font-size: 0.75rem;
-	font-weight: 800;
-	color: #cb6a5b;
-}
-
-.guest-auth-card h2 {
-	margin: 0;
-	font-family: Georgia, serif;
-	font-size: clamp(1.55rem, 3vw, 2rem);
-	color: #4a2b21;
-	line-height: 1.2;
-}
-
-.guest-auth-copy {
-	margin: 0;
-	color: var(--petites-brown-soft, #674332);
-	line-height: 1.55;
-}
-
-.guest-auth-actions {
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.75rem;
-	justify-content: flex-end;
-	padding-top: 0.25rem;
-}
-
-.guest-auth-actions .purchase-btn {
-	flex: 1 1 140px;
-}
-
-.checkout-error-card {
-	border: 1px solid rgba(201, 86, 69, 0.24);
-}
-
-.checkout-error-close {
-	background: rgba(201, 86, 69, 0.1);
-	color: #c95645;
-}
-
-.checkout-error-icon {
-	display: grid;
-	place-items: center;
-	width: 44px;
-	height: 44px;
-	border-radius: 14px;
-	background: rgba(201, 86, 69, 0.1);
-	color: #c95645;
-}
-
-.checkout-error-icon svg {
-	width: 22px;
-	height: 22px;
-}
-
-.checkout-error-eyebrow {
-	color: #c95645;
-}
-
 @keyframes slideIn {
-	from { transform: translateY(-8px); opacity: 0; }
-	to { transform: translateY(0); opacity: 1; }
+	from {
+		transform: translateY(-8px);
+		opacity: 0;
+	}
+
+	to {
+		transform: translateY(0);
+		opacity: 1;
+	}
 }
 
 /* Loading state */
@@ -231,7 +129,9 @@
 }
 
 @keyframes spin {
-	to { transform: rotate(360deg); }
+	to {
+		transform: rotate(360deg);
+	}
 }
 
 /* Split Order Shipment Notice Box */
@@ -472,8 +372,15 @@
 }
 
 @keyframes popIn {
-	from { transform: scale(0.95); opacity: 0; }
-	to { transform: scale(1); opacity: 1; }
+	from {
+		transform: scale(0.95);
+		opacity: 0;
+	}
+
+	to {
+		transform: scale(1);
+		opacity: 1;
+	}
 }
 
 .celebrate-badge {
@@ -534,53 +441,4 @@
 	.success-screen-wrapper {
 		padding: 2rem 1rem;
 	}
-}
-
-.instapay-popup-card {
-	border: 1px solid rgba(82, 167, 124, 0.22);
-}
-
-.instapay-popup-close {
-	background: rgba(82, 167, 124, 0.1);
-	color: #2b7754;
-}
-
-.instapay-popup-icon {
-	display: grid;
-	place-items: center;
-	width: 44px;
-	height: 44px;
-	border-radius: 14px;
-	background: rgba(82, 167, 124, 0.1);
-	color: #2b7754;
-}
-
-.instapay-popup-eyebrow {
-	color: #2b7754;
-}
-
-.instapay-popup-link {
-	color: #cb6a5b;
-	font-weight: 700;
-	text-decoration: underline;
-	transition: color 0.2s ease;
-}
-
-.instapay-popup-link:hover {
-	color: #b55446;
-}
-
-.instapay-urgency-note {
-	font-weight: 500;
-	background: rgba(255, 248, 241, 0.85);
-	border: 1px dashed rgba(203, 106, 91, 0.25);
-	padding: 0.85rem 1.15rem;
-	border-radius: 1rem;
-	color: #674332;
-	line-height: 1.5;
-}
-
-.instapay-popup-btn {
-	background: #cb6a5b !important;
-	box-shadow: 0 4px 16px rgba(203, 106, 91, 0.3) !important;
 }

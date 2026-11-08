@@ -1,0 +1,26 @@
+<div class="guest-auth-modal checkout-error-modal" role="dialog" aria-modal="true"
+  aria-labelledby="checkout-error-title">
+  <div class="guest-auth-backdrop" aria-hidden="true" (click)="dismiss.emit()"></div>
+  <section class="guest-auth-card checkout-error-card">
+    <button type="button" class="guest-auth-close checkout-error-close" (click)="dismiss.emit()"
+      aria-label="Close error">×</button>
+    <div class="checkout-error-icon" aria-hidden="true">
+      <svg viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd"
+          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+          clip-rule="evenodd" />
+      </svg>
+    </div>
+    <p class="guest-auth-eyebrow checkout-error-eyebrow">Checkout issue</p>
+    <h2 id="checkout-error-title">{{ errorPopupMode === 'basket' ? 'Please review your basket' : 'Please complete
+      checkout details' }}</h2>
+    <p class="guest-auth-copy">{{ errorMessage }}</p>
+    <div class="guest-auth-actions checkout-error-actions">
+      <a *ngIf="errorPopupMode === 'basket'" routerLink="/cart" class="purchase-btn purchase-btn--secondary"
+        (click)="dismiss.emit()">Modify basket</a>
+      <button type="button" class="purchase-btn purchase-btn--primary" (click)="dismiss.emit()">
+        {{ errorPopupMode === 'basket' ? 'Review checkout' : 'Got it' }}
+      </button>
+    </div>
+  </section>
+</div>
