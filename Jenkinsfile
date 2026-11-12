@@ -6,7 +6,6 @@ pipeline {
     DB_URL = credentials('petites_db_url')
     DB_USER = credentials('petites_db_user')
     DB_PASSWORD = credentials('petites_db_password')
-    OAUTH2_ISSUER_URI = credentials('petites_oauth2_issuer_uri')
     PORT = '8080'
   }
 

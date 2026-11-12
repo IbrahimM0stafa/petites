@@ -17,18 +17,6 @@ public class PublicSettingController {
         this.settingService = settingService;
     }
 
-    @GetMapping("/delivery-fee")
-    public Map<String, Object> getDeliveryFee() {
-        String feeStr = settingService.getSetting("delivery_fee", "50");
-        double fee = 50.0;
-        try {
-            fee = Double.parseDouble(feeStr);
-        } catch (NumberFormatException e) {
-            // fallback
-        }
-        return Map.of("deliveryFee", fee);
-    }
-
     @GetMapping("/blocked-days")
     public Map<String, java.util.List<String>> getBlockedDays() {
         String blockedDaysStr = settingService.getSetting("blocked_days", "");

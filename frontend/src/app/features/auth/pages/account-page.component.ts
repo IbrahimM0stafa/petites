@@ -153,30 +153,6 @@ export class AccountPageComponent implements OnInit {
 		});
 	}
 
-	simulateExpiredAccessToken(): void {
-		const userId = this.authState.userId();
-		if (!userId) {
-			return;
-		}
-
-		this.refreshTesting = true;
-		this.errorMessage = '';
-		this.message = '';
-
-		this.authState.invalidateAccessTokenForTesting();
-		this.authService.getUser(userId).subscribe({
-			next: (profile) => {
-				this.refreshTesting = false;
-				this.user = profile;
-				this.message = 'Session refreshed automatically — you\'re all set.';
-			},
-			error: (error) => {
-				this.refreshTesting = false;
-				this.errorMessage = this.refreshErrorMessage(error, 'Auto-refresh failed after simulating an expired access token.');
-			}
-		});
-	}
-
 	startAddressEdit(address: SavedAddressResponse): void {
 		this.editingAddressId = address.id;
 		this.addressError = '';

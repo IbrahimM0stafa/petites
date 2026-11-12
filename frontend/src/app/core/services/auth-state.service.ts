@@ -46,21 +46,6 @@ export class AuthStateService {
 	readonly accessTokenExpiresAt = computed(() => this.authSessionState().expiresAt);
 	readonly refreshTokenExpiresAt = computed(() => this.authSessionState().refreshExpiresAt);
 
-	invalidateAccessTokenForTesting(): void {
-		const current = this.authSessionState();
-		if (!current.refreshToken) {
-			return;
-		}
-
-		const nextSession: StoredAuthSession = {
-			...current,
-			token: 'expired-access-token-for-testing'
-		};
-
-		this.authSessionState.set(nextSession);
-		localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(nextSession));
-	}
-
 	setAuthSession(session: AuthResponse): void {
 		const nextSession: StoredAuthSession = {
 			token: session.token,
