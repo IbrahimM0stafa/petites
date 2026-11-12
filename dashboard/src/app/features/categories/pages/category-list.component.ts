@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
@@ -9,7 +9,7 @@ import { CategoryService } from '../../../core/services/category.service';
 @Component({
   selector: 'app-category-list',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [RouterLink],
   templateUrl: './category-list.component.html',
   styleUrl: './category-list.component.css'
 })

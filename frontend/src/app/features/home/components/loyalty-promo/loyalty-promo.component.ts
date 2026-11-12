@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 
 import { LoyaltyService } from '../../../../core/services/loyalty.service';
@@ -9,7 +9,7 @@ import { LoyaltyResponse } from '../../../../core/models/loyalty.models';
 @Component({
 	selector: 'app-loyalty-promo',
 	standalone: true,
-	imports: [CommonModule, RouterLink],
+	imports: [RouterLink],
 	templateUrl: './loyalty-promo.component.html',
 	styleUrl: './loyalty-promo.component.css'
 })

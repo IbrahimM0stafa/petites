@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import {
   AfterViewInit,
   Component,
@@ -9,7 +9,7 @@ import {
 @Component({
   selector: 'app-about',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './about.component.html',
   styleUrl: './about.component.css',
 })

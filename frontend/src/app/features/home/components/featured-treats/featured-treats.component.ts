@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
@@ -8,7 +8,7 @@ import { Product } from '../../../../core/models/shop.models';
 @Component({
   selector: 'app-featured-treats',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProductCardComponent],
+  imports: [RouterLink, ProductCardComponent],
   template: `
     <section class="featured-treats" aria-labelledby="featured-treats-title">
       <h2 id="featured-treats-title" class="section-title">
@@ -16,19 +16,19 @@ import { Product } from '../../../../core/models/shop.models';
         Featured Treats
         <span class="title-heart" aria-hidden="true">♥</span>
       </h2>
-
-      <div 
-        class="treat-grid" 
+    
+      <div
+        class="treat-grid"
         #treatCarousel
         (touchstart)="onTouchStart($event)"
         (touchend)="onTouchEnd($event)">
-        <ng-container *ngFor="let treat of treats">
+        @for (treat of treats; track treat) {
           <app-product-card
             [product]="treat">
           </app-product-card>
-        </ng-container>
+        }
       </div>
-
+    
       <div class="section-footer">
         <a class="view-all" routerLink="/shop">
           View All Treats
@@ -36,7 +36,7 @@ import { Product } from '../../../../core/models/shop.models';
         </a>
       </div>
     </section>
-  `,
+    `,
   styleUrls: ['./featured-treats.component.css']
 })
 export class FeaturedTreatsComponent implements OnInit {

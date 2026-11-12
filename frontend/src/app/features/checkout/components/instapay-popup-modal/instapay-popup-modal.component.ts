@@ -1,10 +1,10 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 @Component({
 	selector: 'app-instapay-popup-modal',
 	standalone: true,
-	imports: [CommonModule],
+	imports: [],
 	templateUrl: './instapay-popup-modal.component.html',
 	styleUrl: './instapay-popup-modal.component.css'
 })

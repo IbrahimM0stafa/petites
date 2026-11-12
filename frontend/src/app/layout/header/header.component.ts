@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, HostListener } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
@@ -9,7 +9,7 @@ import { SOCIAL_LINKS } from '../../core/constants/social-links';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })

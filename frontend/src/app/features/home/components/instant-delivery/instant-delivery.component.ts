@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { RouterLink } from '@angular/router';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
 import { ShopService } from '../../../../core/services/shop.service';
@@ -8,7 +8,7 @@ import { Product } from '../../../../core/models/shop.models';
 @Component({
   selector: 'app-instant-delivery',
   standalone: true,
-  imports: [CommonModule, RouterLink, ProductCardComponent],
+  imports: [RouterLink, ProductCardComponent],
   templateUrl: './instant-delivery.component.html',
   styleUrls: ['./instant-delivery.component.css']
 })

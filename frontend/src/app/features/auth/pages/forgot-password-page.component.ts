@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, inject } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -15,7 +15,7 @@ const passwordMatchValidator: ValidatorFn = (control: AbstractControl): Validati
 @Component({
 	selector: 'app-forgot-password-page',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, RouterLink],
+	imports: [ReactiveFormsModule, RouterLink],
 	templateUrl: './forgot-password-page.component.html',
 	styleUrl: './forgot-password-page.component.css'
 })

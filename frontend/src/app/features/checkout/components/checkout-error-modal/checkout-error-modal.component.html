@@ -3,7 +3,7 @@
   <div class="guest-auth-backdrop" aria-hidden="true" (click)="dismiss.emit()"></div>
   <section class="guest-auth-card checkout-error-card">
     <button type="button" class="guest-auth-close checkout-error-close" (click)="dismiss.emit()"
-      aria-label="Close error">×</button>
+    aria-label="Close error">×</button>
     <div class="checkout-error-icon" aria-hidden="true">
       <svg viewBox="0 0 20 20" fill="currentColor">
         <path fill-rule="evenodd"
@@ -13,11 +13,13 @@
     </div>
     <p class="guest-auth-eyebrow checkout-error-eyebrow">Checkout issue</p>
     <h2 id="checkout-error-title">{{ errorPopupMode === 'basket' ? 'Please review your basket' : 'Please complete
-      checkout details' }}</h2>
+    checkout details' }}</h2>
     <p class="guest-auth-copy">{{ errorMessage }}</p>
     <div class="guest-auth-actions checkout-error-actions">
-      <a *ngIf="errorPopupMode === 'basket'" routerLink="/cart" class="purchase-btn purchase-btn--secondary"
+      @if (errorPopupMode === 'basket') {
+        <a routerLink="/cart" class="purchase-btn purchase-btn--secondary"
         (click)="dismiss.emit()">Modify basket</a>
+      }
       <button type="button" class="purchase-btn purchase-btn--primary" (click)="dismiss.emit()">
         {{ errorPopupMode === 'basket' ? 'Review checkout' : 'Got it' }}
       </button>

@@ -8,7 +8,7 @@ import {
   Output,
   forwardRef
 } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 
 export interface CalendarDay {
@@ -33,7 +33,7 @@ export interface QuickDateOption {
 @Component({
   selector: 'app-date-picker',
   standalone: true,
-  imports: [CommonModule],
+  imports: [],
   templateUrl: './date-picker.component.html',
   styleUrl: './date-picker.component.css',
   providers: [

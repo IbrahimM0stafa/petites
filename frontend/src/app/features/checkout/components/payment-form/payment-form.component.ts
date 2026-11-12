@@ -1,11 +1,11 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, Input } from '@angular/core';
 import { OrderResponse } from '../../../../core/models/order.models';
 
 @Component({
 	selector: 'app-payment-form',
 	standalone: true,
-	imports: [CommonModule],
+	imports: [],
 	templateUrl: './payment-form.component.html',
 	styleUrl: './payment-form.component.css'
 })

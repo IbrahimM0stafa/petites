@@ -6,16 +6,16 @@
 
   <!-- Beautiful Premium Tab Toggler -->
   <div class="fulfillment-tabs">
-    <button 
-      class="tab-btn" 
-      [class.active]="currentFulfillmentMode === 'scheduled'" 
+    <button
+      class="tab-btn"
+      [class.active]="currentFulfillmentMode === 'scheduled'"
       (click)="changeFulfillmentMode('scheduled')">
       <span class="tab-icon">📅</span>
       <span class="tab-label">Scheduled Preorder</span>
     </button>
-    <button 
-      class="tab-btn" 
-      [class.active]="currentFulfillmentMode === 'instant'" 
+    <button
+      class="tab-btn"
+      [class.active]="currentFulfillmentMode === 'instant'"
       (click)="changeFulfillmentMode('instant')">
       <span class="tab-icon">⚡</span>
       <span class="tab-label">Same-day Instant</span>
@@ -51,12 +51,14 @@
       <section class="categories card-section">
         <h4>CATEGORIES</h4>
         <ul>
-          <li *ngFor="let c of categories">
-            <button class="cat-btn" [class.active]="(tempCategory === null && c.id === null) || (tempCategory?.id === c.id)" (click)="selectCategoryDraft(c)">
-              <span class="radio" aria-hidden="true"><span class="dot"></span></span>
-              <span class="cat-label">{{ c.name }}</span>
-            </button>
-          </li>
+          @for (c of categories; track c) {
+            <li>
+              <button class="cat-btn" [class.active]="(tempCategory === null && c.id === null) || (tempCategory?.id === c.id)" (click)="selectCategoryDraft(c)">
+                <span class="radio" aria-hidden="true"><span class="dot"></span></span>
+                <span class="cat-label">{{ c.name }}</span>
+              </button>
+            </li>
+          }
         </ul>
       </section>
 
@@ -78,44 +80,48 @@
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
-          <input 
-            type="text" 
-            placeholder="Search sweet treats..." 
-            [(ngModel)]="searchQuery" 
+          <input
+            type="text"
+            placeholder="Search sweet treats..."
+            [(ngModel)]="searchQuery"
             (input)="onSearchInput($event)"
             aria-label="Search products"
-          />
-          <button *ngIf="searchQuery" class="clear-search-btn" (click)="clearSearch()" aria-label="Clear search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-          </button>
+            />
+            @if (searchQuery) {
+              <button class="clear-search-btn" (click)="clearSearch()" aria-label="Clear search">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            }
+          </div>
         </div>
-      </div>
 
-      <div class="grid">
-        <app-product-card *ngFor="let p of filteredProducts"
-          [product]="p"
-          [fulfillmentMode]="currentFulfillmentMode">
-        </app-product-card>
-      </div>
-      <!-- pagination controls -->
-      <div class="pagination" *ngIf="(totalPages && totalPages > 1) || (totalElements && totalElements > size)">
-        <div class="pagination-inner">
-          <button class="page-btn primary" (click)="prevPage()" [disabled]="page === 0" aria-label="Previous page">
-            <span class="chev">‹</span>
-            <span class="btn-label">Previous</span>
-          </button>
-
-          <div class="page-info">Page <strong>{{ page + 1 }}</strong> of <strong>{{ totalPages || 1 }}</strong></div>
-
-          <button class="page-btn primary" (click)="nextPage()" [disabled]="page + 1 >= totalPages" aria-label="Next page">
-            <span class="btn-label">Next</span>
-            <span class="chev">›</span>
-          </button>
+        <div class="grid">
+          @for (p of filteredProducts; track p) {
+            <app-product-card
+              [product]="p"
+              [fulfillmentMode]="currentFulfillmentMode">
+            </app-product-card>
+          }
         </div>
-      </div>
-    </section>
-  </div>
-</main>
+        <!-- pagination controls -->
+        @if ((totalPages && totalPages > 1) || (totalElements && totalElements > size)) {
+          <div class="pagination">
+            <div class="pagination-inner">
+              <button class="page-btn primary" (click)="prevPage()" [disabled]="page === 0" aria-label="Previous page">
+                <span class="chev">‹</span>
+                <span class="btn-label">Previous</span>
+              </button>
+              <div class="page-info">Page <strong>{{ page + 1 }}</strong> of <strong>{{ totalPages || 1 }}</strong></div>
+              <button class="page-btn primary" (click)="nextPage()" [disabled]="page + 1 >= totalPages" aria-label="Next page">
+                <span class="btn-label">Next</span>
+                <span class="chev">›</span>
+              </button>
+            </div>
+          </div>
+        }
+      </section>
+    </div>
+  </main>

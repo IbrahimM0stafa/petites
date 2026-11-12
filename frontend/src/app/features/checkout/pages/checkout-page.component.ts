@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -42,18 +42,17 @@ import { CheckoutRewardUtil } from '../utils/checkout-reward.util';
 	selector: 'app-checkout-page',
 	standalone: true,
 	imports: [
-		CommonModule,
-		ReactiveFormsModule,
-		RouterLink,
-		AddressFormComponent,
-		CouponFormComponent,
-		CheckoutSummaryComponent,
-		SuccessOrdersComponent,
-		PaymentFormComponent,
-		GuestPromptModalComponent,
-		CheckoutErrorModalComponent,
-		InstapayPopupModalComponent
-	],
+    ReactiveFormsModule,
+    RouterLink,
+    AddressFormComponent,
+    CouponFormComponent,
+    CheckoutSummaryComponent,
+    SuccessOrdersComponent,
+    PaymentFormComponent,
+    GuestPromptModalComponent,
+    CheckoutErrorModalComponent,
+    InstapayPopupModalComponent
+],
 	templateUrl: './checkout-page.component.html',
 	styleUrl: './checkout-page.component.css'
 })

@@ -3,7 +3,7 @@
   <div class="guest-auth-backdrop" aria-hidden="true" (click)="dismiss.emit()"></div>
   <section class="guest-auth-card instapay-popup-card">
     <button type="button" class="guest-auth-close instapay-popup-close" (click)="dismiss.emit()"
-      aria-label="Close popup">×</button>
+    aria-label="Close popup">×</button>
     <div class="instapay-popup-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 24px; height: 24px;">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -13,19 +13,21 @@
     <h2 id="instapay-popup-title">Confirm Your Order</h2>
     <p class="guest-auth-copy instapay-popup-msg">
       To confirm your order, please complete the payment of <strong>{{ totalAmount }}</strong> through the <a
-        [href]="paymentLink" target="_blank" rel="noopener noreferrer" class="instapay-popup-link">link</a> 🤎
-    </p>
-    <p class="guest-auth-copy instapay-courier-note" *ngIf="isCourierDelivery"
+    [href]="paymentLink" target="_blank" rel="noopener noreferrer" class="instapay-popup-link">link</a> 🤎
+  </p>
+  @if (isCourierDelivery) {
+    <p class="guest-auth-copy instapay-courier-note"
       style="color: #6b21a8; font-weight: 600; margin-top: 0.5rem;">
       🚚 Delivery fee will be paid directly to the 3rd-party courier upon arrival.
     </p>
-    <p class="guest-auth-copy instapay-urgency-note">
-      Send your payment screenshot within 1 hour to secure your order — otherwise, it will be cancelled automatically ✨
-    </p>
-    <div class="guest-auth-actions instapay-popup-actions">
-      <button type="button" class="purchase-btn purchase-btn--primary instapay-popup-btn" (click)="dismiss.emit()">
-        Got it
-      </button>
-    </div>
-  </section>
+  }
+  <p class="guest-auth-copy instapay-urgency-note">
+    Send your payment screenshot within 1 hour to secure your order — otherwise, it will be cancelled automatically ✨
+  </p>
+  <div class="guest-auth-actions instapay-popup-actions">
+    <button type="button" class="purchase-btn purchase-btn--primary instapay-popup-btn" (click)="dismiss.emit()">
+      Got it
+    </button>
+  </div>
+</section>
 </div>

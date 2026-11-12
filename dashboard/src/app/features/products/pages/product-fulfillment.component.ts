@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
@@ -10,7 +10,7 @@ import { Product } from '../../../core/models/product.model';
 @Component({
   selector: 'app-product-fulfillment',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './product-fulfillment.component.html',
   styleUrl: './product-fulfillment.component.css'
 })

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+
 
 import { HeroComponent } from '../components/hero/hero.component';
 import { InstantDeliveryComponent } from '../components/instant-delivery/instant-delivery.component';
@@ -12,14 +12,13 @@ import { LoyaltyPromoComponent } from '../components/loyalty-promo/loyalty-promo
   selector: 'app-home',
   standalone: true,
   imports: [
-    CommonModule,
     HeroComponent,
     InstantDeliveryComponent,
     CategoriesComponent,
     FeaturedTreatsComponent,
     HomeInfoPanelComponent,
     LoyaltyPromoComponent
-  ],
+],
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.css']
 })

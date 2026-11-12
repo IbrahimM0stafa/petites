@@ -8,134 +8,146 @@
     </a>
   </div>
 
-  <div *ngIf="isLoading" class="loading-state">
-    <div class="spinner"></div>
-    <p>Baking your treat details...</p>
-  </div>
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Baking your treat details...</p>
+    </div>
+  }
 
-  <div *ngIf="errorMessage" class="error-state">
-    <p class="error-msg">{{ errorMessage }}</p>
-    <button class="retry-btn" (click)="ngOnInit()">Retry</button>
-  </div>
+  @if (errorMessage) {
+    <div class="error-state">
+      <p class="error-msg">{{ errorMessage }}</p>
+      <button class="retry-btn" (click)="ngOnInit()">Retry</button>
+    </div>
+  }
 
 
 
-  <article *ngIf="!isLoading && !errorMessage && product" class="detail-container">
-    <!-- Left Column: Gallery -->
-    <section class="gallery-column">
-      <div 
-        class="main-image-viewport" 
-        [ngClass]="!activeImage ? getArtClass() : ''"
-        [style.backgroundImage]="activeImage ? 'url(' + activeImage + ')' : null">
-      </div>
-      
-      <!-- Thumbnail Carousel -->
-      <div class="thumbnails-container" *ngIf="product.images && product.images.length > 0">
-          <button 
-            *ngIf="product.mainImage"
-            type="button"
-            class="thumbnail-btn main-image-btn"
-            [class.active]="isMainImageActive()"
-            (click)="resetActiveImage()"
-            [style.backgroundImage]="'url(' + product.mainImage + ')'"
-            aria-label="View main image">
-          </button>
-        <button 
-          *ngFor="let img of product.images" 
-          type="button"
-          class="thumbnail-btn" 
-          [class.active]="activeImage === img.imageUrl"
-          (click)="setActiveImage(img.imageUrl)"
-          [style.backgroundImage]="'url(' + img.imageUrl + ')'"
-          [attr.aria-label]="'View image ' + img.id">
-        </button>
-      </div>
-    </section>
-
-    <!-- Right Column: Specs & Checkout -->
-    <section class="details-column">
-      <header class="product-header">
-        <span class="category-tag">{{ product.categoryName || 'Treat' }}</span>
-        <h1>{{ product.name }}</h1>
-        <p class="price-tag">EGP {{ product.price.toFixed(2) }}</p>
-      </header>
-
-      <div class="product-info-block">
-        <div class="info-row">
-          <span class="info-label">Availability</span>
-          <span class="status-badge" [class.available]="product.isAvailable" [class.out-of-stock]="!product.isAvailable">
-            {{ product.isAvailable ? 'In Stock & Fresh' : 'Out of Stock' }}
-          </span>
+  @if (!isLoading && !errorMessage && product) {
+    <article class="detail-container">
+      <!-- Left Column: Gallery -->
+      <section class="gallery-column">
+        <div
+          class="main-image-viewport"
+          [ngClass]="!activeImage ? getArtClass() : ''"
+          [style.backgroundImage]="activeImage ? 'url(' + activeImage + ')' : null">
         </div>
-        <div class="info-row" *ngIf="!product.isAvailable">
-          <span class="info-label">Status</span>
-          <span class="status-badge out-of-stock">This product is no longer available.</span>
+        <!-- Thumbnail Carousel -->
+        @if (product.images && product.images.length > 0) {
+          <div class="thumbnails-container">
+            @if (product.mainImage) {
+              <button
+                type="button"
+                class="thumbnail-btn main-image-btn"
+                [class.active]="isMainImageActive()"
+                (click)="resetActiveImage()"
+                [style.backgroundImage]="'url(' + product.mainImage + ')'"
+                aria-label="View main image">
+              </button>
+            }
+            @for (img of product.images; track img) {
+              <button
+                type="button"
+                class="thumbnail-btn"
+                [class.active]="activeImage === img.imageUrl"
+                (click)="setActiveImage(img.imageUrl)"
+                [style.backgroundImage]="'url(' + img.imageUrl + ')'"
+                [attr.aria-label]="'View image ' + img.id">
+              </button>
+            }
+          </div>
+        }
+      </section>
+      <!-- Right Column: Specs & Checkout -->
+      <section class="details-column">
+        <header class="product-header">
+          <span class="category-tag">{{ product.categoryName || 'Treat' }}</span>
+          <h1>{{ product.name }}</h1>
+          <p class="price-tag">EGP {{ product.price.toFixed(2) }}</p>
+        </header>
+        <div class="product-info-block">
+          <div class="info-row">
+            <span class="info-label">Availability</span>
+            <span class="status-badge" [class.available]="product.isAvailable" [class.out-of-stock]="!product.isAvailable">
+              {{ product.isAvailable ? 'In Stock & Fresh' : 'Out of Stock' }}
+            </span>
+          </div>
+          @if (!product.isAvailable) {
+            <div class="info-row">
+              <span class="info-label">Status</span>
+              <span class="status-badge out-of-stock">This product is no longer available.</span>
+            </div>
+          }
         </div>
-      </div>
-
-      <div class="description-section">
-        <h3>Description</h3>
-        <p>{{ product.description }}</p>
-      </div>
-
-      <div class="fulfillment-section" *ngIf="product.isAvailable && product.scheduledEligible">
-        <h3 class="fulfillment-title">Fulfillment Method</h3>
-        <div class="delivery-options-grid">
-          <button 
-            type="button" 
-            class="delivery-option-card" 
-            [class.active]="deliveryMode === 'INSTANT'" 
-            [disabled]="!product.instantAvailableToday" 
-            (click)="deliveryMode = 'INSTANT'">
-            <div class="option-header">
-              <svg class="option-icon lightning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
-              </svg>
-              <span class="option-name">Instant Delivery</span>
-            </div>
-            <p class="option-desc">Baked & delivered fresh today.</p>
-            <div class="option-footer" *ngIf="product.instantAvailableToday">
-              <span class="option-status success">{{ product.instantQuantityToday }} left today</span>
-            </div>
-            <div class="option-footer" *ngIf="!product.instantAvailableToday">
-              <span class="option-status out-of-stock">Unavailable today</span>
-            </div>
-          </button>
-
-          <button 
-            type="button" 
-            class="delivery-option-card" 
-            [class.active]="deliveryMode === 'SCHEDULED'" 
-            (click)="deliveryMode = 'SCHEDULED'">
-            <div class="option-header">
-              <svg class="option-icon calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                <line x1="16" y1="2" x2="16" y2="6"/>
-                <line x1="8" y1="2" x2="8" y2="6"/>
-                <line x1="3" y1="10" x2="21" y2="10"/>
-              </svg>
-              <span class="option-name">Scheduled Delivery</span>
-            </div>
-            <p class="option-desc">Specify any future date at checkout.</p>
-            <div class="option-footer">
-              <span class="option-status info">Earliest: {{ product.earliestScheduledDate }}</span>
-            </div>
-          </button>
+        <div class="description-section">
+          <h3>Description</h3>
+          <p>{{ product.description }}</p>
         </div>
-      </div>
-
-      <div class="purchase-controls" *ngIf="product.isAvailable">
-        <div class="quantity-selector">
-          <button type="button" class="qty-btn minus" (click)="decrementQuantity()" aria-label="Decrease quantity">−</button>
-          <span class="qty-number">{{ quantity }}</span>
-          <button type="button" class="qty-btn plus" (click)="incrementQuantity()" aria-label="Increase quantity">+</button>
-        </div>
-
-        <button type="button" class="add-to-cart-btn" [disabled]="addingToCart" (click)="addToCart()">
-          {{ addingToCart ? 'ADDING…' : 'ADD TO CART' }}
-          <span class="button-heart">♥</span>
-        </button>
-      </div>
-    </section>
-  </article>
+        @if (product.isAvailable && product.scheduledEligible) {
+          <div class="fulfillment-section">
+            <h3 class="fulfillment-title">Fulfillment Method</h3>
+            <div class="delivery-options-grid">
+              <button
+                type="button"
+                class="delivery-option-card"
+                [class.active]="deliveryMode === 'INSTANT'"
+                [disabled]="!product.instantAvailableToday"
+                (click)="deliveryMode = 'INSTANT'">
+                <div class="option-header">
+                  <svg class="option-icon lightning" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
+                  </svg>
+                  <span class="option-name">Instant Delivery</span>
+                </div>
+                <p class="option-desc">Baked & delivered fresh today.</p>
+                @if (product.instantAvailableToday) {
+                  <div class="option-footer">
+                    <span class="option-status success">{{ product.instantQuantityToday }} left today</span>
+                  </div>
+                }
+                @if (!product.instantAvailableToday) {
+                  <div class="option-footer">
+                    <span class="option-status out-of-stock">Unavailable today</span>
+                  </div>
+                }
+              </button>
+              <button
+                type="button"
+                class="delivery-option-card"
+                [class.active]="deliveryMode === 'SCHEDULED'"
+                (click)="deliveryMode = 'SCHEDULED'">
+                <div class="option-header">
+                  <svg class="option-icon calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                  </svg>
+                  <span class="option-name">Scheduled Delivery</span>
+                </div>
+                <p class="option-desc">Specify any future date at checkout.</p>
+                <div class="option-footer">
+                  <span class="option-status info">Earliest: {{ product.earliestScheduledDate }}</span>
+                </div>
+              </button>
+            </div>
+          </div>
+        }
+        @if (product.isAvailable) {
+          <div class="purchase-controls">
+            <div class="quantity-selector">
+              <button type="button" class="qty-btn minus" (click)="decrementQuantity()" aria-label="Decrease quantity">−</button>
+              <span class="qty-number">{{ quantity }}</span>
+              <button type="button" class="qty-btn plus" (click)="incrementQuantity()" aria-label="Increase quantity">+</button>
+            </div>
+            <button type="button" class="add-to-cart-btn" [disabled]="addingToCart" (click)="addToCart()">
+              {{ addingToCart ? 'ADDING…' : 'ADD TO CART' }}
+              <span class="button-heart">♥</span>
+            </button>
+          </div>
+        }
+      </section>
+    </article>
+  }
 </main>

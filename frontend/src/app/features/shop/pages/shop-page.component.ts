@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, OnInit, inject, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
@@ -12,7 +12,7 @@ import { Category, Product } from '../../../core/models/shop.models';
 @Component({
   selector: 'app-shop-page',
   standalone: true,
-  imports: [CommonModule, FormsModule, ProductCardComponent],
+  imports: [FormsModule, ProductCardComponent],
   templateUrl: './shop-page.component.html',
   styleUrls: ['./shop-page.component.css']
 })

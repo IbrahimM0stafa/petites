@@ -8,14 +8,18 @@
   </div>
 
   <!-- Alerts -->
-  <div *ngIf="successMessage" class="alert alert--success" role="status">
-    <span>{{ successMessage }}</span>
-    <button type="button" class="alert-close" (click)="successMessage = ''">✕</button>
-  </div>
-  <div *ngIf="errorMessage" class="alert alert--error" role="alert">
-    <span>{{ errorMessage }}</span>
-    <button type="button" class="alert-close" (click)="errorMessage = ''">✕</button>
-  </div>
+  @if (successMessage) {
+    <div class="alert alert--success" role="status">
+      <span>{{ successMessage }}</span>
+      <button type="button" class="alert-close" (click)="successMessage = ''">✕</button>
+    </div>
+  }
+  @if (errorMessage) {
+    <div class="alert alert--error" role="alert">
+      <span>{{ errorMessage }}</span>
+      <button type="button" class="alert-close" (click)="errorMessage = ''">✕</button>
+    </div>
+  }
 
   <!-- Stats Grid -->
   <div class="stats-grid">
@@ -63,48 +67,59 @@
         </button>
       </div>
 
-      <div *ngIf="loadingGovs" class="column-loading">
-        <span class="spinner"></span> Loading governorates…
-      </div>
-
-      <div *ngIf="!loadingGovs && governorates.length === 0" class="empty-state">
-        No governorates created yet. Click "+ Add" to create one.
-      </div>
-
-      <div class="zone-list" *ngIf="!loadingGovs && governorates.length > 0">
-        <div 
-          *ngFor="let gov of governorates"
-          class="zone-card"
-          [class.is-selected]="selectedGov?.id === gov.id"
-          [class.is-disabled]="!gov.active"
-          (click)="selectGovernorate(gov)"
-        >
-          <div class="zone-card-main">
-            <div class="zone-name-wrap">
-              <strong>{{ gov.name }}</strong>
-              <span *ngIf="gov.active" class="status-badge status-badge--active">Operating</span>
-              <span *ngIf="!gov.active" class="status-badge status-badge--disabled">Suspended</span>
-            </div>
-            <div class="zone-card-actions">
-              <!-- Operating Toggle -->
-              <label class="switch-toggle" [title]="gov.active ? 'Click to disable orders from this governorate' : 'Click to enable orders from this governorate'">
-                <input 
-                  type="checkbox" 
-                  [checked]="gov.active" 
-                  (change)="toggleGovActive(gov, $event)"
-                />
-                <span class="slider"></span>
-              </label>
-              <button type="button" class="icon-btn" title="Edit" (click)="openEditGovModal(gov, $event)">✏️</button>
-              <button type="button" class="icon-btn icon-btn--danger" title="Delete" (click)="deleteGov(gov, $event)">🗑️</button>
-            </div>
-          </div>
-          <div class="zone-card-footer">
-            <span class="order-hint">Sort: {{ gov.sortOrder }}</span>
-            <span class="chevron">›</span>
-          </div>
+      @if (loadingGovs) {
+        <div class="column-loading">
+          <span class="spinner"></span> Loading governorates…
         </div>
-      </div>
+      }
+
+      @if (!loadingGovs && governorates.length === 0) {
+        <div class="empty-state">
+          No governorates created yet. Click "+ Add" to create one.
+        </div>
+      }
+
+      @if (!loadingGovs && governorates.length > 0) {
+        <div class="zone-list">
+          @for (gov of governorates; track gov) {
+            <div
+              class="zone-card"
+              [class.is-selected]="selectedGov?.id === gov.id"
+              [class.is-disabled]="!gov.active"
+              (click)="selectGovernorate(gov)"
+              >
+              <div class="zone-card-main">
+                <div class="zone-name-wrap">
+                  <strong>{{ gov.name }}</strong>
+                  @if (gov.active) {
+                    <span class="status-badge status-badge--active">Operating</span>
+                  }
+                  @if (!gov.active) {
+                    <span class="status-badge status-badge--disabled">Suspended</span>
+                  }
+                </div>
+                <div class="zone-card-actions">
+                  <!-- Operating Toggle -->
+                  <label class="switch-toggle" [title]="gov.active ? 'Click to disable orders from this governorate' : 'Click to enable orders from this governorate'">
+                    <input
+                      type="checkbox"
+                      [checked]="gov.active"
+                      (change)="toggleGovActive(gov, $event)"
+                      />
+                    <span class="slider"></span>
+                  </label>
+                  <button type="button" class="icon-btn" title="Edit" (click)="openEditGovModal(gov, $event)">✏️</button>
+                  <button type="button" class="icon-btn icon-btn--danger" title="Delete" (click)="deleteGov(gov, $event)">🗑️</button>
+                </div>
+              </div>
+              <div class="zone-card-footer">
+                <span class="order-hint">Sort: {{ gov.sortOrder }}</span>
+                <span class="chevron">›</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
 
     <!-- 2. Cities Column -->
@@ -114,61 +129,74 @@
           <span class="column-step-badge">2</span>
           <h2>Cities</h2>
         </div>
-        <button 
-          type="button" 
-          class="btn btn--primary btn--sm" 
-          [disabled]="!selectedGov" 
+        <button
+          type="button"
+          class="btn btn--primary btn--sm"
+          [disabled]="!selectedGov"
           (click)="openAddCityModal()"
-        >
+          >
           + Add
         </button>
       </div>
 
-      <div *ngIf="!selectedGov" class="empty-state">
-        Select a governorate on the left to view or manage its cities.
-      </div>
-
-      <div *ngIf="selectedGov && loadingCities" class="column-loading">
-        <span class="spinner"></span> Loading cities for {{ selectedGov.name }}…
-      </div>
-
-      <div *ngIf="selectedGov && !loadingCities && cities.length === 0" class="empty-state">
-        No cities found in <strong>{{ selectedGov.name }}</strong>. Click "+ Add" to add a city.
-      </div>
-
-      <div class="zone-list" *ngIf="selectedGov && !loadingCities && cities.length > 0">
-        <div 
-          *ngFor="let city of cities"
-          class="zone-card"
-          [class.is-selected]="selectedCity?.id === city.id"
-          [class.is-disabled]="!city.active || !selectedGov.active"
-          (click)="selectCity(city)"
-        >
-          <div class="zone-card-main">
-            <div class="zone-name-wrap">
-              <strong>{{ city.name }}</strong>
-              <span *ngIf="city.active" class="status-badge status-badge--active">Operating</span>
-              <span *ngIf="!city.active" class="status-badge status-badge--disabled">Suspended</span>
-            </div>
-            <div class="zone-card-actions">
-              <label class="switch-toggle" [title]="city.active ? 'Click to stop operating in this city' : 'Click to operate in this city'">
-                <input 
-                  type="checkbox" 
-                  [checked]="city.active" 
-                  (change)="toggleCityActive(city, $event)"
-                />
-                <span class="slider"></span>
-              </label>
-              <button type="button" class="icon-btn" title="Edit" (click)="openEditCityModal(city, $event)">✏️</button>
-              <button type="button" class="icon-btn icon-btn--danger" title="Delete" (click)="deleteCity(city, $event)">🗑️</button>
-            </div>
-          </div>
-          <div class="zone-card-footer">
-            <span class="order-hint">In {{ selectedGov.name }}</span>
-            <span class="chevron">›</span>
-          </div>
+      @if (!selectedGov) {
+        <div class="empty-state">
+          Select a governorate on the left to view or manage its cities.
         </div>
-      </div>
+      }
+
+      @if (selectedGov && loadingCities) {
+        <div class="column-loading">
+          <span class="spinner"></span> Loading cities for {{ selectedGov.name }}…
+        </div>
+      }
+
+      @if (selectedGov && !loadingCities && cities.length === 0) {
+        <div class="empty-state">
+          No cities found in <strong>{{ selectedGov.name }}</strong>. Click "+ Add" to add a city.
+        </div>
+      }
+
+      @if (selectedGov && !loadingCities && cities.length > 0) {
+        <div class="zone-list">
+          @for (city of cities; track city) {
+            <div
+              class="zone-card"
+              [class.is-selected]="selectedCity?.id === city.id"
+              [class.is-disabled]="!city.active || !selectedGov.active"
+              (click)="selectCity(city)"
+              >
+              <div class="zone-card-main">
+                <div class="zone-name-wrap">
+                  <strong>{{ city.name }}</strong>
+                  @if (city.active) {
+                    <span class="status-badge status-badge--active">Operating</span>
+                  }
+                  @if (!city.active) {
+                    <span class="status-badge status-badge--disabled">Suspended</span>
+                  }
+                </div>
+                <div class="zone-card-actions">
+                  <label class="switch-toggle" [title]="city.active ? 'Click to stop operating in this city' : 'Click to operate in this city'">
+                    <input
+                      type="checkbox"
+                      [checked]="city.active"
+                      (change)="toggleCityActive(city, $event)"
+                      />
+                    <span class="slider"></span>
+                  </label>
+                  <button type="button" class="icon-btn" title="Edit" (click)="openEditCityModal(city, $event)">✏️</button>
+                  <button type="button" class="icon-btn icon-btn--danger" title="Delete" (click)="deleteCity(city, $event)">🗑️</button>
+                </div>
+              </div>
+              <div class="zone-card-footer">
+                <span class="order-hint">In {{ selectedGov.name }}</span>
+                <span class="chevron">›</span>
+              </div>
+            </div>
+          }
+        </div>
+      }
     </div>
 
     <!-- 3. Areas Column (Delivery Fees & Courier Options) -->
@@ -178,213 +206,247 @@
           <span class="column-step-badge">3</span>
           <div>
             <h2>Areas & Delivery Fees</h2>
-            <p *ngIf="selectedCity" class="column-desc">Configuring fees and courier fulfillment for {{ selectedCity.name }}</p>
+            @if (selectedCity) {
+              <p class="column-desc">Configuring fees and courier fulfillment for {{ selectedCity.name }}</p>
+            }
           </div>
         </div>
-        <button 
-          type="button" 
-          class="btn btn--primary btn--sm" 
-          [disabled]="!selectedCity" 
+        <button
+          type="button"
+          class="btn btn--primary btn--sm"
+          [disabled]="!selectedCity"
           (click)="openAddAreaModal()"
-        >
+          >
           + Add Area
         </button>
       </div>
 
-      <div *ngIf="!selectedCity" class="empty-state">
-        Select a city in step 2 to manage its areas, fees, and courier shipment.
-      </div>
+      @if (!selectedCity) {
+        <div class="empty-state">
+          Select a city in step 2 to manage its areas, fees, and courier shipment.
+        </div>
+      }
 
-      <div *ngIf="selectedCity && loadingAreas" class="column-loading">
-        <span class="spinner"></span> Loading areas for {{ selectedCity.name }}…
-      </div>
+      @if (selectedCity && loadingAreas) {
+        <div class="column-loading">
+          <span class="spinner"></span> Loading areas for {{ selectedCity.name }}…
+        </div>
+      }
 
-      <div *ngIf="selectedCity && !loadingAreas && areas.length === 0" class="empty-state">
-        No areas configured for <strong>{{ selectedCity.name }}</strong>. Click "+ Add Area" to set one up with a delivery fee.
-      </div>
+      @if (selectedCity && !loadingAreas && areas.length === 0) {
+        <div class="empty-state">
+          No areas configured for <strong>{{ selectedCity.name }}</strong>. Click "+ Add Area" to set one up with a delivery fee.
+        </div>
+      }
 
       <!-- Area Table / Cards -->
-      <div class="area-table-wrap" *ngIf="selectedCity && !loadingAreas && areas.length > 0">
-        <table class="area-table">
-          <thead>
-            <tr>
-              <th>Area Name</th>
-              <th>Delivery Fee</th>
-              <th>Fulfillment Method</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let area of areas" [class.row-disabled]="!area.active">
-              <td>
-                <div class="area-name-cell">
-                  <strong>{{ area.name }}</strong>
-                </div>
-              </td>
-              <td>
-                <span *ngIf="!area.courierDelivery" class="fee-badge">EGP {{ area.deliveryFee | number:'1.2-2' }}</span>
-                <span *ngIf="area.courierDelivery" class="fee-badge" style="background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe;">
-                  Paid to courier
-                </span>
-              </td>
-              <td>
-                <div class="courier-toggle-cell">
-                  <label class="switch-toggle" [title]="area.courierDelivery ? 'Shipped by 3rd-party courier (Customer pays courier directly)' : 'Delivered by in-house bakery fleet'">
-                    <input 
-                      type="checkbox" 
-                      [checked]="area.courierDelivery" 
-                      (change)="toggleAreaCourier(area)"
-                    />
-                    <span class="slider slider--courier"></span>
-                  </label>
-                  <span *ngIf="area.courierDelivery" class="courier-tag courier-tag--3rdparty" title="Customer pays courier directly on delivery">
-                    🚚 3rd-Party Courier
-                  </span>
-                  <span *ngIf="!area.courierDelivery" class="courier-tag courier-tag--inhouse" title="Delivered by Petites delivery team">
-                    🛵 Bakery Express
-                  </span>
-                </div>
-              </td>
-              <td>
-                <label class="switch-toggle" [title]="area.active ? 'Area active' : 'Area disabled'">
-                  <input 
-                    type="checkbox" 
-                    [checked]="area.active" 
-                    (change)="toggleAreaActive(area)"
-                  />
-                  <span class="slider"></span>
-                </label>
-              </td>
-              <td>
-                <div class="row-actions">
-                  <button type="button" class="btn btn--secondary btn--xs" (click)="openEditAreaModal(area)">Edit</button>
-                  <button type="button" class="btn btn--danger btn--xs" (click)="deleteArea(area)">Delete</button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      @if (selectedCity && !loadingAreas && areas.length > 0) {
+        <div class="area-table-wrap">
+          <table class="area-table">
+            <thead>
+              <tr>
+                <th>Area Name</th>
+                <th>Delivery Fee</th>
+                <th>Fulfillment Method</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (area of areas; track area) {
+                <tr [class.row-disabled]="!area.active">
+                  <td>
+                    <div class="area-name-cell">
+                      <strong>{{ area.name }}</strong>
+                    </div>
+                  </td>
+                  <td>
+                    @if (!area.courierDelivery) {
+                      <span class="fee-badge">EGP {{ area.deliveryFee | number:'1.2-2' }}</span>
+                    }
+                    @if (area.courierDelivery) {
+                      <span class="fee-badge" style="background: #f5f3ff; color: #7c3aed; border-color: #ddd6fe;">
+                        Paid to courier
+                      </span>
+                    }
+                  </td>
+                  <td>
+                    <div class="courier-toggle-cell">
+                      <label class="switch-toggle" [title]="area.courierDelivery ? 'Shipped by 3rd-party courier (Customer pays courier directly)' : 'Delivered by in-house bakery fleet'">
+                        <input
+                          type="checkbox"
+                          [checked]="area.courierDelivery"
+                          (change)="toggleAreaCourier(area)"
+                          />
+                        <span class="slider slider--courier"></span>
+                      </label>
+                      @if (area.courierDelivery) {
+                        <span class="courier-tag courier-tag--3rdparty" title="Customer pays courier directly on delivery">
+                          🚚 3rd-Party Courier
+                        </span>
+                      }
+                      @if (!area.courierDelivery) {
+                        <span class="courier-tag courier-tag--inhouse" title="Delivered by Petites delivery team">
+                          🛵 Bakery Express
+                        </span>
+                      }
+                    </div>
+                  </td>
+                  <td>
+                    <label class="switch-toggle" [title]="area.active ? 'Area active' : 'Area disabled'">
+                      <input
+                        type="checkbox"
+                        [checked]="area.active"
+                        (change)="toggleAreaActive(area)"
+                        />
+                      <span class="slider"></span>
+                    </label>
+                  </td>
+                  <td>
+                    <div class="row-actions">
+                      <button type="button" class="btn btn--secondary btn--xs" (click)="openEditAreaModal(area)">Edit</button>
+                      <button type="button" class="btn btn--danger btn--xs" (click)="deleteArea(area)">Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
   </div>
 
   <!-- ── MODAL: Governorate Form ─────────────────────────────────────────── -->
-  <div class="modal-backdrop" *ngIf="showGovModal" (click)="showGovModal = false">
-    <div class="modal-card" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ editingGov ? 'Edit Governorate' : 'Add New Governorate' }}</h3>
-        <button type="button" class="modal-close" (click)="showGovModal = false">✕</button>
+  @if (showGovModal) {
+    <div class="modal-backdrop" (click)="showGovModal = false">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ editingGov ? 'Edit Governorate' : 'Add New Governorate' }}</h3>
+          <button type="button" class="modal-close" (click)="showGovModal = false">✕</button>
+        </div>
+        <form [formGroup]="govForm" (ngSubmit)="saveGov()">
+          <div class="form-group">
+            <label>Governorate Name *</label>
+            <input type="text" formControlName="name" placeholder="e.g. Cairo, Giza, Alexandria" />
+            @if (govForm.get('name')?.touched && govForm.get('name')?.invalid) {
+              <span class="field-error">
+                Name is required (at least 2 characters).
+              </span>
+            }
+          </div>
+          <div class="form-group">
+            <label>Display Sort Order</label>
+            <input type="number" formControlName="sortOrder" placeholder="1" />
+          </div>
+          <div class="form-group form-group--checkbox">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="active" />
+              <span>Currently operating in this governorate</span>
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn--secondary" (click)="showGovModal = false">Cancel</button>
+            <button type="submit" class="btn btn--primary" [disabled]="actionLoading">
+              {{ actionLoading ? 'Saving…' : editingGov ? 'Update Governorate' : 'Create Governorate' }}
+            </button>
+          </div>
+        </form>
       </div>
-      <form [formGroup]="govForm" (ngSubmit)="saveGov()">
-        <div class="form-group">
-          <label>Governorate Name *</label>
-          <input type="text" formControlName="name" placeholder="e.g. Cairo, Giza, Alexandria" />
-          <span class="field-error" *ngIf="govForm.get('name')?.touched && govForm.get('name')?.invalid">
-            Name is required (at least 2 characters).
-          </span>
-        </div>
-        <div class="form-group">
-          <label>Display Sort Order</label>
-          <input type="number" formControlName="sortOrder" placeholder="1" />
-        </div>
-        <div class="form-group form-group--checkbox">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="active" />
-            <span>Currently operating in this governorate</span>
-          </label>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn--secondary" (click)="showGovModal = false">Cancel</button>
-          <button type="submit" class="btn btn--primary" [disabled]="actionLoading">
-            {{ actionLoading ? 'Saving…' : editingGov ? 'Update Governorate' : 'Create Governorate' }}
-          </button>
-        </div>
-      </form>
     </div>
-  </div>
+  }
 
   <!-- ── MODAL: City Form ────────────────────────────────────────────────── -->
-  <div class="modal-backdrop" *ngIf="showCityModal" (click)="showCityModal = false">
-    <div class="modal-card" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ editingCity ? 'Edit City' : 'Add City to ' + selectedGov?.name }}</h3>
-        <button type="button" class="modal-close" (click)="showCityModal = false">✕</button>
+  @if (showCityModal) {
+    <div class="modal-backdrop" (click)="showCityModal = false">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ editingCity ? 'Edit City' : 'Add City to ' + selectedGov?.name }}</h3>
+          <button type="button" class="modal-close" (click)="showCityModal = false">✕</button>
+        </div>
+        <form [formGroup]="cityForm" (ngSubmit)="saveCity()">
+          <div class="form-group">
+            <label>City Name *</label>
+            <input type="text" formControlName="name" placeholder="e.g. New Cairo, Maadi, Sheikh Zayed" />
+            @if (cityForm.get('name')?.touched && cityForm.get('name')?.invalid) {
+              <span class="field-error">
+                City name is required (at least 2 characters).
+              </span>
+            }
+          </div>
+          <div class="form-group">
+            <label>Display Sort Order</label>
+            <input type="number" formControlName="sortOrder" placeholder="1" />
+          </div>
+          <div class="form-group form-group--checkbox">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="active" />
+              <span>Currently operating in this city</span>
+            </label>
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn--secondary" (click)="showCityModal = false">Cancel</button>
+            <button type="submit" class="btn btn--primary" [disabled]="actionLoading">
+              {{ actionLoading ? 'Saving…' : editingCity ? 'Update City' : 'Create City' }}
+            </button>
+          </div>
+        </form>
       </div>
-      <form [formGroup]="cityForm" (ngSubmit)="saveCity()">
-        <div class="form-group">
-          <label>City Name *</label>
-          <input type="text" formControlName="name" placeholder="e.g. New Cairo, Maadi, Sheikh Zayed" />
-          <span class="field-error" *ngIf="cityForm.get('name')?.touched && cityForm.get('name')?.invalid">
-            City name is required (at least 2 characters).
-          </span>
-        </div>
-        <div class="form-group">
-          <label>Display Sort Order</label>
-          <input type="number" formControlName="sortOrder" placeholder="1" />
-        </div>
-        <div class="form-group form-group--checkbox">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="active" />
-            <span>Currently operating in this city</span>
-          </label>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn--secondary" (click)="showCityModal = false">Cancel</button>
-          <button type="submit" class="btn btn--primary" [disabled]="actionLoading">
-            {{ actionLoading ? 'Saving…' : editingCity ? 'Update City' : 'Create City' }}
-          </button>
-        </div>
-      </form>
     </div>
-  </div>
+  }
 
   <!-- ── MODAL: Area Form ────────────────────────────────────────────────── -->
-  <div class="modal-backdrop" *ngIf="showAreaModal" (click)="showAreaModal = false">
-    <div class="modal-card" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3>{{ editingArea ? 'Edit Area' : 'Add Area to ' + selectedCity?.name }}</h3>
-        <button type="button" class="modal-close" (click)="showAreaModal = false">✕</button>
-      </div>
-      <form [formGroup]="areaForm" (ngSubmit)="saveArea()">
-        <div class="form-group">
-          <label>Area / District Name *</label>
-          <input type="text" formControlName="name" placeholder="e.g. Fifth Settlement, Degla, Smouha" />
-          <span class="field-error" *ngIf="areaForm.get('name')?.touched && areaForm.get('name')?.invalid">
-            Area name is required.
-          </span>
+  @if (showAreaModal) {
+    <div class="modal-backdrop" (click)="showAreaModal = false">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ editingArea ? 'Edit Area' : 'Add Area to ' + selectedCity?.name }}</h3>
+          <button type="button" class="modal-close" (click)="showAreaModal = false">✕</button>
         </div>
-        <div class="form-group form-group--checkbox highlight-box">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="courierDelivery" />
-            <div>
-              <strong>🚚 3rd-Party Courier Delivery</strong>
-              <p class="field-hint">When enabled, shipment is fulfilled by an external courier partner. <strong>The bakery charges 0 EGP, and the customer pays the delivery fee directly to the courier upon delivery.</strong></p>
+        <form [formGroup]="areaForm" (ngSubmit)="saveArea()">
+          <div class="form-group">
+            <label>Area / District Name *</label>
+            <input type="text" formControlName="name" placeholder="e.g. Fifth Settlement, Degla, Smouha" />
+            @if (areaForm.get('name')?.touched && areaForm.get('name')?.invalid) {
+              <span class="field-error">
+                Area name is required.
+              </span>
+            }
+          </div>
+          <div class="form-group form-group--checkbox highlight-box">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="courierDelivery" />
+              <div>
+                <strong>🚚 3rd-Party Courier Delivery</strong>
+                <p class="field-hint">When enabled, shipment is fulfilled by an external courier partner. <strong>The bakery charges 0 EGP, and the customer pays the delivery fee directly to the courier upon delivery.</strong></p>
+              </div>
+            </label>
+          </div>
+          @if (!areaForm.get('courierDelivery')?.value) {
+            <div class="form-group">
+              <label>Delivery Fee (EGP) *</label>
+              <input type="number" formControlName="deliveryFee" step="5" min="0" placeholder="50.00" />
+              <span class="field-hint">Specify the bakery delivery fee charged for orders to this specific area.</span>
             </div>
-          </label>
-        </div>
-        <div class="form-group" *ngIf="!areaForm.get('courierDelivery')?.value">
-          <label>Delivery Fee (EGP) *</label>
-          <input type="number" formControlName="deliveryFee" step="5" min="0" placeholder="50.00" />
-          <span class="field-hint">Specify the bakery delivery fee charged for orders to this specific area.</span>
-        </div>
-        <div class="form-group form-group--checkbox">
-          <label class="checkbox-label">
-            <input type="checkbox" formControlName="active" />
-            <span>Area is currently active for orders</span>
-          </label>
-        </div>
-        <div class="form-group">
-          <label>Display Sort Order</label>
-          <input type="number" formControlName="sortOrder" placeholder="1" />
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn btn--secondary" (click)="showAreaModal = false">Cancel</button>
-          <button type="submit" class="btn btn--primary" [disabled]="actionLoading">
-            {{ actionLoading ? 'Saving…' : editingArea ? 'Update Area' : 'Create Area' }}
-          </button>
-        </div>
-      </form>
+          }
+          <div class="form-group form-group--checkbox">
+            <label class="checkbox-label">
+              <input type="checkbox" formControlName="active" />
+              <span>Area is currently active for orders</span>
+            </label>
+          </div>
+          <div class="form-group">
+            <label>Display Sort Order</label>
+            <input type="number" formControlName="sortOrder" placeholder="1" />
+          </div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn--secondary" (click)="showAreaModal = false">Cancel</button>
+            <button type="submit" class="btn btn--primary" [disabled]="actionLoading">
+              {{ actionLoading ? 'Saving…' : editingArea ? 'Update Area' : 'Create Area' }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
-  </div>
+  }
 </div>

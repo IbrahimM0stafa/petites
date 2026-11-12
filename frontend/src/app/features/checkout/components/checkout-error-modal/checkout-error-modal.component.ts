@@ -1,11 +1,11 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
 	selector: 'app-checkout-error-modal',
 	standalone: true,
-	imports: [CommonModule, RouterLink],
+	imports: [RouterLink],
 	templateUrl: './checkout-error-modal.component.html',
 	styleUrl: './checkout-error-modal.component.css'
 })

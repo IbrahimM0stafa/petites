@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+
 import { Component, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -9,7 +9,7 @@ import { AuthService } from '../../../core/services/auth.service';
 @Component({
 	selector: 'app-user-create',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, RouterLink],
+	imports: [ReactiveFormsModule, RouterLink],
 	templateUrl: './user-create.component.html',
 	styleUrl: './user-create.component.css'
 })

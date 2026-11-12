@@ -1,120 +1,153 @@
 <aside class="checkout-card checkout-summary">
   <h2>Basket Review</h2>
 
-  <div class="single-receipt-container" *ngIf="!isMixedOrder">
-    <div class="checkout-items scroll-custom">
-      <article class="checkout-item-mini" *ngFor="let item of cart?.items">
-        <div class="item-mini-copy">
-          <strong class="item-mini-name">{{ item.productName }}</strong>
-          <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
-        </div>
-        <div class="item-mini-badge" [class.scheduled]="item.deliveryMode === 'SCHEDULED'">
-          {{ item.deliveryMode }}
-        </div>
-      </article>
-    </div>
-
-    <dl class="checkout-cost-list">
-      <div class="cost-row">
-        <dt>Subtotal</dt>
-        <dd>{{ subtotal | currency }}</dd>
-      </div>
-      <div class="cost-row discount" *ngIf="couponPreview">
-        <dt>Discount</dt>
-        <dd>-{{ couponPreview.discountAmount | currency }}</dd>
-      </div>
-      <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
-        <dt>Delivery Fee</dt>
-        <dd *ngIf="!isCourierDelivery">{{ deliveryFee > 0 ? (deliveryFee | currency) : (hasAreaSelected ? 'Free' : 'Select area') }}</dd>
-        <dd *ngIf="isCourierDelivery" class="courier-val-tag">Paid to courier on delivery</dd>
-      </div>
-      <div class="cost-row total-row">
-        <dt>Total to Bakery</dt>
-        <dd>{{ finalAmount | currency }}</dd>
-      </div>
-    </dl>
-  </div>
-
-  <div class="split-receipts-container" *ngIf="isMixedOrder">
-    <!-- Instant Delivery Package Receipt -->
-    <div class="split-receipt-block">
-      <h3 class="split-receipt-title">⚡ Instant Package</h3>
+  @if (!isMixedOrder) {
+    <div class="single-receipt-container">
       <div class="checkout-items scroll-custom">
-        <article class="checkout-item-mini" *ngFor="let item of instantItems">
-          <div class="item-mini-copy">
-            <strong class="item-mini-name">{{ item.productName }}</strong>
-            <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
-          </div>
-        </article>
+        @for (item of cart?.items; track item) {
+          <article class="checkout-item-mini">
+            <div class="item-mini-copy">
+              <strong class="item-mini-name">{{ item.productName }}</strong>
+              <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
+            </div>
+            <div class="item-mini-badge" [class.scheduled]="item.deliveryMode === 'SCHEDULED'">
+              {{ item.deliveryMode }}
+            </div>
+          </article>
+        }
       </div>
-      <dl class="checkout-cost-list split-cost-list">
+      <dl class="checkout-cost-list">
         <div class="cost-row">
           <dt>Subtotal</dt>
-          <dd>{{ instantSubtotal | currency }}</dd>
+          <dd>{{ subtotal | currency }}</dd>
         </div>
-        <div class="cost-row discount" *ngIf="instantDiscount > 0">
-          <dt>Discount</dt>
-          <dd>-{{ instantDiscount | currency }}</dd>
-        </div>
-        <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
-          <dt>Delivery Fee</dt>
-          <dd *ngIf="!isCourierDelivery">{{ instantDeliveryFee > 0 ? (instantDeliveryFee | currency) : (hasAreaSelected ? 'Free' : 'Select area') }}</dd>
-          <dd *ngIf="isCourierDelivery" class="courier-val-tag">Paid to courier</dd>
-        </div>
-        <div class="cost-row total-row split-total-row">
-          <dt>Package Total</dt>
-          <dd>{{ instantTotal | currency }}</dd>
-        </div>
-      </dl>
-    </div>
-
-    <!-- Scheduled Delivery Package Receipt -->
-    <div class="split-receipt-block">
-      <h3 class="split-receipt-title">📅 Scheduled Package</h3>
-      <div class="checkout-items scroll-custom">
-        <article class="checkout-item-mini" *ngFor="let item of scheduledItems">
-          <div class="item-mini-copy">
-            <strong class="item-mini-name">{{ item.productName }}</strong>
-            <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
+        @if (couponPreview) {
+          <div class="cost-row discount">
+            <dt>Discount</dt>
+            <dd>-{{ couponPreview.discountAmount | currency }}</dd>
           </div>
-        </article>
-      </div>
-      <dl class="checkout-cost-list split-cost-list">
-        <div class="cost-row">
-          <dt>Subtotal</dt>
-          <dd>{{ scheduledSubtotal | currency }}</dd>
-        </div>
-        <div class="cost-row discount" *ngIf="scheduledDiscount > 0">
-          <dt>Discount</dt>
-          <dd>-{{ scheduledDiscount | currency }}</dd>
-        </div>
-        <div class="cost-row delivery-fee-row" *ngIf="orderType === 'DELIVERY'">
-          <dt>Delivery Fee</dt>
-          <dd *ngIf="!isCourierDelivery">{{ scheduledDeliveryFee > 0 ? (scheduledDeliveryFee | currency) : (hasAreaSelected ? 'Free' : 'Select area') }}</dd>
-          <dd *ngIf="isCourierDelivery" class="courier-val-tag">Paid to courier</dd>
-        </div>
-        <div class="cost-row total-row split-total-row">
-          <dt>Package Total</dt>
-          <dd>{{ scheduledTotal | currency }}</dd>
-        </div>
-      </dl>
-    </div>
-
-    <!-- Grand Combined Total -->
-    <div class="grand-total-block">
-      <dl class="checkout-cost-list grand-cost-list">
-        <div class="cost-row total-row grand-total-row">
-          <dt>Grand Total (Combined)</dt>
+        }
+        @if (orderType === 'DELIVERY') {
+          <div class="cost-row delivery-fee-row">
+            <dt>Delivery Fee</dt>
+            @if (!isCourierDelivery) {
+              <dd>{{ deliveryFee > 0 ? (deliveryFee | currency) : (hasAreaSelected ? 'Free' : 'Select area') }}</dd>
+            }
+            @if (isCourierDelivery) {
+              <dd class="courier-val-tag">Paid to courier on delivery</dd>
+            }
+          </div>
+        }
+        <div class="cost-row total-row">
+          <dt>Total to Bakery</dt>
           <dd>{{ finalAmount | currency }}</dd>
         </div>
       </dl>
     </div>
-  </div>
+  }
 
-  <div class="delivery-notice-box" *ngIf="orderType === 'DELIVERY' && isCourierDelivery">
-    <h3>🚚 3rd-Party Courier Delivery</h3>
-    <p>Orders to your selected area are shipped via an external courier. The delivery fee will be collected directly by the courier upon arrival.</p>
-  </div>
+  @if (isMixedOrder) {
+    <div class="split-receipts-container">
+      <!-- Instant Delivery Package Receipt -->
+      <div class="split-receipt-block">
+        <h3 class="split-receipt-title">⚡ Instant Package</h3>
+        <div class="checkout-items scroll-custom">
+          @for (item of instantItems; track item) {
+            <article class="checkout-item-mini">
+              <div class="item-mini-copy">
+                <strong class="item-mini-name">{{ item.productName }}</strong>
+                <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
+              </div>
+            </article>
+          }
+        </div>
+        <dl class="checkout-cost-list split-cost-list">
+          <div class="cost-row">
+            <dt>Subtotal</dt>
+            <dd>{{ instantSubtotal | currency }}</dd>
+          </div>
+          @if (instantDiscount > 0) {
+            <div class="cost-row discount">
+              <dt>Discount</dt>
+              <dd>-{{ instantDiscount | currency }}</dd>
+            </div>
+          }
+          @if (orderType === 'DELIVERY') {
+            <div class="cost-row delivery-fee-row">
+              <dt>Delivery Fee</dt>
+              @if (!isCourierDelivery) {
+                <dd>{{ instantDeliveryFee > 0 ? (instantDeliveryFee | currency) : (hasAreaSelected ? 'Free' : 'Select area') }}</dd>
+              }
+              @if (isCourierDelivery) {
+                <dd class="courier-val-tag">Paid to courier</dd>
+              }
+            </div>
+          }
+          <div class="cost-row total-row split-total-row">
+            <dt>Package Total</dt>
+            <dd>{{ instantTotal | currency }}</dd>
+          </div>
+        </dl>
+      </div>
+      <!-- Scheduled Delivery Package Receipt -->
+      <div class="split-receipt-block">
+        <h3 class="split-receipt-title">📅 Scheduled Package</h3>
+        <div class="checkout-items scroll-custom">
+          @for (item of scheduledItems; track item) {
+            <article class="checkout-item-mini">
+              <div class="item-mini-copy">
+                <strong class="item-mini-name">{{ item.productName }}</strong>
+                <p class="item-mini-details">{{ item.quantity }} × {{ item.unitPrice | currency }}</p>
+              </div>
+            </article>
+          }
+        </div>
+        <dl class="checkout-cost-list split-cost-list">
+          <div class="cost-row">
+            <dt>Subtotal</dt>
+            <dd>{{ scheduledSubtotal | currency }}</dd>
+          </div>
+          @if (scheduledDiscount > 0) {
+            <div class="cost-row discount">
+              <dt>Discount</dt>
+              <dd>-{{ scheduledDiscount | currency }}</dd>
+            </div>
+          }
+          @if (orderType === 'DELIVERY') {
+            <div class="cost-row delivery-fee-row">
+              <dt>Delivery Fee</dt>
+              @if (!isCourierDelivery) {
+                <dd>{{ scheduledDeliveryFee > 0 ? (scheduledDeliveryFee | currency) : (hasAreaSelected ? 'Free' : 'Select area') }}</dd>
+              }
+              @if (isCourierDelivery) {
+                <dd class="courier-val-tag">Paid to courier</dd>
+              }
+            </div>
+          }
+          <div class="cost-row total-row split-total-row">
+            <dt>Package Total</dt>
+            <dd>{{ scheduledTotal | currency }}</dd>
+          </div>
+        </dl>
+      </div>
+      <!-- Grand Combined Total -->
+      <div class="grand-total-block">
+        <dl class="checkout-cost-list grand-cost-list">
+          <div class="cost-row total-row grand-total-row">
+            <dt>Grand Total (Combined)</dt>
+            <dd>{{ finalAmount | currency }}</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  }
+
+  @if (orderType === 'DELIVERY' && isCourierDelivery) {
+    <div class="delivery-notice-box">
+      <h3>🚚 3rd-Party Courier Delivery</h3>
+      <p>Orders to your selected area are shipped via an external courier. The delivery fee will be collected directly by the courier upon arrival.</p>
+    </div>
+  }
 
   <div class="checkout-actions">
     <a routerLink="/cart" class="purchase-btn purchase-btn--secondary back-to-cart-btn">
