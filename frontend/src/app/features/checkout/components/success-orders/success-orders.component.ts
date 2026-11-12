@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { OrderResponse } from '../../../../core/models/order.models';
 
@@ -8,6 +8,7 @@ import { OrderResponse } from '../../../../core/models/order.models';
 	standalone: true,
 	imports: [CommonModule, RouterLink],
 	templateUrl: './success-orders.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './success-orders.component.css'
 })
 export class SuccessOrdersComponent {

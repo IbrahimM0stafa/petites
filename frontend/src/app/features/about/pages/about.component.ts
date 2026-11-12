@@ -4,6 +4,7 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  ChangeDetectionStrategy
 } from '@angular/core';
 
 @Component({
@@ -11,6 +12,7 @@ import {
   standalone: true,
   imports: [],
   templateUrl: './about.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './about.component.css',
 })
 export class AboutComponent implements AfterViewInit, OnDestroy {

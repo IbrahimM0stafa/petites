@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -12,6 +12,7 @@ import { CouponService } from '../../../core/services/coupon.service';
   standalone: true,
   imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './coupons-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './coupons-list.component.css'
 })
 export class CouponsListComponent implements OnInit {

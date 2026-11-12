@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, OnChanges, inject } from '@angular/core';
+import { Component, Input, OnChanges, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../../core/models/shop.models';
 import { AddCartItemRequest, DeliveryMode } from '../../../core/models/cart.models';
@@ -11,6 +11,7 @@ import { readApiErrorMessage } from '../../../core/models/api-error.model';
   standalone: true,
   imports: [CommonModule, RouterLink],
   templateUrl: './product-card.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./product-card.component.css']
 })
 export class ProductCardComponent implements OnChanges {

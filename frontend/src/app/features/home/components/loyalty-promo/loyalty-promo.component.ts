@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 
@@ -11,6 +11,7 @@ import { LoyaltyResponse } from '../../../../core/models/loyalty.models';
 	standalone: true,
 	imports: [RouterLink],
 	templateUrl: './loyalty-promo.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './loyalty-promo.component.css'
 })
 export class LoyaltyPromoComponent implements OnInit {

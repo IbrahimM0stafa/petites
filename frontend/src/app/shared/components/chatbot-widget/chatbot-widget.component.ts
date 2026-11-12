@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -29,6 +29,7 @@ import { InChatCheckoutCoordinator } from './services/in-chat-checkout-coordinat
   standalone: true,
   imports: [CommonModule, FormsModule, DatePickerComponent],
   templateUrl: './chatbot-widget.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './chatbot-widget.component.css'
 })
 export class ChatbotWidgetComponent implements OnInit {

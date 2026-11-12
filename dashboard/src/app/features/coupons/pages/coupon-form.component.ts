@@ -1,5 +1,5 @@
 
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -17,6 +17,7 @@ import { CouponService } from '../../../core/services/coupon.service';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './coupon-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './coupon-form.component.css'
 })
 export class CouponFormComponent implements OnInit {

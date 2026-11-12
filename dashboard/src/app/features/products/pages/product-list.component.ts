@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 
@@ -14,6 +14,7 @@ import { ProductService } from '../../../core/services/product.service';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './product-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './product-list.component.css'
 })
 export class ProductListComponent implements OnInit {

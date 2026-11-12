@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Subject, Subscription, takeUntil } from 'rxjs';
 
@@ -16,6 +16,7 @@ import { CustomerWebSocketService } from '../../../core/services/websocket.servi
 	standalone: true,
 	imports: [CommonModule, RouterLink],
 	templateUrl: './orders-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './orders-page.component.css'
 })
 export class OrdersPageComponent implements OnInit, OnDestroy {

@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 
@@ -26,6 +26,7 @@ export interface NewOrderAlert {
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './orders-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './orders-list.component.css'
 })
 export class OrdersListComponent implements OnInit, OnDestroy {

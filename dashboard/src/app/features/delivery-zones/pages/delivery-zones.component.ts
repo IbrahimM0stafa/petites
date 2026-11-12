@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DeliveryZoneService } from '../../../core/services/delivery-zone.service';
@@ -10,6 +10,7 @@ import { readApiErrorMessage } from '../../../core/models/api-error.model';
   standalone: true,
   imports: [CommonModule, FormsModule, ReactiveFormsModule],
   templateUrl: './delivery-zones.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './delivery-zones.component.css'
 })
 export class DeliveryZonesComponent implements OnInit {

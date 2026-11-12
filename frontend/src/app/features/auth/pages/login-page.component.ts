@@ -1,5 +1,5 @@
 
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 import { LoginFormComponent } from '../components/login-form/login-form.component';
 
@@ -8,6 +8,7 @@ import { LoginFormComponent } from '../components/login-form/login-form.componen
 	standalone: true,
 	imports: [LoginFormComponent],
 	templateUrl: './login-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './login-page.component.css'
 })
 export class LoginPageComponent {}

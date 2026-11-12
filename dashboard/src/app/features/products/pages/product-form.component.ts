@@ -1,5 +1,5 @@
 
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin, of, Observable } from 'rxjs';
@@ -16,6 +16,7 @@ import { ProductService } from '../../../core/services/product.service';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './product-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './product-form.component.css'
 })
 export class ProductFormComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
@@ -10,6 +10,7 @@ import { Product } from '../../../../core/models/shop.models';
   standalone: true,
   imports: [RouterLink, ProductCardComponent],
   templateUrl: './instant-delivery.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./instant-delivery.component.css']
 })
 export class InstantDeliveryComponent implements OnInit {

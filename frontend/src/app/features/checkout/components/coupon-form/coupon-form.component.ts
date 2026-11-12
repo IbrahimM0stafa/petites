@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CouponValidationResponse } from '../../../../core/models/coupon.models';
 
@@ -8,6 +8,7 @@ import { CouponValidationResponse } from '../../../../core/models/coupon.models'
 	standalone: true,
 	imports: [CommonModule, ReactiveFormsModule],
 	templateUrl: './coupon-form.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './coupon-form.component.css'
 })
 export class CouponFormComponent {

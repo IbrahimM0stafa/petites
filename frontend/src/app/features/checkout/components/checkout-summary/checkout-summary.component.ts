@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartItemResponse, CartResponse } from '../../../../core/models/cart.models';
 import { CouponValidationResponse } from '../../../../core/models/coupon.models';
@@ -10,6 +10,7 @@ import { OrderType } from '../../../../core/models/order.models';
 	standalone: true,
 	imports: [CommonModule, RouterLink],
 	templateUrl: './checkout-summary.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './checkout-summary.component.css'
 })
 export class CheckoutSummaryComponent {

@@ -1,5 +1,5 @@
 
-import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -14,6 +14,7 @@ import { Category, Product } from '../../../core/models/shop.models';
   standalone: true,
   imports: [FormsModule, ProductCardComponent],
   templateUrl: './shop-page.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./shop-page.component.css']
 })
 export class ShopPageComponent implements OnInit {

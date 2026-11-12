@@ -1,5 +1,5 @@
 
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Observable, of } from 'rxjs';
@@ -14,6 +14,7 @@ import { ImageUploadService } from '../../../core/services/image-upload.service'
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './category-form.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './category-form.component.css'
 })
 export class CategoryFormComponent implements OnInit {

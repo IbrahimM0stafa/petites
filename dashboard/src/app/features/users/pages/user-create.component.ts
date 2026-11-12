@@ -1,5 +1,5 @@
 
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -11,6 +11,7 @@ import { AuthService } from '../../../core/services/auth.service';
 	standalone: true,
 	imports: [ReactiveFormsModule, RouterLink],
 	templateUrl: './user-create.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './user-create.component.css'
 })
 export class UserCreateComponent {

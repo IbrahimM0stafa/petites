@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
 
@@ -16,6 +16,7 @@ import { ShopService } from '../../../core/services/shop.service';
 	standalone: true,
 	imports: [CommonModule, RouterLink],
 	templateUrl: './cart-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './cart-page.component.css'
 })
 export class CartPageComponent implements OnInit {

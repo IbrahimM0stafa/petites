@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { ShopService } from '../../../../core/services/shop.service';
@@ -9,6 +9,7 @@ import { Category } from '../../../../core/models/shop.models';
   standalone: true,
   imports: [CommonModule],
   templateUrl: './categories.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./categories.component.css']
 })
 export class CategoriesComponent implements OnInit, AfterViewInit {

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
 import { CartService } from '../../core/services/cart.service';
@@ -12,6 +12,7 @@ import { ChatbotWidgetComponent } from '../../shared/components/chatbot-widget/c
   standalone: true,
   imports: [HeaderComponent, FooterComponent, RouterOutlet, ChatbotWidgetComponent],
   templateUrl: './shell.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './shell.component.css'
 })
 export class ShellComponent implements OnInit {

@@ -1,5 +1,5 @@
 
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
@@ -11,6 +11,7 @@ import { CategoryService } from '../../../core/services/category.service';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './category-list.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './category-list.component.css'
 })
 export class CategoryListComponent implements OnInit {

@@ -1,5 +1,5 @@
 
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { CartService } from '../../core/services/cart.service';
@@ -11,6 +11,7 @@ import { SOCIAL_LINKS } from '../../core/constants/social-links';
   standalone: true,
   imports: [RouterLink, RouterLinkActive],
   templateUrl: './header.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent {

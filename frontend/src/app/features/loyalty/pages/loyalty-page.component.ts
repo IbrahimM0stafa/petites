@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 
@@ -11,6 +11,7 @@ import { AuthStateService } from '../../../core/services/auth-state.service';
 	standalone: true,
 	imports: [RouterLink],
 	templateUrl: './loyalty-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './loyalty-page.component.css'
 })
 export class LoyaltyPageComponent implements OnInit {

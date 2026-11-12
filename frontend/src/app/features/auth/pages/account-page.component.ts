@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -22,6 +22,7 @@ import { environment } from '../../../../environments/environment';
 	standalone: true,
 	imports: [CommonModule, ReactiveFormsModule, RouterLink],
 	templateUrl: './account-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './account-page.component.css'
 })
 export class AccountPageComponent implements OnInit {

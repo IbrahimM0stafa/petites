@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, HostListener, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, HostListener, OnDestroy, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
@@ -16,6 +16,7 @@ import { OrderResponse } from '../../core/models/order.model';
 	standalone: true,
 	imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
 	templateUrl: './admin-shell.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './admin-shell.component.css'
 })
 export class AdminShellComponent implements OnInit, OnDestroy {

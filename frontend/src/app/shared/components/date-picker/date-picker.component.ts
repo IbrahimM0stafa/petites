@@ -6,7 +6,8 @@ import {
   Input,
   OnInit,
   Output,
-  forwardRef
+  forwardRef,
+  ChangeDetectionStrategy
 } from '@angular/core';
 
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -36,6 +37,7 @@ export interface QuickDateOption {
   imports: [],
   templateUrl: './date-picker.component.html',
   styleUrl: './date-picker.component.css',
+  changeDetection: ChangeDetectionStrategy.Eager,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
@@ -15,6 +15,7 @@ import { WebSocketService } from '../../../core/services/websocket.service';
   standalone: true,
   imports: [CommonModule, RouterLink, FormsModule],
   templateUrl: './order-detail.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './order-detail.component.css'
 })
 export class OrderDetailComponent implements OnInit, OnDestroy {

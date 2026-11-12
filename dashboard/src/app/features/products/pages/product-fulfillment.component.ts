@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -12,6 +12,7 @@ import { Product } from '../../../core/models/product.model';
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './product-fulfillment.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './product-fulfillment.component.css'
 })
 export class ProductFulfillmentComponent implements OnInit {

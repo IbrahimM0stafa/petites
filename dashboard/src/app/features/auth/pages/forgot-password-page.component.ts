@@ -1,5 +1,5 @@
 
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 
@@ -17,6 +17,7 @@ const passwordMatchValidator: ValidatorFn = (control: AbstractControl): Validati
 	standalone: true,
 	imports: [ReactiveFormsModule, RouterLink],
 	templateUrl: './forgot-password-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './forgot-password-page.component.css'
 })
 export class ForgotPasswordPageComponent {

@@ -1,5 +1,5 @@
 
-import { Component, inject } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
@@ -12,6 +12,7 @@ import { AuthService } from '../../../../core/services/auth.service';
 	standalone: true,
 	imports: [ReactiveFormsModule, RouterLink],
 	templateUrl: './login-form.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './login-form.component.css'
 })
 export class LoginFormComponent {

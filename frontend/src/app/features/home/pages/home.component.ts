@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 
 import { HeroComponent } from '../components/hero/hero.component';
@@ -20,6 +20,7 @@ import { LoyaltyPromoComponent } from '../components/loyalty-promo/loyalty-promo
     LoyaltyPromoComponent
 ],
   templateUrl: './home.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./home.component.css']
 })
 export class HomeComponent {}

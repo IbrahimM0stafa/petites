@@ -1,5 +1,5 @@
 
-import { Component, Input } from '@angular/core';
+import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { OrderResponse } from '../../../../core/models/order.models';
 
 @Component({
@@ -7,6 +7,7 @@ import { OrderResponse } from '../../../../core/models/order.models';
 	standalone: true,
 	imports: [],
 	templateUrl: './payment-form.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './payment-form.component.css'
 })
 export class PaymentFormComponent {

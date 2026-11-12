@@ -1,5 +1,5 @@
 
-import { Component, OnInit, inject, DestroyRef } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -54,6 +54,7 @@ import { CheckoutRewardUtil } from '../utils/checkout-reward.util';
     InstapayPopupModalComponent
 ],
 	templateUrl: './checkout-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './checkout-page.component.css'
 })
 export class CheckoutPageComponent implements OnInit {

@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 
@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
   standalone: true,
   imports: [RouterLink],
   templateUrl: './hero.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./hero.component.css']
 })
 export class HeroComponent {}

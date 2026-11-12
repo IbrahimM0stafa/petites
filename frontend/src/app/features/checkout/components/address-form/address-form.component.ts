@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, Input, Output, EventEmitter, OnInit, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { SavedAddressResponse } from '../../../../core/models/address.models';
 import { DatePickerComponent } from '../../../../shared/components/date-picker/date-picker.component';
@@ -14,6 +14,7 @@ import { RouterLink } from '@angular/router';
 	standalone: true,
 	imports: [CommonModule, ReactiveFormsModule, DatePickerComponent, RouterLink],
 	templateUrl: './address-form.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './address-form.component.css'
 })
 export class AddressFormComponent implements OnInit {

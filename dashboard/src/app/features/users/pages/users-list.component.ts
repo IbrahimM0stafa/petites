@@ -1,5 +1,5 @@
 
-import { Component, OnDestroy, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
@@ -13,6 +13,7 @@ import { AuthService } from '../../../core/services/auth.service';
 	standalone: true,
 	imports: [RouterLink, FormsModule],
 	templateUrl: './users-list.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './users-list.component.css'
 })
 export class UsersListComponent implements OnInit, OnDestroy {

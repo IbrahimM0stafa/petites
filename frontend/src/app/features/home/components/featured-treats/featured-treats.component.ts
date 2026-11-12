@@ -1,5 +1,5 @@
 
-import { Component, ViewChild, ElementRef, OnInit } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
 import { ShopService } from '../../../../core/services/shop.service';
@@ -37,6 +37,7 @@ import { Product } from '../../../../core/models/shop.models';
       </div>
     </section>
     `,
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./featured-treats.component.css']
 })
 export class FeaturedTreatsComponent implements OnInit {

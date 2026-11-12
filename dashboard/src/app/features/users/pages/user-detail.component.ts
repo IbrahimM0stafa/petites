@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
@@ -12,6 +12,7 @@ import { AuthStateService } from '../../../core/services/auth-state.service';
 	standalone: true,
 	imports: [CommonModule, RouterLink],
 	templateUrl: './user-detail.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './user-detail.component.css'
 })
 export class UserDetailComponent implements OnInit {

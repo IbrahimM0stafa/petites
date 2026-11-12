@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { hasAdminRole } from '../../../core/auth/admin-roles';
@@ -10,6 +10,7 @@ import { LoginFormComponent } from '../components/login-form/login-form.componen
 	standalone: true,
 	imports: [LoginFormComponent],
 	templateUrl: './login-page.component.html',
+	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './login-page.component.css'
 })
 export class LoginPageComponent implements OnInit {
