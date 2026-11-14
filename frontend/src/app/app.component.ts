@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { Router, NavigationEnd, ActivatedRoute } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { ShellComponent } from './layout/shell/shell.component';
@@ -15,11 +15,9 @@ import { SeoService } from './core/services/seo.service';
 export class AppComponent implements OnInit {
   title = 'frontend';
 
-  constructor(
-    private readonly router: Router,
-    private readonly activatedRoute: ActivatedRoute,
-    private readonly seoService: SeoService
-  ) {}
+  private readonly router = inject(Router);
+  private readonly activatedRoute = inject(ActivatedRoute);
+  private readonly seoService = inject(SeoService);
 
   ngOnInit(): void {
     this.router.events.pipe(

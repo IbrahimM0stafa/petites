@@ -1,8 +1,8 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
 
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { OrderResponse, OrderStatus } from '../../../core/models/order.model';
@@ -18,12 +18,11 @@ import { WebSocketService } from '../../../core/services/websocket.service';
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './order-detail.component.css'
 })
-export class OrderDetailComponent implements OnInit, OnDestroy {
+export class OrderDetailComponent implements OnInit {
   private readonly orderService = inject(OrderService);
   private readonly route = inject(ActivatedRoute);
   readonly webSocketService = inject(WebSocketService);
-
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   order: OrderResponse | null = null;
   loading = true;
@@ -58,14 +57,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     this.setupRealtimeSync();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   private setupRealtimeSync(): void {
     this.webSocketService.orderStatusUpdates$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((updated) => {
         if (this.order && this.order.orderId === updated.orderId) {
           this.order = { ...this.order, ...updated, status: updated.status };

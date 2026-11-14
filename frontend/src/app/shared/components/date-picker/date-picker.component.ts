@@ -7,6 +7,7 @@ import {
   OnInit,
   Output,
   forwardRef,
+  inject,
   ChangeDetectionStrategy
 } from '@angular/core';
 
@@ -70,10 +71,9 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
   calendarGrid: CalendarDay[][] = [];
   quickOptions: QuickDateOption[] = [];
 
+  private readonly elementRef = inject(ElementRef);
   private onChange: (val: string) => void = () => {};
   private onTouched: () => void = () => {};
-
-  constructor(private readonly elementRef: ElementRef) {}
 
   ngOnInit(): void {
     this.initViewDate();

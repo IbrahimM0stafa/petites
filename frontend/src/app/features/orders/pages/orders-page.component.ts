@@ -1,7 +1,8 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { Subject, Subscription, takeUntil } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { LoyaltyService } from '../../../core/services/loyalty.service';
@@ -26,8 +27,8 @@ export class OrdersPageComponent implements OnInit, OnDestroy {
 	readonly authState = inject(AuthStateService);
 	readonly webSocketService = inject(CustomerWebSocketService);
 	readonly formatAddressShort = formatAddressShort;
+	private readonly destroyRef = inject(DestroyRef);
 
-	private readonly destroy$ = new Subject<void>();
 	private currentOrderWatchSub: Subscription | null = null;
 
 	loading = true;
@@ -40,7 +41,7 @@ export class OrdersPageComponent implements OnInit, OnDestroy {
 		this.loadOrders();
 		this.setupCustomerRealtimeListener();
 
-		this.route.paramMap.pipe(takeUntil(this.destroy$)).subscribe((params) => {
+		this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
 			const orderId = params.get('id');
 			if (orderId) {
 				this.loadOrder(orderId);
@@ -55,13 +56,11 @@ export class OrdersPageComponent implements OnInit, OnDestroy {
 
 	ngOnDestroy(): void {
 		this.currentOrderWatchSub?.unsubscribe();
-		this.destroy$.next();
-		this.destroy$.complete();
 	}
 
 	private setupCustomerRealtimeListener(): void {
 		this.webSocketService.myOrderUpdates$
-			.pipe(takeUntil(this.destroy$))
+			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((updated) => {
 				// 1. Update in the customer orders list
 				const index = this.orders.findIndex((o) => o.orderId === updated.orderId);
@@ -89,7 +88,7 @@ export class OrdersPageComponent implements OnInit, OnDestroy {
 		this.currentOrderWatchSub?.unsubscribe();
 		this.currentOrderWatchSub = this.webSocketService
 			.watchOrder(orderId)
-			.pipe(takeUntil(this.destroy$))
+			.pipe(takeUntilDestroyed(this.destroyRef))
 			.subscribe((updated) => {
 				if (this.selectedOrder && this.selectedOrder.orderId === updated.orderId) {
 					this.selectedOrder = { ...this.selectedOrder, ...updated, status: updated.status };

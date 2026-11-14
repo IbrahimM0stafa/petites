@@ -28,13 +28,10 @@ export class ProductDetailComponent implements OnInit {
   addingToCart = false;
 
   private readonly destroyRef = inject(DestroyRef);
-
-  constructor(
-    private readonly route: ActivatedRoute,
-    private readonly shopService: ShopService,
-    private readonly cartService: CartService,
-    private readonly seoService: SeoService
-  ) { }
+  private readonly route = inject(ActivatedRoute);
+  private readonly shopService = inject(ShopService);
+  private readonly cartService = inject(CartService);
+  private readonly seoService = inject(SeoService);
 
   ngOnInit(): void {
     this.route.paramMap

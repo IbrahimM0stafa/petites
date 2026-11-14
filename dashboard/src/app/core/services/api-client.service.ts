@@ -1,5 +1,5 @@
 import { HttpClient, HttpContext, HttpHeaders, HttpParams } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -14,7 +14,7 @@ export interface ApiRequestOptions {
 	providedIn: 'root'
 })
 export class ApiClientService {
-	constructor(private readonly httpClient: HttpClient) {}
+	private readonly httpClient = inject(HttpClient);
 
 	get<T>(path: string, options: ApiRequestOptions = {}): Observable<T> {
 		return this.httpClient.get<T>(this.buildUrl(path), options);

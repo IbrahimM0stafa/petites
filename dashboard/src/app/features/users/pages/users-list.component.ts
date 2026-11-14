@@ -1,8 +1,9 @@
 
-import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
 
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { UserResponse } from '../../../core/models/user.models';
@@ -16,9 +17,9 @@ import { AuthService } from '../../../core/services/auth.service';
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './users-list.component.css'
 })
-export class UsersListComponent implements OnInit, OnDestroy {
+export class UsersListComponent implements OnInit {
 	private readonly authService = inject(AuthService);
-	private readonly destroy$ = new Subject<void>();
+	private readonly destroyRef = inject(DestroyRef);
 	private readonly searchInput$ = new Subject<string>();
 
 	users: UserResponse[] = [];
@@ -43,18 +44,13 @@ export class UsersListComponent implements OnInit, OnDestroy {
 		this.searchInput$.pipe(
 			debounceTime(350),
 			distinctUntilChanged(),
-			takeUntil(this.destroy$)
+			takeUntilDestroyed(this.destroyRef)
 		).subscribe(() => {
 			this.page = 0;
 			this.loadUsers();
 		});
 
 		this.loadUsers();
-	}
-
-	ngOnDestroy(): void {
-		this.destroy$.next();
-		this.destroy$.complete();
 	}
 
 	loadUsers(): void {

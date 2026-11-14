@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClientService } from './api-client.service';
 import { Category, Product, PagedResponse } from '../models/shop.models';
@@ -7,7 +7,7 @@ import { Category, Product, PagedResponse } from '../models/shop.models';
   providedIn: 'root'
 })
 export class ShopService {
-  constructor(private readonly apiClient: ApiClientService) {}
+  private readonly apiClient = inject(ApiClientService);
 
   getCategories(page = 0, size = 10, sort = 'sortOrder,asc'): Observable<PagedResponse<Category>> {
     return this.apiClient.get<PagedResponse<Category>>('/api/categories', {

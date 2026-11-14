@@ -1,5 +1,5 @@
 import { HttpContext, HttpHeaders } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, finalize, shareReplay, tap, throwError } from 'rxjs';
 
 import { isRefreshTokenRejected } from '../models/api-error.model';
@@ -14,12 +14,10 @@ import { AuthStateService } from './auth-state.service';
 	providedIn: 'root'
 })
 export class AuthService {
-	private refreshSessionRequest?: Observable<AuthResponse>;
+	private readonly apiClient = inject(ApiClientService);
+	private readonly authState = inject(AuthStateService);
 
-	constructor(
-		private readonly apiClient: ApiClientService,
-		private readonly authState: AuthStateService
-	) {}
+	private refreshSessionRequest?: Observable<AuthResponse>;
 
 	login(request: AuthRequest): Observable<AuthResponse> {
 		return this.apiClient

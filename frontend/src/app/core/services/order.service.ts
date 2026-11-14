@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, switchMap } from 'rxjs';
 
 import { ApiClientService } from './api-client.service';
@@ -9,10 +9,8 @@ import { OrderResponse } from '../models/order.models';
 	providedIn: 'root'
 })
 export class OrderService {
-	constructor(
-		private readonly apiClient: ApiClientService,
-		private readonly purchaseSession: PurchaseSessionService
-	) {}
+	private readonly apiClient = inject(ApiClientService);
+	private readonly purchaseSession = inject(PurchaseSessionService);
 
 	listOrders(): Observable<OrderResponse[]> {
 		return this.purchaseSession.ensureGuestSessionIfAnonymous().pipe(switchMap(() => this.apiClient.get<OrderResponse[]>('/api/orders')));

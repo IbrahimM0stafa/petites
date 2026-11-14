@@ -18,6 +18,9 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class LoginFormComponent implements OnInit {
 	private readonly formBuilder = inject(FormBuilder);
 	private readonly route = inject(ActivatedRoute);
+	private readonly authService = inject(AuthService);
+	private readonly cartService = inject(CartService);
+	private readonly router = inject(Router);
 
 	readonly loginForm = this.formBuilder.group({
 		email: ['', [Validators.required, Validators.email]],
@@ -28,12 +31,6 @@ export class LoginFormComponent implements OnInit {
 	serverError = '';
 	successMessage = '';
 	serverFieldErrors: Record<string, string[]> = {};
-
-	constructor(
-		private readonly authService: AuthService,
-		private readonly cartService: CartService,
-		private readonly router: Router
-	) {}
 
 	ngOnInit(): void {
 		this.route.queryParams.subscribe((params) => {

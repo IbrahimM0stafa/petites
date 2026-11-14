@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { AddressCreateRequest, AddressUpdateRequest, SavedAddressResponse } from '../models/address.models';
@@ -8,7 +8,7 @@ import { ApiClientService } from './api-client.service';
 	providedIn: 'root'
 })
 export class AddressService {
-	constructor(private readonly apiClient: ApiClientService) {}
+	private readonly apiClient = inject(ApiClientService);
 
 	listAddresses(): Observable<SavedAddressResponse[]> {
 		return this.apiClient.get<SavedAddressResponse[]>('/api/addresses');

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, map, of } from 'rxjs';
 
 import { AuthService } from './auth.service';
@@ -8,10 +8,8 @@ import { AuthStateService } from './auth-state.service';
 	providedIn: 'root'
 })
 export class PurchaseSessionService {
-	constructor(
-		private readonly authService: AuthService,
-		private readonly authState: AuthStateService
-	) {}
+	private readonly authService = inject(AuthService);
+	private readonly authState = inject(AuthStateService);
 
 	ensureGuestSessionIfAnonymous(): Observable<void> {
 		if (this.authState.isAuthenticated()) {

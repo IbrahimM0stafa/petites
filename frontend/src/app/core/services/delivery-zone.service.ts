@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable, shareReplay } from 'rxjs';
 import { ApiClientService } from './api-client.service';
 import { GovernorateNode } from '../models/delivery-zone.model';
@@ -7,9 +7,8 @@ import { GovernorateNode } from '../models/delivery-zone.model';
 	providedIn: 'root'
 })
 export class DeliveryZoneService {
+	private readonly apiClient = inject(ApiClientService);
 	private tree$?: Observable<GovernorateNode[]>;
-
-	constructor(private readonly apiClient: ApiClientService) {}
 
 	getTree(forceRefresh = false): Observable<GovernorateNode[]> {
 		if (!this.tree$ || forceRefresh) {

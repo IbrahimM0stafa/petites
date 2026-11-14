@@ -4,6 +4,7 @@ import {
   Component,
   ElementRef,
   OnDestroy,
+  inject,
   ChangeDetectionStrategy
 } from '@angular/core';
 
@@ -16,9 +17,8 @@ import {
   styleUrl: './about.component.css',
 })
 export class AboutComponent implements AfterViewInit, OnDestroy {
+  private readonly el = inject(ElementRef);
   private observer!: IntersectionObserver;
-
-  constructor(private el: ElementRef) {}
 
   ngAfterViewInit(): void {
     this.initScrollAnimations();

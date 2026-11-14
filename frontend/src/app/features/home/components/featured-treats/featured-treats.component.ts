@@ -1,5 +1,5 @@
 
-import { Component, ViewChild, ElementRef, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ViewChild, ElementRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
 import { ShopService } from '../../../../core/services/shop.service';
@@ -41,13 +41,13 @@ import { Product } from '../../../../core/models/shop.models';
   styleUrls: ['./featured-treats.component.css']
 })
 export class FeaturedTreatsComponent implements OnInit {
+  private readonly shopService = inject(ShopService);
+
   @ViewChild('treatCarousel') carousel!: ElementRef<HTMLDivElement>;
   private touchStartX: number = 0;
   private touchEndX: number = 0;
 
   treats: Product[] = [];
-
-  constructor(private readonly shopService: ShopService) {}
 
   ngOnInit(): void {
     this.shopService.getFeaturedProducts().subscribe({

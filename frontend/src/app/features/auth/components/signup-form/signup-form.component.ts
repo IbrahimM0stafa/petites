@@ -18,6 +18,9 @@ import { AuthService } from '../../../../core/services/auth.service';
 })
 export class SignupFormComponent {
 	private readonly formBuilder = inject(FormBuilder);
+	private readonly authService = inject(AuthService);
+	private readonly cartService = inject(CartService);
+	private readonly router = inject(Router);
 
 	readonly signupForm = this.formBuilder.group({
 		name: ['', [Validators.required, Validators.minLength(2)]],
@@ -29,12 +32,6 @@ export class SignupFormComponent {
 	loading = false;
 	serverError = '';
 	serverFieldErrors: Record<string, string[]> = {};
-
-	constructor(
-		private readonly authService: AuthService,
-		private readonly cartService: CartService,
-		private readonly router: Router
-	) {}
 
 	submit(): void {
 		if (this.signupForm.invalid) {

@@ -28,6 +28,12 @@ import { environment } from '../../../../environments/environment';
 export class AccountPageComponent implements OnInit {
 	private readonly formBuilder = inject(FormBuilder);
 	private readonly deliveryZoneService = inject(DeliveryZoneService);
+	readonly authState = inject(AuthStateService);
+	private readonly authService = inject(AuthService);
+	private readonly addressService = inject(AddressService);
+	private readonly cartService = inject(CartService);
+	private readonly loyaltyService = inject(LoyaltyService);
+	private readonly router = inject(Router);
 
 	readonly isDev = !environment.production;
 	readonly addressForm = this.formBuilder.group({
@@ -70,15 +76,6 @@ export class AccountPageComponent implements OnInit {
 
 		return `${parts[0][0] ?? ''}${parts[1][0] ?? ''}`.toUpperCase();
 	}
-
-	constructor(
-		readonly authState: AuthStateService,
-		private readonly authService: AuthService,
-		private readonly addressService: AddressService,
-		private readonly cartService: CartService,
-		private readonly loyaltyService: LoyaltyService,
-		private readonly router: Router
-	) { }
 
 	ngOnInit(): void {
 		this.loadProfile();

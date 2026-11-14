@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiClientService } from './api-client.service';
 import { ChatRequest, ChatResponse } from '../models/chatbot.models';
@@ -7,8 +7,7 @@ import { ChatRequest, ChatResponse } from '../models/chatbot.models';
   providedIn: 'root'
 })
 export class ChatbotService {
-
-  constructor(private readonly apiClient: ApiClientService) {}
+  private readonly apiClient = inject(ApiClientService);
 
   sendMessage(request: ChatRequest): Observable<ChatResponse> {
     return this.apiClient.post<ChatResponse>('/api/chat', request);

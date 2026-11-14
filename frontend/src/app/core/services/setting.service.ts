@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { ApiClientService } from './api-client.service';
@@ -11,7 +11,7 @@ export interface BlockedDaysResponse {
 	providedIn: 'root'
 })
 export class SettingService {
-	constructor(private readonly apiClient: ApiClientService) {}
+	private readonly apiClient = inject(ApiClientService);
 
 	getBlockedDays(): Observable<BlockedDaysResponse> {
 		return this.apiClient.get<BlockedDaysResponse>('/api/settings/blocked-days');

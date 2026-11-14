@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { Title, Meta } from '@angular/platform-browser';
 
 export interface SeoConfig {
@@ -14,13 +14,14 @@ export interface SeoConfig {
   providedIn: 'root'
 })
 export class SeoService {
+  private readonly titleService = inject(Title);
+  private readonly metaService = inject(Meta);
+
   private defaultTitle = 'Petites | Handmade Sweet Treats & Tiny Bites';
   private defaultDesc = "Handmade sweet treats for life's every little moment. Delight in every tiny bite of our cookies, pastries, and baked goods, delivered fresh to your door.";
   private defaultKeywords = 'petites, sweet treats, bakery, cookies, pastries, desserts, handmade sweets, online bakery';
   private defaultImage = 'https://petites-bakery.com/assets/og-image.jpg';
   private baseUrl = 'https://petites-bakery.com';
-
-  constructor(private readonly titleService: Title, private readonly metaService: Meta) {}
 
   generateTags(config: SeoConfig = {}): void {
     const title = config.title ? config.title : this.defaultTitle;

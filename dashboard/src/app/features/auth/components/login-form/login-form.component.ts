@@ -18,6 +18,8 @@ import { AuthService } from '../../../../core/services/auth.service';
 export class LoginFormComponent {
 	private readonly formBuilder = inject(FormBuilder);
 	private readonly route = inject(ActivatedRoute);
+	private readonly authService = inject(AuthService);
+	private readonly router = inject(Router);
 
 	readonly loginForm = this.formBuilder.group({
 		email: ['', [Validators.required, Validators.email]],
@@ -29,10 +31,7 @@ export class LoginFormComponent {
 	successMessage = '';
 	serverFieldErrors: Record<string, string[]> = {};
 
-	constructor(
-		private readonly authService: AuthService,
-		private readonly router: Router
-	) {
+	constructor() {
 		if (this.route.snapshot.queryParamMap.get('unauthorized') === '1') {
 			this.serverError = 'Your account does not have staff access.';
 		}

@@ -1,4 +1,4 @@
-import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { RouterLink } from '@angular/router';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
@@ -14,10 +14,10 @@ import { Product } from '../../../../core/models/shop.models';
   styleUrls: ['./instant-delivery.component.css']
 })
 export class InstantDeliveryComponent implements OnInit {
+  private readonly shopService = inject(ShopService);
+
   products: Product[] = [];
   loading = true;
-
-  constructor(private readonly shopService: ShopService) {}
 
   ngOnInit(): void {
     this.shopService.getProducts(undefined, 'instant', 0, 4).subscribe({

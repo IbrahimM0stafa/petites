@@ -1,4 +1,4 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, switchMap, tap } from 'rxjs';
 
 import { AddCartItemRequest, CartResponse, UpdateCartItemRequest } from '../models/cart.models';
@@ -9,15 +9,13 @@ import { PurchaseSessionService } from './purchase-session.service';
 	providedIn: 'root'
 })
 export class CartService {
+	private readonly apiClient = inject(ApiClientService);
+	private readonly purchaseSession = inject(PurchaseSessionService);
+
 	private readonly cartState = signal<CartResponse | null>(null);
 
 	readonly cart = this.cartState.asReadonly();
 	readonly itemCount = computed(() => this.cartState()?.items.reduce((total, item) => total + item.quantity, 0) ?? 0);
-
-	constructor(
-		private readonly apiClient: ApiClientService,
-		private readonly purchaseSession: PurchaseSessionService
-	) {}
 
 	loadCart(): Observable<CartResponse> {
 		return this.withSession(() => this.apiClient.get<CartResponse>('/api/cart')).pipe(tap((cart) => this.cartState.set(cart)));

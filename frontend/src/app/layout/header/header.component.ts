@@ -1,5 +1,5 @@
 
-import { Component, HostListener, ChangeDetectionStrategy } from '@angular/core';
+import { Component, HostListener, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 import { CartService } from '../../core/services/cart.service';
@@ -15,12 +15,9 @@ import { SOCIAL_LINKS } from '../../core/constants/social-links';
   styleUrls: ['./header.component.css']
 })
 export class HeaderComponent {
+  readonly authState = inject(AuthStateService);
+  readonly cartService = inject(CartService);
   readonly socialLinks = SOCIAL_LINKS;
-
-  constructor(
-    readonly authState: AuthStateService,
-    readonly cartService: CartService
-  ) {}
 
   menuOpen = false;
   isScrolled = false;

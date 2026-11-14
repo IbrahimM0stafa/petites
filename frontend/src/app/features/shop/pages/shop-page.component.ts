@@ -39,17 +39,14 @@ export class ShopPageComponent implements OnInit {
   searchQuery = '';
   private readonly searchSubject = new Subject<string>();
   private readonly destroyRef = inject(DestroyRef);
+  private readonly shopService = inject(ShopService);
+  private readonly route = inject(ActivatedRoute);
 
   // Pagination state
   page = 0;
   size = 20;
   totalPages = 0;
   totalElements = 0;
-
-  constructor(
-    private readonly shopService: ShopService,
-    private readonly route: ActivatedRoute
-  ) {}
 
   ngOnInit(): void {
     // Set up search debouncing

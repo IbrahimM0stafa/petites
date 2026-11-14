@@ -1,8 +1,8 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
-import { Subject, takeUntil } from 'rxjs';
 
 import { readApiErrorMessage } from '../../../core/models/api-error.model';
 import { DeliveryMode, OrderResponse, OrderStatus, OrderType } from '../../../core/models/order.model';
@@ -29,13 +29,12 @@ export interface NewOrderAlert {
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './orders-list.component.css'
 })
-export class OrdersListComponent implements OnInit, OnDestroy {
+export class OrdersListComponent implements OnInit {
   private readonly orderService = inject(OrderService);
   readonly webSocketService = inject(WebSocketService);
   readonly audioService = inject(AudioNotificationService);
   readonly orderNotificationService = inject(OrderNotificationService);
-
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   orders: OrderResponse[] = [];
   loading = true;
@@ -96,14 +95,9 @@ export class OrdersListComponent implements OnInit, OnDestroy {
     this.setupRealtimeSubscriptions();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   private setupRealtimeSubscriptions(): void {
     this.webSocketService.newOrders$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((newOrder) => {
         const count = (this.newOrderAlert?.count ?? 0) + 1;
         this.newOrderAlert = {
@@ -132,7 +126,7 @@ export class OrdersListComponent implements OnInit, OnDestroy {
       });
 
     this.webSocketService.orderStatusUpdates$
-      .pipe(takeUntil(this.destroy$))
+      .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((updatedOrder) => {
         // Live update status in the existing list without full reload
         const index = this.orders.findIndex((o) => o.orderId === updatedOrder.orderId);

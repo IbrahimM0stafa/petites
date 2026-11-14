@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { ShopService } from '../../../../core/services/shop.service';
@@ -13,6 +13,9 @@ import { Category } from '../../../../core/models/shop.models';
   styleUrls: ['./categories.component.css']
 })
 export class CategoriesComponent implements OnInit, AfterViewInit {
+  private readonly shopService = inject(ShopService);
+  private readonly router = inject(Router);
+
   categories: Category[] = [];
   @ViewChild('categoriesContainer', { static: false }) categoriesContainer?: ElementRef<HTMLDivElement>;
 
@@ -23,11 +26,6 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
 
   private readonly mobileBreakpoint = 560;
   private readonly visibleCardsMobile = 3;
-
-  constructor(
-    private readonly shopService: ShopService,
-    private readonly router: Router
-  ) {}
 
   ngOnInit(): void {
     this.shopService.getCategories().subscribe({
