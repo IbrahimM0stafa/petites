@@ -1,5 +1,5 @@
 
-import { Component, EventEmitter, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, output, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -7,10 +7,10 @@ import { RouterLink } from '@angular/router';
 	standalone: true,
 	imports: [RouterLink],
 	templateUrl: './guest-prompt-modal.component.html',
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	styleUrl: './guest-prompt-modal.component.css'
 })
 export class GuestPromptModalComponent {
-	@Output() dismiss = new EventEmitter<void>();
+	readonly dismiss = output<void>();
 }
 

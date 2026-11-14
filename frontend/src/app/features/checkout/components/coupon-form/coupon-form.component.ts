@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CouponValidationResponse } from '../../../../core/models/coupon.models';
 
@@ -8,14 +8,14 @@ import { CouponValidationResponse } from '../../../../core/models/coupon.models'
 	standalone: true,
 	imports: [CurrencyPipe, ReactiveFormsModule],
 	templateUrl: './coupon-form.component.html',
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	styleUrl: './coupon-form.component.css'
 })
 export class CouponFormComponent {
-	@Input({ required: true }) checkoutForm!: FormGroup;
-	@Input({ required: true }) validatingCoupon!: boolean;
-	@Input({ required: true }) couponPreview!: CouponValidationResponse | null;
-	@Input({ required: true }) subtotal!: number;
+	readonly checkoutForm = input.required<FormGroup>();
+	readonly validatingCoupon = input.required<boolean>();
+	readonly couponPreview = input.required<CouponValidationResponse | null>();
+	readonly subtotal = input.required<number>();
 
-	@Output() validate = new EventEmitter<void>();
+	readonly validate = output<void>();
 }

@@ -1,31 +1,33 @@
 <article class="treat-card">
   <div
-    [class]="'treat-art ' + getArtClass()"
-    [routerLink]="productLink"
+    [class]="'treat-art ' + computedArtClass()"
+    [routerLink]="productLink()"
     style="cursor: pointer; position: relative;"
-    [style.backgroundImage]="imageUrl ? 'url(' + imageUrl + ')' : null"
-    [style.backgroundSize]="imageUrl ? 'cover' : 'contain'"
+    [style.backgroundImage]="displayImageUrl() ? 'url(' + displayImageUrl() + ')' : null"
+    [style.backgroundSize]="displayImageUrl() ? 'cover' : 'contain'"
     aria-hidden="true">
-    @if (product && fulfillmentMode === 'scheduled' && product.scheduledEligible) {
-      <div class="fulfillment-badge scheduled-badge">
-        Earliest Delivery: {{ product.earliestScheduledDate | date:'mediumDate' }}
-      </div>
-    }
-    @if (product && fulfillmentMode === 'instant' && product.instantAvailableToday) {
-      <div class="fulfillment-badge instant-badge">
-        ⚡ Same-Day Delivery available until {{ product.instantAvailableUntil | date:'shortTime' }} ({{ product.instantQuantityToday }} left)
-      </div>
+    @if (product(); as prod) {
+      @if (fulfillmentMode() === 'scheduled' && prod.scheduledEligible) {
+        <div class="fulfillment-badge scheduled-badge">
+          Earliest Delivery: {{ prod.earliestScheduledDate | date:'mediumDate' }}
+        </div>
+      }
+      @if (fulfillmentMode() === 'instant' && prod.instantAvailableToday) {
+        <div class="fulfillment-badge instant-badge">
+          ⚡ Same-Day Delivery available until {{ prod.instantAvailableUntil | date:'shortTime' }} ({{ prod.instantQuantityToday }} left)
+        </div>
+      }
     }
   </div>
 
   <div class="treat-content">
-    <h3 [routerLink]="productLink" style="cursor: pointer;">{{ name }}</h3>
-    <p class="price">{{ formattedPrice }}</p>
-    @if (product && product.isAvailable === false) {
+    <h3 [routerLink]="productLink()" style="cursor: pointer;">{{ displayName() }}</h3>
+    <p class="price">{{ formattedPrice() }}</p>
+    @if (product() && product()!.isAvailable === false) {
       <p class="button-note">This item is no longer available.</p>
     }
-    <button type="button" class="add-button" [disabled]="adding || !canAddToCart" (click)="addToCart($event)">
-      {{ adding ? 'Adding…' : (product && product.isAvailable === false ? 'Unavailable' : ctaText) }}
+    <button type="button" class="add-button" [disabled]="adding || !canAddToCart()" (click)="addToCart($event)">
+      {{ adding ? 'Adding…' : (product() && product()!.isAvailable === false ? 'Unavailable' : ctaText()) }}
       <span class="button-heart" aria-hidden="true">♥</span>
     </button>
     @if (statusMessage) {

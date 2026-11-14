@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, Input, OnChanges, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, input, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../../core/models/shop.models';
 import { AddCartItemRequest, DeliveryMode } from '../../../core/models/cart.models';
@@ -11,63 +11,75 @@ import { readApiErrorMessage } from '../../../core/models/api-error.model';
   standalone: true,
   imports: [DatePipe, RouterLink],
   templateUrl: './product-card.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrls: ['./product-card.component.css']
 })
-export class ProductCardComponent implements OnChanges {
+export class ProductCardComponent {
   private readonly cartService = inject(CartService);
 
-  @Input() product?: Product;
-  @Input() fulfillmentMode: 'scheduled' | 'instant' = 'scheduled';
-  @Input() name = '';
-  @Input() price: string | number = '';
-  @Input() artClass = '';
-  @Input() imageUrl?: string;
-  @Input() ctaText = 'Add to Cart';
-  @Input() ctaLink = '/products';
+  readonly product = input<Product | undefined>(undefined);
+  readonly fulfillmentMode = input<'scheduled' | 'instant'>('scheduled');
+  readonly name = input<string>('');
+  readonly price = input<string | number>('');
+  readonly artClass = input<string>('');
+  readonly imageUrl = input<string | undefined>(undefined);
+  readonly ctaText = input<string>('Add to Cart');
+  readonly ctaLink = input<string>('/products');
 
   adding = false;
   statusMessage = '';
 
-  ngOnChanges(): void {
-    if (this.product) {
-      this.name = this.product.name;
-      this.price = this.product.price;
-      this.imageUrl = this.product.mainImage || undefined;
-      this.ctaText = 'Add to Cart';
-      this.statusMessage = '';
-    }
-  }
+  readonly displayName = computed(() => this.product()?.name ?? this.name());
+  readonly displayImageUrl = computed(() => this.product()?.mainImage || this.imageUrl());
 
-  get productLink(): string {
-    return this.product ? `/products/${this.product.id}` : this.ctaLink;
-  }
+  readonly productLink = computed(() => (this.product() ? `/products/${this.product()!.id}` : this.ctaLink()));
 
-  get cartDeliveryMode(): DeliveryMode {
-    return this.fulfillmentMode === 'instant' ? 'INSTANT' : 'SCHEDULED';
-  }
+  readonly cartDeliveryMode = computed<DeliveryMode>(() => (this.fulfillmentMode() === 'instant' ? 'INSTANT' : 'SCHEDULED'));
 
-  get canAddToCart(): boolean {
-    if (!this.product) {
+  readonly canAddToCart = computed<boolean>(() => {
+    const prod = this.product();
+    if (!prod) {
       return false;
     }
 
-    if (this.product.isAvailable === false) {
+    if (prod.isAvailable === false) {
       return false;
     }
 
-    if (this.cartDeliveryMode === 'INSTANT') {
-      return this.product.instantAvailableToday && this.product.instantQuantityToday > 0;
+    if (this.cartDeliveryMode() === 'INSTANT') {
+      return Boolean(prod.instantAvailableToday && prod.instantQuantityToday > 0);
     }
 
-    return this.product.scheduledEligible;
-  }
+    return Boolean(prod.scheduledEligible);
+  });
+
+  readonly formattedPrice = computed<string>(() => {
+    const rawPrice = this.product()?.price ?? this.price();
+    if (typeof rawPrice === 'number') {
+      return `EGP ${rawPrice.toFixed(2)}`;
+    }
+    return String(rawPrice ?? '');
+  });
+
+  readonly computedArtClass = computed<string>(() => {
+    const explicitClass = this.artClass();
+    if (explicitClass) {
+      return explicitClass;
+    }
+    const nameLower = (this.displayName() || '').toLowerCase();
+    if (nameLower.includes('cake')) return 'cake';
+    if (nameLower.includes('muffin')) return 'muffin';
+    if (nameLower.includes('tiramisu')) return 'tiramisu';
+    if (nameLower.includes('brownie') || nameLower.includes('cookie')) return 'brownie';
+    return 'cake';
+  });
 
   addToCart(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
 
-    if (!this.product || !this.canAddToCart) {
+    const prod = this.product();
+    if (!prod || !this.canAddToCart()) {
       return;
     }
 
@@ -75,9 +87,9 @@ export class ProductCardComponent implements OnChanges {
     this.statusMessage = '';
 
     const request: AddCartItemRequest = {
-      productId: this.product.id,
+      productId: prod.id,
       quantity: 1,
-      deliveryMode: this.cartDeliveryMode
+      deliveryMode: this.cartDeliveryMode()
     };
 
     this.cartService.addItem(request).subscribe({
@@ -90,24 +102,5 @@ export class ProductCardComponent implements OnChanges {
         this.statusMessage = readApiErrorMessage(error, 'Unable to add item to cart.');
       }
     });
-  }
-
-  getArtClass(): string {
-    if (this.artClass) {
-      return this.artClass;
-    }
-    const nameLower = this.name.toLowerCase();
-    if (nameLower.includes('cake')) return 'cake';
-    if (nameLower.includes('muffin')) return 'muffin';
-    if (nameLower.includes('tiramisu')) return 'tiramisu';
-    if (nameLower.includes('brownie') || nameLower.includes('cookie')) return 'brownie';
-    return 'cake'; // fallback default
-  }
-
-  get formattedPrice(): string {
-    if (typeof this.price === 'number') {
-      return `EGP ${this.price.toFixed(2)}`;
-    }
-    return this.price;
   }
 }

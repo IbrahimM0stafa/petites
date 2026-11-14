@@ -1,13 +1,15 @@
 import {
   Component,
   ElementRef,
-  EventEmitter,
   HostListener,
-  Input,
   OnInit,
-  Output,
   forwardRef,
   inject,
+  input,
+  output,
+  signal,
+  computed,
+  effect,
   ChangeDetectionStrategy
 } from '@angular/core';
 
@@ -38,7 +40,7 @@ export interface QuickDateOption {
   imports: [],
   templateUrl: './date-picker.component.html',
   styleUrl: './date-picker.component.css',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -48,18 +50,21 @@ export interface QuickDateOption {
   ]
 })
 export class DatePickerComponent implements OnInit, ControlValueAccessor {
-  @Input() minDate = ''; // YYYY-MM-DD
-  @Input() maxDate = ''; // YYYY-MM-DD
-  @Input() blockedDays: string[] = [];
-  @Input() placeholder = 'Select Baking & Delivery Date...';
-  @Input() label = '';
-  @Input() required = false;
-  @Input() inline = false;
-  @Input() disabled = false;
-  @Input() error: string | null = null;
-  @Input() hint = '';
+  readonly minDate = input<string>(''); // YYYY-MM-DD
+  readonly maxDate = input<string>(''); // YYYY-MM-DD
+  readonly blockedDays = input<string[]>([]);
+  readonly placeholder = input<string>('Select Baking & Delivery Date...');
+  readonly label = input<string>('');
+  readonly required = input<boolean>(false);
+  readonly inline = input<boolean>(false);
+  readonly disabled = input<boolean>(false);
+  readonly error = input<string | null>(null);
+  readonly hint = input<string>('');
 
-  @Output() dateChange = new EventEmitter<string>();
+  readonly dateChange = output<string>();
+
+  private readonly formDisabled = signal<boolean>(false);
+  readonly isDisabled = computed(() => this.disabled() || this.formDisabled());
 
   isOpen = false;
   value: string = ''; // YYYY-MM-DD
@@ -75,20 +80,24 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
   private onChange: (val: string) => void = () => {};
   private onTouched: () => void = () => {};
 
+  constructor() {
+    effect(() => {
+      this.minDate();
+      this.blockedDays();
+      this.generateCalendar();
+      this.generateQuickOptions();
+    });
+  }
+
   ngOnInit(): void {
     this.initViewDate();
     this.generateCalendar();
     this.generateQuickOptions();
   }
 
-  ngOnChanges(): void {
-    this.generateCalendar();
-    this.generateQuickOptions();
-  }
-
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
-    if (this.inline) return;
+    if (this.inline()) return;
     if (!this.elementRef.nativeElement.contains(event.target)) {
       this.isOpen = false;
     }
@@ -118,11 +127,11 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
   }
 
   setDisabledState(isDisabled: boolean): void {
-    this.disabled = isDisabled;
+    this.formDisabled.set(isDisabled);
   }
 
   toggleOpen(): void {
-    if (this.disabled || this.inline) return;
+    if (this.isDisabled() || this.inline()) return;
     this.isOpen = !this.isOpen;
     if (this.isOpen) {
       this.onTouched();
@@ -139,8 +148,9 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
         return;
       }
     }
-    if (this.minDate) {
-      const parts = this.minDate.split('-');
+    const minD = this.minDate();
+    if (minD) {
+      const parts = minD.split('-');
       if (parts.length === 3) {
         this.viewDate = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, 1);
         return;
@@ -172,8 +182,9 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
   }
 
   get formattedBlockedDays(): string {
-    if (!this.blockedDays || this.blockedDays.length === 0) return '';
-    const names = this.blockedDays.map(d => {
+    const blocked = this.blockedDays();
+    if (!blocked || blocked.length === 0) return '';
+    const names = blocked.map(d => {
       const lower = d.toLowerCase();
       return lower.charAt(0).toUpperCase() + lower.slice(1) + 's';
     });
@@ -182,8 +193,9 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
   }
 
   get canGoPrev(): boolean {
-    if (!this.minDate) return true;
-    const parts = this.minDate.split('-');
+    const minD = this.minDate();
+    if (!minD) return true;
+    const parts = minD.split('-');
     if (parts.length !== 3) return true;
     const minYear = parseInt(parts[0], 10);
     const minMonth = parseInt(parts[1], 10) - 1;
@@ -208,32 +220,32 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
   }
 
   selectDate(day: CalendarDay): void {
-    if (day.isDisabled || this.disabled) return;
+    if (day.isDisabled || this.isDisabled()) return;
     this.value = day.dateStr;
     this.onChange(this.value);
     this.dateChange.emit(this.value);
     this.generateCalendar();
     this.generateQuickOptions();
-    if (!this.inline) {
+    if (!this.inline()) {
       this.isOpen = false;
     }
   }
 
   selectDateStr(dateStr: string): void {
-    if (this.disabled) return;
+    if (this.isDisabled()) return;
     this.value = dateStr;
     this.onChange(this.value);
     this.dateChange.emit(this.value);
     this.generateCalendar();
     this.generateQuickOptions();
-    if (!this.inline) {
+    if (!this.inline()) {
       this.isOpen = false;
     }
   }
 
   clearDate(event: MouseEvent): void {
     event.stopPropagation();
-    if (this.disabled) return;
+    if (this.isDisabled()) return;
     this.value = '';
     this.onChange('');
     this.dateChange.emit('');
@@ -242,9 +254,10 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
   }
 
   isDayBlocked(date: Date): boolean {
-    if (!this.blockedDays || this.blockedDays.length === 0) return false;
+    const blocked = this.blockedDays();
+    if (!blocked || blocked.length === 0) return false;
     const dayName = this.daysOfWeekFull[date.getDay()];
-    return this.blockedDays.some(b => b.toUpperCase() === dayName);
+    return blocked.some(b => b.toUpperCase() === dayName);
   }
 
   private formatDateStr(year: number, month: number, day: number): string {
@@ -257,6 +270,7 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
   private generateCalendar(): void {
     const year = this.viewDate.getFullYear();
     const month = this.viewDate.getMonth();
+    const minD = this.minDate();
 
     const today = new Date();
     const todayStr = this.formatDateStr(today.getFullYear(), today.getMonth(), today.getDate());
@@ -289,7 +303,7 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       const dateStr = this.formatDateStr(year, month, day);
-      const isPast = Boolean(this.minDate && dateStr < this.minDate);
+      const isPast = Boolean(minD && dateStr < minD);
       const isBlocked = this.isDayBlocked(date);
       const isDisabled = isPast || isBlocked;
 
@@ -335,7 +349,8 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
 
   private generateQuickOptions(): void {
     const options: QuickDateOption[] = [];
-    const baseDate = this.minDate ? this.parseDate(this.minDate) : new Date();
+    const minD = this.minDate();
+    const baseDate = minD ? this.parseDate(minD) : new Date();
     
     // Find next 3 available non-blocked dates starting from baseDate
     let current = new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate());
@@ -351,7 +366,7 @@ export class DatePickerComponent implements OnInit, ControlValueAccessor {
 
     while (count < 3 && iterations < 30) {
       const dateStr = this.formatDateStr(current.getFullYear(), current.getMonth(), current.getDate());
-      const isPast = Boolean(this.minDate && dateStr < this.minDate);
+      const isPast = Boolean(minD && dateStr < minD);
       const isBlocked = this.isDayBlocked(current);
 
       if (!isPast && !isBlocked) {

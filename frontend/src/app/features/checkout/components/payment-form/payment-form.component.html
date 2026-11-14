@@ -13,7 +13,7 @@
 
     <div class="payment-instructions-box">
       <p class="payment-instruction-text">
-        To confirm your order, please complete the payment of <strong>{{ totalAmount }}</strong> through the <a [href]="instapayPaymentLink" target="_blank" rel="noopener noreferrer" class="payment-form-link">link</a> 🤎
+        To confirm your order, please complete the payment of <strong>{{ totalAmount() }}</strong> through the <a [href]="instapayPaymentLink()" target="_blank" rel="noopener noreferrer" class="payment-form-link">link</a> 🤎
       </p>
       <p class="payment-urgency-text">
         Send your payment screenshot within 1 hour to secure your order — otherwise, it will be cancelled automatically ✨
@@ -23,9 +23,9 @@
     <div class="payment-hint-box">
       <p class="payment-hint-title">Transfer via Link</p>
       <p class="payment-hint-copy">
-        Click the link to send money to <strong>{{ instapayHandle }}</strong>.
+        Click the link to send money to <strong>{{ instapayHandle() }}</strong>.
       </p>
-      <a [href]="instapayPaymentLink" target="_blank" rel="noopener noreferrer" class="purchase-btn purchase-btn--primary instapay-cta-btn">
+      <a [href]="instapayPaymentLink()" target="_blank" rel="noopener noreferrer" class="purchase-btn purchase-btn--primary instapay-cta-btn">
         <span>Send via InstaPay Link</span>
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" style="width: 1.25rem; height: 1.25rem;">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

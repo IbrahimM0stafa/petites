@@ -1,4 +1,4 @@
-<section class="checkout-card" [formGroup]="checkoutForm">
+<section class="checkout-card" [formGroup]="checkoutForm()">
   <div class="card-title-wrap">
     <svg class="card-title-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
@@ -6,11 +6,11 @@
     <h2>Customer Details</h2>
   </div>
 
-  @if (showRewardTeaser) {
+  @if (showRewardTeaser()) {
     <div class="checkout-reward">
       <div class="reward-image-wrap">
-        @if (rewardProductImage) {
-          <img class="checkout-reward-image" [src]="rewardProductImage || '/assets/images/logo.png'" [alt]="rewardProductName" />
+        @if (rewardProductImage()) {
+          <img class="checkout-reward-image" [src]="rewardProductImage() || '/assets/images/logo.png'" [alt]="rewardProductName()" />
         } @else {
           <div class="checkout-reward-fallback" aria-hidden="true">Gift</div>
         }
@@ -22,12 +22,12 @@
       </div>
       <div class="checkout-reward-copy">
         <p class="reward-teaser-eyebrow">Loyalty Reward Available</p>
-        <p class="reward-teaser-text">A free <strong>{{ rewardProductName }}</strong> will be baked and added to your order automatically!</p>
+        <p class="reward-teaser-text">A free <strong>{{ rewardProductName() }}</strong> will be baked and added to your order automatically!</p>
       </div>
     </div>
   }
 
-  @if (!isAuthenticated) {
+  @if (!isAuthenticated()) {
     <div class="checkout-grid">
       <label class="form-label-wrap">
         <span class="form-label-text">Customer Name <span class="required-star">*</span></span>
@@ -64,13 +64,13 @@
       </div>
     </label>
 
-    @if (isAuthenticated && orderType === 'DELIVERY') {
+    @if (isAuthenticated() && orderType === 'DELIVERY') {
       <label class="form-label-wrap">
         <span class="form-label-text">Delivery Address <span class="required-star">*</span></span>
         <div class="select-styled-container">
           <select class="form-select-el" formControlName="addressId">
             <option value="">Select a saved address</option>
-            @for (address of addresses; track address) {
+            @for (address of addresses(); track address) {
               <option [value]="address.id">
                 {{ address.city }}, {{ address.area }} - {{ address.street }}{{ (!address.areaId || !address.governorateId) ? ' ⚠️ (Update required)' : '' }}
               </option>
@@ -92,11 +92,11 @@
     }
   </div>
 
-  @if (showGuestDeliveryFields) {
+  @if (showGuestDeliveryFields()) {
     <div class="guest-delivery-panel">
       <div class="guest-delivery-panel__head">
-        <h3>{{ isAuthenticated ? 'New delivery address' : 'Guest delivery address' }}</h3>
-        <p>{{ isAuthenticated ? 'Enter the new address details below to use and save for future orders.' : 'Enter the delivery address for this order. Sign in or sign up to keep it for later.' }}</p>
+        <h3>{{ isAuthenticated() ? 'New delivery address' : 'Guest delivery address' }}</h3>
+        <p>{{ isAuthenticated() ? 'Enter the new address details below to use and save for future orders.' : 'Enter the delivery address for this order. Sign in or sign up to keep it for later.' }}</p>
       </div>
       <div class="checkout-grid checkout-grid--guest-address">
         <label class="form-label-wrap">
@@ -198,15 +198,15 @@
     <textarea formControlName="notes" rows="3" placeholder="Any delivery instructions or customization details…"></textarea>
   </label>
 
-  @if (hasScheduledItems) {
+  @if (hasScheduledItems()) {
     <div class="form-label-wrap">
       <app-date-picker
         formControlName="scheduledDate"
-        [minDate]="minScheduledDate"
-        [blockedDays]="blockedDays"
+        [minDate]="minScheduledDate()"
+        [blockedDays]="blockedDays()"
         label="Scheduled Baking Date"
         [required]="true"
-        [error]="(checkoutForm.get('scheduledDate')?.touched && checkoutForm.get('scheduledDate')?.errors?.['blockedDay']) ? ('We are closed on ' + getFormattedBlockedDays() + '. Please select another date.') : null"
+        [error]="(checkoutForm().get('scheduledDate')?.touched && checkoutForm().get('scheduledDate')?.errors?.['blockedDay']) ? ('We are closed on ' + getFormattedBlockedDays() + '. Please select another date.') : null"
         hint="Choose when you would like your freshly baked goods prepared and dispatched.">
       </app-date-picker>
     </div>

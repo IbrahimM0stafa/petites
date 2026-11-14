@@ -1,5 +1,5 @@
 
-import { Component, ViewChild, ElementRef, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, viewChild, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { ProductCardComponent } from '../../../../shared/components/product-card/product-card.component';
 import { ShopService } from '../../../../core/services/shop.service';
@@ -42,8 +42,8 @@ import { Product } from '../../../../core/models/shop.models';
 })
 export class FeaturedTreatsComponent implements OnInit {
   private readonly shopService = inject(ShopService);
+  readonly carousel = viewChild<ElementRef<HTMLDivElement>>('treatCarousel');
 
-  @ViewChild('treatCarousel') carousel!: ElementRef<HTMLDivElement>;
   private touchStartX: number = 0;
   private touchEndX: number = 0;
 
@@ -75,15 +75,18 @@ export class FeaturedTreatsComponent implements OnInit {
 
     if (Math.abs(diff) > swipeThreshold) {
       const scrollAmount = 300;
+      const carouselEl = this.carousel()?.nativeElement;
+      if (!carouselEl) return;
+
       if (diff > 0) {
         // Swiped left - scroll right
-        this.carousel.nativeElement.scrollBy({
+        carouselEl.scrollBy({
           left: scrollAmount,
           behavior: 'smooth'
         });
       } else {
         // Swiped right - scroll left
-        this.carousel.nativeElement.scrollBy({
+        carouselEl.scrollBy({
           left: -scrollAmount,
           behavior: 'smooth'
         });

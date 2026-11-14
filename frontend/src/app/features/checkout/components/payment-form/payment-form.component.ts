@@ -1,5 +1,5 @@
 
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, input, ChangeDetectionStrategy } from '@angular/core';
 import { OrderResponse } from '../../../../core/models/order.models';
 
 @Component({
@@ -7,19 +7,19 @@ import { OrderResponse } from '../../../../core/models/order.models';
 	standalone: true,
 	imports: [],
 	templateUrl: './payment-form.component.html',
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	styleUrl: './payment-form.component.css'
 })
 export class PaymentFormComponent {
-	@Input({ required: true }) orders!: OrderResponse[];
-	@Input({ required: true }) instapayPaymentLink!: string;
-	@Input({ required: true }) instapayHandle!: string;
+	readonly orders = input.required<OrderResponse[]>();
+	readonly instapayPaymentLink = input.required<string>();
+	readonly instapayHandle = input.required<string>();
 
-	get totalAmount(): string {
-		const amount = this.orders.reduce((sum, order) => sum + (order.totalAmount ?? 0), 0);
+	readonly totalAmount = computed(() => {
+		const amount = this.orders().reduce((sum, order) => sum + (order.totalAmount ?? 0), 0);
 		return new Intl.NumberFormat('en-EG', {
 			style: 'currency',
 			currency: 'EGP'
 		}).format(amount);
-	}
+	});
 }

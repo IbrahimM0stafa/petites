@@ -1,4 +1,4 @@
-import { ApplicationConfig, DEFAULT_CURRENCY_CODE, provideZoneChangeDetection } from '@angular/core';
+import { ApplicationConfig, DEFAULT_CURRENCY_CODE, provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors, withXhr } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
 
@@ -7,7 +7,7 @@ import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
 	providers: [
-		provideZoneChangeDetection({ eventCoalescing: true }),
+		provideZonelessChangeDetection(),
 		provideRouter(routes),
 		provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
 		{ provide: DEFAULT_CURRENCY_CODE, useValue: 'EGP' }

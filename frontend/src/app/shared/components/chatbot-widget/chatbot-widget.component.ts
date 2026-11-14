@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ElementRef, OnInit, viewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 import { CurrencyPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -48,7 +48,7 @@ export class ChatbotWidgetComponent implements OnInit {
   private readonly deliveryZoneService = inject(DeliveryZoneService);
   private readonly inChatCheckoutCoordinator = inject(InChatCheckoutCoordinator);
 
-  @ViewChild('scrollContainer') private scrollContainer?: ElementRef;
+  private readonly scrollContainer = viewChild<ElementRef<HTMLDivElement>>('scrollContainer');
 
   isOpen = false;
   isLoading = false;
@@ -654,8 +654,9 @@ export class ChatbotWidgetComponent implements OnInit {
 
   private scrollToBottom(): void {
     setTimeout(() => {
-      if (this.scrollContainer) {
-        this.scrollContainer.nativeElement.scrollTop = this.scrollContainer.nativeElement.scrollHeight;
+      const el = this.scrollContainer()?.nativeElement;
+      if (el) {
+        el.scrollTop = el.scrollHeight;
       }
     }, 60);
   }

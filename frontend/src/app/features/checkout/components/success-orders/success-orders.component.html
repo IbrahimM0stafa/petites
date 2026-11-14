@@ -1,7 +1,7 @@
 <div class="success-orders-container">
   <h3 class="section-title">📦 Placed Order Details</h3>
   <div class="orders-results-list">
-    @for (order of orders; track order) {
+    @for (order of orders(); track order) {
       <article class="order-result-card">
         <div class="order-result-head">
           <div class="result-number-wrap">

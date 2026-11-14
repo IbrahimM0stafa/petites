@@ -1,5 +1,5 @@
 import { CurrencyPipe, DatePipe } from '@angular/common';
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { OrderResponse } from '../../../../core/models/order.models';
 
@@ -8,13 +8,13 @@ import { OrderResponse } from '../../../../core/models/order.models';
 	standalone: true,
 	imports: [CurrencyPipe, DatePipe, RouterLink],
 	templateUrl: './success-orders.component.html',
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	styleUrl: './success-orders.component.css'
 })
 export class SuccessOrdersComponent {
-	@Input({ required: true }) orders!: OrderResponse[];
-	@Input({ required: true }) rewardProductName!: string;
-	@Input({ required: true }) rewardProductId!: string;
+	readonly orders = input.required<OrderResponse[]>();
+	readonly rewardProductName = input.required<string>();
+	readonly rewardProductId = input.required<string>();
 
 	rewardLine(order: OrderResponse): string | null {
 		const rewardSummary = this.findRewardSummary([order]);
@@ -28,12 +28,12 @@ export class SuccessOrdersComponent {
 	private findRewardSummary(orders: OrderResponse[]): { productName: string } | null {
 		for (const order of orders) {
 			if (order.rewardApplied) {
-				return { productName: this.rewardProductName };
+				return { productName: this.rewardProductName() };
 			}
 
 			const rewardItem = order.items.find((item) => this.isRewardItem(item));
 			if (rewardItem) {
-				return { productName: rewardItem.productName?.trim() || this.rewardProductName };
+				return { productName: rewardItem.productName?.trim() || this.rewardProductName() };
 			}
 		}
 
@@ -45,13 +45,13 @@ export class SuccessOrdersComponent {
 			return false;
 		}
 
-		const rewardProductId = this.rewardProductId.toLowerCase();
+		const rewardProductId = this.rewardProductId().toLowerCase();
 		const productId = item.productId?.trim().toLowerCase() ?? '';
 		if (rewardProductId && productId === rewardProductId) {
 			return true;
 		}
 
-		const rewardProductName = this.rewardProductName.toLowerCase();
+		const rewardProductName = this.rewardProductName().toLowerCase();
 		const productName = item.productName?.trim().toLowerCase() ?? '';
 		return Boolean(rewardProductName && productName === rewardProductName);
 	}

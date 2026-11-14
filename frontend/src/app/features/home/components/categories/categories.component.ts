@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnInit, ViewChild, inject, ChangeDetectionStrategy } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnInit, viewChild, inject, ChangeDetectionStrategy } from '@angular/core';
 
 import { Router } from '@angular/router';
 import { ShopService } from '../../../../core/services/shop.service';
@@ -17,7 +17,7 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
   private readonly router = inject(Router);
 
   categories: Category[] = [];
-  @ViewChild('categoriesContainer', { static: false }) categoriesContainer?: ElementRef<HTMLDivElement>;
+  readonly categoriesContainer = viewChild<ElementRef<HTMLDivElement>>('categoriesContainer');
 
   pages: number[] = [];
   activePage = 0;
@@ -59,7 +59,7 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
   }
 
   private getCardStep(): number {
-    const el = this.categoriesContainer?.nativeElement;
+    const el = this.categoriesContainer()?.nativeElement;
     if (!el) return 0;
 
     const firstCard = el.querySelector<HTMLElement>('.category');
@@ -90,7 +90,7 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
   }
 
   onCategoriesScroll(): void {
-    const el = this.categoriesContainer?.nativeElement;
+    const el = this.categoriesContainer()?.nativeElement;
     if (!el || this.pages.length === 0) return;
 
     const step = this.getCardStep();
@@ -111,7 +111,7 @@ export class CategoriesComponent implements OnInit, AfterViewInit {
   }
 
   scrollToPage(idx: number) {
-    const el = this.categoriesContainer?.nativeElement;
+    const el = this.categoriesContainer()?.nativeElement;
     if (!el) return;
     const left = idx * this.getCardStep();
     el.scrollTo({ left, behavior: 'smooth' });

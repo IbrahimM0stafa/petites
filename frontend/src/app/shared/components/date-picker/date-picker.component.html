@@ -1,20 +1,20 @@
-<div class="custom-datepicker-wrapper" [class.is-inline]="inline" [class.has-error]="!!error">
+<div class="custom-datepicker-wrapper" [class.is-inline]="inline()" [class.has-error]="!!error()">
   <!-- Label if provided -->
-  @if (label) {
+  @if (label()) {
     <label class="datepicker-label">
-      <span>{{ label }}</span>
-      @if (required) {
+      <span>{{ label() }}</span>
+      @if (required()) {
         <span class="required-star">*</span>
       }
     </label>
   }
 
   <!-- Input Trigger Box (When not in inline mode) -->
-  @if (!inline) {
+  @if (!inline()) {
     <div
       class="datepicker-trigger"
       [class.is-open]="isOpen"
-      [class.is-disabled]="disabled"
+      [class.is-disabled]="isDisabled()"
       [class.has-value]="!!value"
       (click)="toggleOpen()"
       tabindex="0"
@@ -30,11 +30,11 @@
           </svg>
         </span>
         <span class="selected-text" [class.placeholder]="!value">
-          {{ formattedSelectedDate || placeholder }}
+          {{ formattedSelectedDate || placeholder() }}
         </span>
       </div>
       <div class="trigger-actions">
-        @if (value && !disabled) {
+        @if (value && !isDisabled()) {
           <button
             type="button"
             class="clear-btn"
@@ -54,11 +54,11 @@
   }
 
   <!-- Calendar Dropdown / Inline Card -->
-  @if (inline || isOpen) {
+  @if (inline() || isOpen) {
     <div
       class="calendar-card"
-      [class.inline-card]="inline"
-      [class.popup-card]="!inline"
+      [class.inline-card]="inline()"
+      [class.popup-card]="!inline()"
       role="dialog"
       aria-label="Bakery Calendar Picker">
       <!-- Quick Select Chips Row (if options available) -->
@@ -148,14 +148,14 @@
   }
 
   <!-- Hint or Error Message -->
-  @if (error) {
+  @if (error()) {
     <div class="datepicker-error-msg">
-      {{ error }}
+      {{ error() }}
     </div>
   }
-  @if (!error && hint) {
+  @if (!error() && hint()) {
     <div class="datepicker-hint-msg">
-      {{ hint }}
+      {{ hint() }}
     </div>
   }
 </div>

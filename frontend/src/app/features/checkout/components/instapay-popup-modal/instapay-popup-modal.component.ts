@@ -1,19 +1,19 @@
 
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
 	selector: 'app-instapay-popup-modal',
 	standalone: true,
 	imports: [],
 	templateUrl: './instapay-popup-modal.component.html',
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	styleUrl: './instapay-popup-modal.component.css'
 })
 export class InstapayPopupModalComponent {
-	@Input({ required: true }) totalAmount!: string;
-	@Input({ required: true }) paymentLink!: string;
-	@Input() isCourierDelivery: boolean = false;
+	readonly totalAmount = input.required<string>();
+	readonly paymentLink = input.required<string>();
+	readonly isCourierDelivery = input<boolean>(false);
 
-	@Output() dismiss = new EventEmitter<void>();
+	readonly dismiss = output<void>();
 }
 

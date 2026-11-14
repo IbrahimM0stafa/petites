@@ -1,5 +1,5 @@
 import { DecimalPipe } from '@angular/common';
-import { Component, Input, Output, EventEmitter, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, inject, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { SavedAddressResponse } from '../../../../core/models/address.models';
 import { DatePickerComponent } from '../../../../shared/components/date-picker/date-picker.component';
@@ -14,26 +14,26 @@ import { RouterLink } from '@angular/router';
 	standalone: true,
 	imports: [DecimalPipe, ReactiveFormsModule, DatePickerComponent, RouterLink],
 	templateUrl: './address-form.component.html',
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	styleUrl: './address-form.component.css'
 })
 export class AddressFormComponent implements OnInit {
 	private readonly zoneService = inject(DeliveryZoneService);
 
-	@Input({ required: true }) checkoutForm!: FormGroup;
-	@Input({ required: true }) isAuthenticated!: boolean;
-	@Input({ required: true }) addresses!: SavedAddressResponse[];
-	@Input({ required: true }) addressesLoading!: boolean;
-	@Input({ required: true }) showRewardTeaser!: boolean;
-	@Input({ required: true }) rewardProductName!: string;
-	@Input({ required: true }) rewardProductImage!: string | null;
-	@Input({ required: true }) hasScheduledItems!: boolean;
-	@Input({ required: true }) minScheduledDate!: string;
-	@Input({ required: true }) showGuestDeliveryFields!: boolean;
-	@Input() blockedDays: string[] = [];
+	readonly checkoutForm = input.required<FormGroup>();
+	readonly isAuthenticated = input.required<boolean>();
+	readonly addresses = input.required<SavedAddressResponse[]>();
+	readonly addressesLoading = input.required<boolean>();
+	readonly showRewardTeaser = input.required<boolean>();
+	readonly rewardProductName = input.required<string>();
+	readonly rewardProductImage = input.required<string | null>();
+	readonly hasScheduledItems = input.required<boolean>();
+	readonly minScheduledDate = input.required<string>();
+	readonly showGuestDeliveryFields = input.required<boolean>();
+	readonly blockedDays = input<string[]>([]);
 
-	@Output() orderTypeChange = new EventEmitter<void>();
-	@Output() areaChange = new EventEmitter<AreaNode | null>();
+	readonly orderTypeChange = output<void>();
+	readonly areaChange = output<AreaNode | null>();
 
 	governorates: GovernorateNode[] = [];
 	availableCities: CityNode[] = [];
@@ -42,9 +42,9 @@ export class AddressFormComponent implements OnInit {
 	zonesLoading = false;
 
 	get selectedSavedAddress(): SavedAddressResponse | null {
-		const addressId = this.checkoutForm.get('addressId')?.value;
+		const addressId = this.checkoutForm().get('addressId')?.value;
 		if (addressId && addressId !== 'new') {
-			return this.addresses.find(a => a.id === addressId) || null;
+			return this.addresses().find(a => a.id === addressId) || null;
 		}
 		return null;
 	}
@@ -73,77 +73,78 @@ export class AddressFormComponent implements OnInit {
 	}
 
 	syncDropdownsFromForm(): void {
-		const govId = this.checkoutForm.get('guestDeliveryGovernorateId')?.value;
-		const cityId = this.checkoutForm.get('guestDeliveryCityId')?.value;
-		const areaId = this.checkoutForm.get('guestDeliveryAreaId')?.value;
+		const govId = this.checkoutForm().get('guestDeliveryGovernorateId')?.value;
+		const cityId = this.checkoutForm().get('guestDeliveryCityId')?.value;
+		const areaId = this.checkoutForm().get('guestDeliveryAreaId')?.value;
 
-			this.availableCities = DeliveryZoneUtil.getCities(this.governorates, govId);
-			this.availableAreas = DeliveryZoneUtil.getAreas(this.governorates, cityId);
-			this.selectedArea = DeliveryZoneUtil.findArea(this.governorates, areaId);
-			if (this.selectedArea) {
-				this.areaChange.emit(this.selectedArea);
-			}
-		}
-
-		onGovernorateChange(event: Event): void {
-			const selectEl = event.target as HTMLSelectElement;
-			const govId = selectEl.value;
-			const gov = DeliveryZoneUtil.findGovernorate(this.governorates, govId);
-
-			this.checkoutForm.patchValue({
-				guestDeliveryGovernorateId: govId,
-				guestDeliveryGovernorate: gov ? gov.name : '',
-				guestDeliveryCityId: '',
-				guestDeliveryCity: '',
-				guestDeliveryAreaId: '',
-				guestDeliveryArea: ''
-			});
-
-			this.availableCities = gov ? gov.cities : [];
-			this.availableAreas = [];
-			this.selectedArea = null;
-			this.areaChange.emit(null);
-		}
-
-		onCityChange(event: Event): void {
-			const selectEl = event.target as HTMLSelectElement;
-			const cityId = selectEl.value;
-			const city = DeliveryZoneUtil.findCity(this.governorates, cityId);
-
-			this.checkoutForm.patchValue({
-				guestDeliveryCityId: cityId,
-				guestDeliveryCity: city ? city.name : '',
-				guestDeliveryAreaId: '',
-				guestDeliveryArea: ''
-			});
-
-			this.availableAreas = city ? city.areas : [];
-			this.selectedArea = null;
-			this.areaChange.emit(null);
-		}
-
-		onAreaChange(event: Event): void {
-			const selectEl = event.target as HTMLSelectElement;
-			const areaId = selectEl.value;
-			const area = DeliveryZoneUtil.findArea(this.governorates, areaId);
-
-			this.checkoutForm.patchValue({
-				guestDeliveryAreaId: areaId,
-				guestDeliveryArea: area ? area.name : ''
-			});
-
-			this.selectedArea = area || null;
+		this.availableCities = DeliveryZoneUtil.getCities(this.governorates, govId);
+		this.availableAreas = DeliveryZoneUtil.getAreas(this.governorates, cityId);
+		this.selectedArea = DeliveryZoneUtil.findArea(this.governorates, areaId);
+		if (this.selectedArea) {
 			this.areaChange.emit(this.selectedArea);
 		}
+	}
+
+	onGovernorateChange(event: Event): void {
+		const selectEl = event.target as HTMLSelectElement;
+		const govId = selectEl.value;
+		const gov = DeliveryZoneUtil.findGovernorate(this.governorates, govId);
+
+		this.checkoutForm().patchValue({
+			guestDeliveryGovernorateId: govId,
+			guestDeliveryGovernorate: gov ? gov.name : '',
+			guestDeliveryCityId: '',
+			guestDeliveryCity: '',
+			guestDeliveryAreaId: '',
+			guestDeliveryArea: ''
+		});
+
+		this.availableCities = gov ? gov.cities : [];
+		this.availableAreas = [];
+		this.selectedArea = null;
+		this.areaChange.emit(null);
+	}
+
+	onCityChange(event: Event): void {
+		const selectEl = event.target as HTMLSelectElement;
+		const cityId = selectEl.value;
+		const city = DeliveryZoneUtil.findCity(this.governorates, cityId);
+
+		this.checkoutForm().patchValue({
+			guestDeliveryCityId: cityId,
+			guestDeliveryCity: city ? city.name : '',
+			guestDeliveryAreaId: '',
+			guestDeliveryArea: ''
+		});
+
+		this.availableAreas = city ? city.areas : [];
+		this.selectedArea = null;
+		this.areaChange.emit(null);
+	}
+
+	onAreaChange(event: Event): void {
+		const selectEl = event.target as HTMLSelectElement;
+		const areaId = selectEl.value;
+		const area = DeliveryZoneUtil.findArea(this.governorates, areaId);
+
+		this.checkoutForm().patchValue({
+			guestDeliveryAreaId: areaId,
+			guestDeliveryArea: area ? area.name : ''
+		});
+
+		this.selectedArea = area || null;
+		this.areaChange.emit(this.selectedArea);
+	}
 
 	get orderType(): string {
-			return this.checkoutForm.get('orderType')?.value ?? 'DELIVERY';
-		}
+		return this.checkoutForm().get('orderType')?.value ?? 'DELIVERY';
+	}
 
-		getFormattedBlockedDays(): string {
-			if (!this.blockedDays || this.blockedDays.length === 0) return '';
-			return this.blockedDays.map(d => this.capitalize(d)).join(' and ');
-		}
+	getFormattedBlockedDays(): string {
+		const days = this.blockedDays();
+		if (!days || days.length === 0) return '';
+		return days.map(d => this.capitalize(d)).join(' and ');
+	}
 
 	private capitalize(s: string): string {
 		return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();

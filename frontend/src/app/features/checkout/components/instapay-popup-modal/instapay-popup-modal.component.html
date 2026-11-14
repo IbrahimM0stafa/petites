@@ -12,10 +12,10 @@
     <p class="guest-auth-eyebrow instapay-popup-eyebrow">Order Placed Successfully</p>
     <h2 id="instapay-popup-title">Confirm Your Order</h2>
     <p class="guest-auth-copy instapay-popup-msg">
-      To confirm your order, please complete the payment of <strong>{{ totalAmount }}</strong> through the <a
-    [href]="paymentLink" target="_blank" rel="noopener noreferrer" class="instapay-popup-link">link</a> 🤎
+      To confirm your order, please complete the payment of <strong>{{ totalAmount() }}</strong> through the <a
+    [href]="paymentLink()" target="_blank" rel="noopener noreferrer" class="instapay-popup-link">link</a> 🤎
   </p>
-  @if (isCourierDelivery) {
+  @if (isCourierDelivery()) {
     <p class="guest-auth-copy instapay-courier-note"
       style="color: #6b21a8; font-weight: 600; margin-top: 0.5rem;">
       🚚 Delivery fee will be paid directly to the 3rd-party courier upon arrival.

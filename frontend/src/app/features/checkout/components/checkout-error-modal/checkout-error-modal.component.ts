@@ -1,5 +1,5 @@
 
-import { Component, EventEmitter, Input, Output, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, output, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
@@ -7,12 +7,12 @@ import { RouterLink } from '@angular/router';
 	standalone: true,
 	imports: [RouterLink],
 	templateUrl: './checkout-error-modal.component.html',
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	styleUrl: './checkout-error-modal.component.css'
 })
 export class CheckoutErrorModalComponent {
-	@Input({ required: true }) errorMessage!: string;
-	@Input() errorPopupMode: 'basket' | 'checkout' = 'checkout';
+	readonly errorMessage = input.required<string>();
+	readonly errorPopupMode = input<'basket' | 'checkout'>('checkout');
 
-	@Output() dismiss = new EventEmitter<void>();
+	readonly dismiss = output<void>();
 }

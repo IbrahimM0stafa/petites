@@ -1,5 +1,5 @@
 import { CurrencyPipe } from '@angular/common';
-import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
+import { Component, input, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartItemResponse, CartResponse } from '../../../../core/models/cart.models';
 import { CouponValidationResponse } from '../../../../core/models/coupon.models';
@@ -10,27 +10,27 @@ import { OrderType } from '../../../../core/models/order.models';
 	standalone: true,
 	imports: [CurrencyPipe, RouterLink],
 	templateUrl: './checkout-summary.component.html',
-	changeDetection: ChangeDetectionStrategy.Eager,
+	changeDetection: ChangeDetectionStrategy.OnPush,
 	styleUrl: './checkout-summary.component.css'
 })
 export class CheckoutSummaryComponent {
-	@Input({ required: true }) cart!: CartResponse | null;
-	@Input({ required: true }) couponPreview!: CouponValidationResponse | null;
-	@Input({ required: true }) orderType!: OrderType;
-	@Input({ required: true }) subtotal!: number;
-	@Input({ required: true }) deliveryFee!: number;
-	@Input({ required: true }) finalAmount!: number;
-	@Input({ required: true }) isMixedOrder!: boolean;
-	@Input({ required: true }) instantItems!: CartItemResponse[];
-	@Input({ required: true }) scheduledItems!: CartItemResponse[];
-	@Input({ required: true }) instantSubtotal!: number;
-	@Input({ required: true }) scheduledSubtotal!: number;
-	@Input({ required: true }) instantDeliveryFee!: number;
-	@Input({ required: true }) scheduledDeliveryFee!: number;
-	@Input({ required: true }) instantDiscount!: number;
-	@Input({ required: true }) scheduledDiscount!: number;
-	@Input({ required: true }) instantTotal!: number;
-	@Input({ required: true }) scheduledTotal!: number;
-	@Input() isCourierDelivery = false;
-	@Input() hasAreaSelected = false;
+	readonly cart = input.required<CartResponse | null>();
+	readonly couponPreview = input.required<CouponValidationResponse | null>();
+	readonly orderType = input.required<OrderType>();
+	readonly subtotal = input.required<number>();
+	readonly deliveryFee = input.required<number>();
+	readonly finalAmount = input.required<number>();
+	readonly isMixedOrder = input.required<boolean>();
+	readonly instantItems = input.required<CartItemResponse[]>();
+	readonly scheduledItems = input.required<CartItemResponse[]>();
+	readonly instantSubtotal = input.required<number>();
+	readonly scheduledSubtotal = input.required<number>();
+	readonly instantDeliveryFee = input.required<number>();
+	readonly scheduledDeliveryFee = input.required<number>();
+	readonly instantDiscount = input.required<number>();
+	readonly scheduledDiscount = input.required<number>();
+	readonly instantTotal = input.required<number>();
+	readonly scheduledTotal = input.required<number>();
+	readonly isCourierDelivery = input<boolean>(false);
+	readonly hasAreaSelected = input<boolean>(false);
 }

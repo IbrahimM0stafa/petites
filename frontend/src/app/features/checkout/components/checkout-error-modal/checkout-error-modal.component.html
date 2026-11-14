@@ -12,16 +12,16 @@
       </svg>
     </div>
     <p class="guest-auth-eyebrow checkout-error-eyebrow">Checkout issue</p>
-    <h2 id="checkout-error-title">{{ errorPopupMode === 'basket' ? 'Please review your basket' : 'Please complete
+    <h2 id="checkout-error-title">{{ errorPopupMode() === 'basket' ? 'Please review your basket' : 'Please complete
     checkout details' }}</h2>
-    <p class="guest-auth-copy">{{ errorMessage }}</p>
+    <p class="guest-auth-copy">{{ errorMessage() }}</p>
     <div class="guest-auth-actions checkout-error-actions">
-      @if (errorPopupMode === 'basket') {
+      @if (errorPopupMode() === 'basket') {
         <a routerLink="/cart" class="purchase-btn purchase-btn--secondary"
         (click)="dismiss.emit()">Modify basket</a>
       }
       <button type="button" class="purchase-btn purchase-btn--primary" (click)="dismiss.emit()">
-        {{ errorPopupMode === 'basket' ? 'Review checkout' : 'Got it' }}
+        {{ errorPopupMode() === 'basket' ? 'Review checkout' : 'Got it' }}
       </button>
     </div>
   </section>
