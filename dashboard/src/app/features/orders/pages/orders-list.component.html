@@ -140,10 +140,10 @@
               </td>
               <td>
                 @if (order.orderType) {
-                  <span class="badge badge-type" [ngClass]="{'type-delivery': order.orderType === 'DELIVERY', 'type-pickup': order.orderType === 'PICKUP'}">{{ order.orderType }}</span>
+                  <span class="badge badge-type" [class.type-delivery]="order.orderType === 'DELIVERY'" [class.type-pickup]="order.orderType === 'PICKUP'">{{ order.orderType }}</span>
                 }
                 @if (order.deliveryMode) {
-                  <span class="badge badge-mode" [ngClass]="{'mode-instant': order.deliveryMode === 'INSTANT', 'mode-scheduled': order.deliveryMode === 'SCHEDULED'}">{{ order.deliveryMode }}</span>
+                  <span class="badge badge-mode" [class.mode-instant]="order.deliveryMode === 'INSTANT'" [class.mode-scheduled]="order.deliveryMode === 'SCHEDULED'">{{ order.deliveryMode }}</span>
                 }
               </td>
               <td>

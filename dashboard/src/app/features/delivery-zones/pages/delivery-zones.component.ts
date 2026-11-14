@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { DeliveryZoneService } from '../../../core/services/delivery-zone.service';
 import { Governorate, City, Area } from '../../../core/models/delivery-zone.model';
@@ -8,7 +8,7 @@ import { readApiErrorMessage } from '../../../core/models/api-error.model';
 @Component({
   selector: 'app-delivery-zones',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [DecimalPipe, FormsModule, ReactiveFormsModule],
   templateUrl: './delivery-zones.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './delivery-zones.component.css'

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, Input, OnChanges, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Product } from '../../../core/models/shop.models';
@@ -9,7 +9,7 @@ import { readApiErrorMessage } from '../../../core/models/api-error.model';
 @Component({
   selector: 'app-product-card',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [DatePipe, RouterLink],
   templateUrl: './product-card.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./product-card.component.css']

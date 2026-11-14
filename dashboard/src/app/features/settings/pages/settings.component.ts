@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { DatePipe, TitleCasePipe } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { SettingsService, AdminSetting } from '../../../core/services/settings.service';
@@ -11,7 +11,7 @@ import { RouterLink } from '@angular/router';
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterLink],
+  imports: [DatePipe, TitleCasePipe, ReactiveFormsModule, RouterLink],
   templateUrl: './settings.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './settings.component.css'

@@ -508,7 +508,7 @@
                   <div class="order-track-item">
                     <div class="track-item-top">
                       <span class="order-num">#{{ ord.orderNumber }}</span>
-                      <span class="order-status-badge" [ngClass]="ord.status.toLowerCase()">{{ ord.status }}</span>
+                      <span [class]="'order-status-badge ' + ord.status.toLowerCase()">{{ ord.status }}</span>
                     </div>
                     <div class="track-item-meta">
                       <span>{{ ord.orderType }}</span> •

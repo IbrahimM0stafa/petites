@@ -1,9 +1,8 @@
 <article class="treat-card">
   <div
-    class="treat-art"
+    [class]="'treat-art ' + getArtClass()"
     [routerLink]="productLink"
     style="cursor: pointer; position: relative;"
-    [ngClass]="getArtClass()"
     [style.backgroundImage]="imageUrl ? 'url(' + imageUrl + ')' : null"
     [style.backgroundSize]="imageUrl ? 'cover' : 'contain'"
     aria-hidden="true">

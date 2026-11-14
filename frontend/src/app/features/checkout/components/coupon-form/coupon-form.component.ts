@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { CouponValidationResponse } from '../../../../core/models/coupon.models';
@@ -6,7 +6,7 @@ import { CouponValidationResponse } from '../../../../core/models/coupon.models'
 @Component({
 	selector: 'app-coupon-form',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule],
+	imports: [CurrencyPipe, ReactiveFormsModule],
 	templateUrl: './coupon-form.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './coupon-form.component.css'

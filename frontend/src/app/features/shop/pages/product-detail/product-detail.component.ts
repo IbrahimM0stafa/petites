@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, DestroyRef, ChangeDetectionStrategy } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ShopService } from '../../../../core/services/shop.service';
@@ -13,7 +12,7 @@ import { SeoService } from '../../../../core/services/seo.service';
 @Component({
   selector: 'app-product-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [FormsModule, RouterLink],
   templateUrl: './product-detail.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrls: ['./product-detail.component.css']

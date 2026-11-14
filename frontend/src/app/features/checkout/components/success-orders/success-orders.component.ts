@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { OrderResponse } from '../../../../core/models/order.models';
@@ -6,7 +6,7 @@ import { OrderResponse } from '../../../../core/models/order.models';
 @Component({
 	selector: 'app-success-orders',
 	standalone: true,
-	imports: [CommonModule, RouterLink],
+	imports: [CurrencyPipe, DatePipe, RouterLink],
 	templateUrl: './success-orders.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './success-orders.component.css'

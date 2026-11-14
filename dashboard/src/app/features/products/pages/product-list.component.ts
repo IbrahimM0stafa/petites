@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -12,7 +12,7 @@ import { ProductService } from '../../../core/services/product.service';
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CurrencyPipe, RouterLink, FormsModule],
   templateUrl: './product-list.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './product-list.component.css'

@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
@@ -10,7 +10,7 @@ import { AuthStateService } from '../../../core/services/auth-state.service';
 @Component({
 	selector: 'app-user-detail',
 	standalone: true,
-	imports: [CommonModule, RouterLink],
+	imports: [DatePipe, RouterLink],
 	templateUrl: './user-detail.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './user-detail.component.css'

@@ -6,7 +6,7 @@
   </h2>
 
   <div class="treat-grid">
-    <ng-container *ngFor="let treat of treats">
+    @for (treat of treats; track treat) {
       <app-product-card
         [name]="treat.name"
         [price]="treat.price"
@@ -14,7 +14,7 @@
         ctaText="Add to Cart"
         ctaLink="/cart">
       </app-product-card>
-    </ng-container>
+    }
   </div>
 
   <div class="section-footer">

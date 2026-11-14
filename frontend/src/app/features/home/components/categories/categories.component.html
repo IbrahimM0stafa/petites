@@ -2,7 +2,7 @@
   <div class="categories" #categoriesContainer (scroll)="onCategoriesScroll()">
     @for (category of categories; track category) {
       <article class="category" (click)="onCategoryClick(category.id)" style="cursor: pointer;">
-        <div class="category-icon" [ngClass]="getCategoryClass(category.name)" aria-hidden="true">
+        <div [class]="'category-icon ' + getCategoryClass(category.name)" aria-hidden="true">
           <span
             class="category-icon-inner"
             [style.backgroundImage]="category.imageUrl ? 'url(' + category.imageUrl + ')' : null"

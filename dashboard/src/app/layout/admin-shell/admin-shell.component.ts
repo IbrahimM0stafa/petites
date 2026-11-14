@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, HostListener, OnDestroy, OnInit, inject, signal, ChangeDetectionStrategy } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -14,7 +14,7 @@ import { OrderResponse } from '../../core/models/order.model';
 @Component({
 	selector: 'app-admin-shell',
 	standalone: true,
-	imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive],
+	imports: [CurrencyPipe, DatePipe, RouterOutlet, RouterLink, RouterLinkActive],
 	templateUrl: './admin-shell.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './admin-shell.component.css'

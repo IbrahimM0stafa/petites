@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { catchError, forkJoin, map, of } from 'rxjs';
@@ -14,7 +14,7 @@ import { ShopService } from '../../../core/services/shop.service';
 @Component({
 	selector: 'app-cart-page',
 	standalone: true,
-	imports: [CommonModule, RouterLink],
+	imports: [CurrencyPipe, RouterLink],
 	templateUrl: './cart-page.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './cart-page.component.css'

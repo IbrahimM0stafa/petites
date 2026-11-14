@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
@@ -20,7 +20,7 @@ import { environment } from '../../../../environments/environment';
 @Component({
 	selector: 'app-account-page',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, RouterLink],
+	imports: [CurrencyPipe, ReactiveFormsModule, RouterLink],
 	templateUrl: './account-page.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './account-page.component.css'

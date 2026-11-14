@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe, DatePipe } from '@angular/common';
 import { Component, OnDestroy, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -13,7 +13,7 @@ import { WebSocketService } from '../../../core/services/websocket.service';
 @Component({
   selector: 'app-order-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CurrencyPipe, DatePipe, RouterLink, FormsModule],
   templateUrl: './order-detail.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './order-detail.component.css'

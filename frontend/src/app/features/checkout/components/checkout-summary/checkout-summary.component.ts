@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { CurrencyPipe } from '@angular/common';
 import { Component, Input, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartItemResponse, CartResponse } from '../../../../core/models/cart.models';
@@ -8,7 +8,7 @@ import { OrderType } from '../../../../core/models/order.models';
 @Component({
 	selector: 'app-checkout-summary',
 	standalone: true,
-	imports: [CommonModule, RouterLink],
+	imports: [CurrencyPipe, RouterLink],
 	templateUrl: './checkout-summary.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './checkout-summary.component.css'

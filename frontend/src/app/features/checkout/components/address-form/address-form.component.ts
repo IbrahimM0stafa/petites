@@ -1,4 +1,4 @@
-import { CommonModule } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { Component, Input, Output, EventEmitter, OnInit, inject, ChangeDetectionStrategy } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { SavedAddressResponse } from '../../../../core/models/address.models';
@@ -12,7 +12,7 @@ import { RouterLink } from '@angular/router';
 @Component({
 	selector: 'app-address-form',
 	standalone: true,
-	imports: [CommonModule, ReactiveFormsModule, DatePickerComponent, RouterLink],
+	imports: [DecimalPipe, ReactiveFormsModule, DatePickerComponent, RouterLink],
 	templateUrl: './address-form.component.html',
 	changeDetection: ChangeDetectionStrategy.Eager,
 	styleUrl: './address-form.component.css'

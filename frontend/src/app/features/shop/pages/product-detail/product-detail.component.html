@@ -29,8 +29,7 @@
       <!-- Left Column: Gallery -->
       <section class="gallery-column">
         <div
-          class="main-image-viewport"
-          [ngClass]="!activeImage ? getArtClass() : ''"
+          [class]="'main-image-viewport ' + (!activeImage ? getArtClass() : '')"
           [style.backgroundImage]="activeImage ? 'url(' + activeImage + ')' : null">
         </div>
         <!-- Thumbnail Carousel -->
